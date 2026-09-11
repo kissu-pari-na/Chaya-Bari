@@ -1,0 +1,47 @@
+// Chaya Bari — homemade food business management system.
+// Modular monolith: this single schema grows module-by-module across phases.
+// Phase 1 (Foundation) covers authentication, roles, and the customer profile.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Application role. Kept separate from business ownership — access is role-based.
+enum Role {
+  CUSTOMER
+  ADMIN
+  KITCHEN
+}
+
+/// An authenticated user of the system.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role     @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // A user with the CUSTOMER role has a linked customer profile.
+  customer Customer?
+
+  @@index([role])
+}
+
+/// Customer profile (1-1 with a User). Holds ordering-related info and, later,
+/// derived analytics. Addresses are added in the ordering phase.
+model Customer {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
