@@ -1,0 +1,22 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.logo img {
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.logo__name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-heading, #2f5233);
+}
+
+.logo__name-en {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--color-muted, #6b6b6b);
+}

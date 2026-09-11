@@ -1,0 +1,27 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.5rem;
+  background: #fffaf0;
+  border-bottom: 1px solid #e8ddc4;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.app-header__nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.app-header__link {
+  text-decoration: none;
+  color: #4a4a4a;
+  font-weight: 500;
+  padding-bottom: 2px;
+}
+
+.app-header__link--active {
+  color: #2f5233;
+  border-bottom: 2px solid #c9a84c;
+}
