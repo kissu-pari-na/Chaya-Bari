@@ -1,0 +1,86 @@
+.profile-form fieldset {
+  border: 1px solid #e8ddc4;
+  border-radius: 8px;
+  padding: 1rem 1.25rem 1.25rem;
+  margin: 0 0 1.25rem;
+}
+
+.profile-form legend {
+  font-weight: 700;
+  color: #2f5233;
+  padding: 0 0.4rem;
+}
+
+.profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.85rem;
+  max-width: 420px;
+}
+
+.profile-form input,
+.profile-form select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #6b6b6b;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.hint--warning {
+  color: #b3541e;
+}
+
+.hint--success {
+  color: #2f5233;
+  font-weight: 600;
+}
+
+.partner-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+}
+
+.partner-table th {
+  text-align: left;
+  font-size: 0.8rem;
+  color: #6b6b6b;
+  padding: 0.4rem;
+}
+
+.partner-table td {
+  padding: 0.4rem;
+}
+
+.partner-table input,
+.partner-table select {
+  width: 100%;
+}
+
+.profile-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-form__actions button {
+  background: #2f5233;
+  color: #fff;
+  border: none;
+  padding: 0.65rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.profile-form__actions button:hover {
+  background: #24401f;
+}

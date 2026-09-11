@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
+
+:root {
+  --color-heading: #2f5233;
+  --color-muted: #6b6b6b;
+  font-family: 'Noto Sans Bengali', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fdf9ef;
+  color: #262626;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page__content {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 10px;
+  padding: 1.5rem 1.75rem;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.sample-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-row {
+  display: flex;
+  gap: 1.5rem;
+  margin: 1.25rem 0;
+  flex-wrap: wrap;
+}
+
+.stat {
+  background: #fdf9ef;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat__label {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.stat__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+h1 {
+  color: var(--color-heading);
+  margin-top: 0;
+}

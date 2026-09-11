@@ -1,0 +1,26 @@
+.doc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #2f5233;
+  flex-wrap: wrap;
+}
+
+.doc-header__details {
+  text-align: right;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.doc-header__tagline {
+  font-style: italic;
+  color: #2f5233;
+  margin: 0 0 0.25rem;
+}
+
+.doc-header__details p {
+  margin: 0.15rem 0;
+}
