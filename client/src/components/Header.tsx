@@ -8,9 +8,14 @@ interface HeaderProps {
 }
 
 const links: Record<HeaderProps['variant'], { to: string; label: string; end?: boolean }[]> = {
-  customer: [{ to: '/', label: 'হোম', end: true }],
+  customer: [
+    { to: '/', label: 'হোম', end: true },
+    { to: '/products', label: 'পণ্য' },
+  ],
   admin: [
     { to: '/admin', label: 'ড্যাশবোর্ড', end: true },
+    { to: '/admin/products', label: 'পণ্য' },
+    { to: '/admin/categories', label: 'ক্যাটাগরি' },
     { to: '/admin/business-profile', label: 'বিজনেস প্রোফাইল' },
   ],
   kitchen: [{ to: '/kitchen', label: 'প্রোডাকশন', end: true }],

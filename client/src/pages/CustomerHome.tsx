@@ -14,14 +14,13 @@ export function CustomerHome() {
         আমরা {profile.address.city}, {profile.address.country}-এ সেবা প্রদান করি।
       </p>
 
-      {user ? (
-        <p>স্বাগতম, <strong>{user.name}</strong>! পণ্য ব্রাউজিং ও অর্ডার শীঘ্রই যুক্ত হবে।</p>
-      ) : (
-        <div className="sample-links">
-          <Link to="/login">লগইন</Link>
-          <Link to="/register">রেজিস্টার করুন</Link>
-        </div>
-      )}
+      {user && <p>স্বাগতম, <strong>{user.name}</strong>!</p>}
+
+      <div className="sample-links">
+        <Link to="/products">পণ্য দেখুন</Link>
+        {!user && <Link to="/login">লগইন</Link>}
+        {!user && <Link to="/register">রেজিস্টার করুন</Link>}
+      </div>
 
       <div className="sample-links">
         <Link to="/order-confirmation">অর্ডার কনফার্মেশন (নমুনা)</Link>

@@ -25,10 +25,11 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      <p>
-        ব্যবসার নাম, লোগো, ঠিকানা এবং পার্টনার তথ্য পরিবর্তন করতে{' '}
-        <Link to="/admin/business-profile">বিজনেস প্রোফাইল</Link> পাতায় যান।
-      </p>
+      <div className="sample-links">
+        <Link to="/admin/products">পণ্য ব্যবস্থাপনা</Link>
+        <Link to="/admin/categories">ক্যাটাগরি</Link>
+        <Link to="/admin/business-profile">বিজনেস প্রোফাইল</Link>
+      </div>
     </section>
   )
 }

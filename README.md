@@ -7,7 +7,8 @@ calculation.
 
 Built as a **modular monolith** and developed **phase by phase** (see the spec
 in the project docs). This repo currently implements **Phase 0 (business
-identity)** and **Phase 1 (foundation: auth, roles, database)**.
+identity)**, **Phase 1 (foundation: auth, roles, database)**, and
+**Phase 2 (products: categories, products, pricing, availability)**.
 
 ## Tech stack
 
@@ -109,8 +110,20 @@ Register a new account (becomes a customer), or log in with a seeded
 admin/kitchen account. Each role lands on its own area:
 `/` (customer), `/admin`, `/kitchen`.
 
+## Phase 2 — what's implemented
+
+- **Categories & products**: admin CRUD for product categories and products
+  (name, description, image URL, price, category, preparation info).
+- **Pricing over time**: each price change is appended to a price-history log;
+  historical orders will keep their own captured price (later phase).
+- **Availability vs. active**: `isActive` controls catalog visibility;
+  `isAvailable` marks sold-out items (shown to customers with a "sold out"
+  badge, hidden from ordering).
+- **Customer browsing**: public product grid with category filter and a product
+  detail page. Admin-only management is separated under `/api/admin/*`.
+
 ## Roadmap (next phases)
 
-Products → Customer ordering → Orders & discounts → Kitchen production →
+Customer ordering → Orders & discounts → Kitchen production →
 Delivery (customer vs. actual cost) → Payments → Inventory & recipe costing →
 Expenses & profit → Analytics & reports → Automation.
