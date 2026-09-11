@@ -1,0 +1,99 @@
+// Chaya Bari — homemade food business management system.
+// Modular monolith: this single schema grows module-by-module across phases.
+// Phase 1 (Foundation) covers authentication, roles, and the customer profile.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Application role. Kept separate from business ownership — access is role-based.
+enum Role {
+  CUSTOMER
+  ADMIN
+  KITCHEN
+}
+
+/// An authenticated user of the system.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role     @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // A user with the CUSTOMER role has a linked customer profile.
+  customer Customer?
+
+  @@index([role])
+}
+
+/// Customer profile (1-1 with a User). Holds ordering-related info and, later,
+/// derived analytics. Addresses are added in the ordering phase.
+model Customer {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Phase 2 — Products
+// -----------------------------------------------------------------------------
+
+/// Grouping for products (e.g. Rice Dishes, Desserts, Snacks).
+model ProductCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+/// A sellable item. `isActive` controls whether it exists in the catalog at all;
+/// `isAvailable` controls whether it can currently be ordered (e.g. sold out
+/// today). Image is stored as a URL so it stays configurable without code
+/// changes; real uploads can be added later.
+model Product {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  /// Current selling price. Historical orders keep their own captured price.
+  price       Decimal          @db.Decimal(10, 2)
+  isActive    Boolean          @default(true)
+  isAvailable Boolean          @default(true)
+  prepInfo    String?
+  categoryId  String?
+  category    ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  priceHistory ProductPriceHistory[]
+
+  @@index([categoryId])
+  @@index([isActive, isAvailable])
+}
+
+/// Append-only log of a product's selling price over time. Supports "different
+/// prices over time" without mutating past records.
+model ProductPriceHistory {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price         Decimal  @db.Decimal(10, 2)
+  effectiveFrom DateTime @default(now())
+
+  @@index([productId])
+}

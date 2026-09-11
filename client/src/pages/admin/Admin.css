@@ -1,0 +1,160 @@
+.admin-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-head button,
+.inline-form button,
+.admin-form__actions button[type='submit'] {
+  background: #2f5233;
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #f0e8d2;
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  font-size: 0.78rem;
+  color: #8a7d5c;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-table__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle {
+  border: 1px solid #d6cba9;
+  background: #fdf9ef;
+  color: #8a7d5c;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.toggle--on {
+  background: #e6f0e6;
+  border-color: #2f5233;
+  color: #2f5233;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid #d6cba9;
+  color: #2f5233;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid #e6b8b3;
+  color: #b3261e;
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+/* Forms */
+.admin-form {
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 10px;
+  padding: 1.5rem;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.admin-form h2 {
+  margin: 0;
+  color: #2f5233;
+}
+
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.admin-form__row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-form__row > label {
+  flex: 1;
+  min-width: 160px;
+}
+
+.admin-form__check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.admin-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.inline-form input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+}
