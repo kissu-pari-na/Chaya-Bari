@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { Product } from '../types/product'
+import { effectivePrice, type Product } from '../types/product'
 
 export interface CartItem {
   productId: string
@@ -53,7 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return [
           ...current,
-          { productId: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl, quantity },
+          { productId: product.id, name: product.name, price: effectivePrice(product), imageUrl: product.imageUrl, quantity },
         ]
       })
 

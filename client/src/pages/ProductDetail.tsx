@@ -51,7 +51,16 @@ export function ProductDetail() {
         <div className="product-detail__info">
           <h1>{product.name}</h1>
           {product.categoryName && <span className="product-card__cat">{product.categoryName}</span>}
-          <p className="product-detail__price">{formatBdt(product.price)}</p>
+          <p className="product-detail__price">
+            {product.salePrice != null && product.salePrice < product.price ? (
+              <>
+                {formatBdt(product.salePrice)}{' '}
+                <s className="product-card__was">{formatBdt(product.price)}</s>
+              </>
+            ) : (
+              formatBdt(product.price)
+            )}
+          </p>
           {product.description && <p>{product.description}</p>}
           {product.prepInfo && <p className="muted">প্রস্তুতি: {product.prepInfo}</p>}
           {product.isAvailable ? (

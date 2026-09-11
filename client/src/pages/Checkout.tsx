@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type SyntheticEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { fetchAddresses, fetchOrderingWindow, placeOrder } from '../lib/orders'
+import { fetchAddresses, fetchOrderingWindow, placeOrder, previewCoupon } from '../lib/orders'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt } from '../lib/format'
-import type { Address, AddressInput, OrderingWindow } from '../types/order'
+import type { Address, AddressInput, CouponPreview, OrderingWindow } from '../types/order'
 import './Checkout.css'
 
 const emptyAddress: AddressInput = {
@@ -28,6 +28,9 @@ export function Checkout() {
   const [saveAddress, setSaveAddress] = useState(true)
   const [fulfillmentDate, setFulfillmentDate] = useState('')
   const [notes, setNotes] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [coupon, setCoupon] = useState<CouponPreview | null>(null)
+  const [couponError, setCouponError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -49,7 +52,37 @@ export function Checkout() {
   }, [])
 
   const deliveryCost = window?.defaultDeliveryCost ?? 0
-  const total = useMemo(() => subtotal + deliveryCost, [subtotal, deliveryCost])
+  // With a valid coupon, trust the server-computed pricing (gross subtotal +
+  // itemised discounts). Without one, the cart subtotal already reflects any
+  // per-item sale prices, so show it directly with no separate discount line.
+  const displaySubtotal = coupon?.pricing.subtotal ?? subtotal
+  const productDiscount = coupon?.pricing.productDiscount ?? 0
+  const deliveryDiscount = coupon?.pricing.deliveryDiscount ?? 0
+  const total = useMemo(
+    () => (coupon ? coupon.pricing.total : subtotal + deliveryCost),
+    [coupon, subtotal, deliveryCost],
+  )
+
+  async function handleApplyCoupon() {
+    setCouponError(null)
+    if (!couponCode.trim()) return
+    try {
+      const preview = await previewCoupon(
+        couponCode.trim(),
+        items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      )
+      setCoupon(preview)
+    } catch (err) {
+      setCoupon(null)
+      setCouponError(err instanceof ApiError ? err.message : 'কুপন প্রয়োগ করা যায়নি')
+    }
+  }
+
+  function clearCoupon() {
+    setCoupon(null)
+    setCouponCode('')
+    setCouponError(null)
+  }
 
   if (items.length === 0) {
     return (
@@ -72,6 +105,7 @@ export function Checkout() {
         address: useNew ? { ...newAddress, isDefault: saveAddress && addresses.length === 0 } : undefined,
         fulfillmentDate,
         notes: notes || undefined,
+        couponCode: coupon ? coupon.coupon.code : undefined,
       })
       clear()
       navigate(`/orders/${order.id}`, { state: { justPlaced: true } })
@@ -210,14 +244,45 @@ export function Checkout() {
             </li>
           ))}
         </ul>
+        <div className="coupon-box">
+          {coupon ? (
+            <div className="coupon-applied">
+              <span>✓ কুপন <strong>{coupon.coupon.code}</strong> প্রয়োগ হয়েছে</span>
+              <button type="button" onClick={clearCoupon}>সরান</button>
+            </div>
+          ) : (
+            <div className="coupon-input">
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="কুপন কোড"
+              />
+              <button type="button" onClick={handleApplyCoupon}>প্রয়োগ</button>
+            </div>
+          )}
+          {couponError && <p className="hint hint--err">{couponError}</p>}
+        </div>
+
         <div className="checkout__line">
           <span>সাবটোটাল</span>
-          <span>{formatBdt(subtotal)}</span>
+          <span>{formatBdt(displaySubtotal)}</span>
         </div>
+        {productDiscount > 0 && (
+          <div className="checkout__line checkout__line--discount">
+            <span>ফুড ডিসকাউন্ট</span>
+            <span>−{formatBdt(productDiscount)}</span>
+          </div>
+        )}
         <div className="checkout__line">
           <span>ডেলিভারি চার্জ</span>
           <span>{formatBdt(deliveryCost)}</span>
         </div>
+        {deliveryDiscount > 0 && (
+          <div className="checkout__line checkout__line--discount">
+            <span>ডেলিভারি ডিসকাউন্ট</span>
+            <span>−{formatBdt(deliveryDiscount)}</span>
+          </div>
+        )}
         <div className="checkout__line checkout__line--total">
           <span>সর্বমোট</span>
           <span>{formatBdt(total)}</span>

@@ -14,6 +14,7 @@ export interface PublicProduct {
   description: string | null
   imageUrl: string | null
   price: number
+  salePrice: number | null
   isActive: boolean
   isAvailable: boolean
   prepInfo: string | null
@@ -30,6 +31,7 @@ function toPublicProduct(p: ProductWithCategory): PublicProduct {
     description: p.description,
     imageUrl: p.imageUrl,
     price: Number(p.price),
+    salePrice: p.salePrice ? Number(p.salePrice) : null,
     isActive: p.isActive,
     isAvailable: p.isAvailable,
     prepInfo: p.prepInfo,
@@ -101,8 +103,16 @@ export async function getProduct(id: string, includeHidden: boolean): Promise<Pu
   return toPublicProduct(product)
 }
 
+/// Ensures a sale price, when present, is below the (effective) list price.
+function assertSalePrice(salePrice: number | null | undefined, price: number) {
+  if (salePrice != null && salePrice >= price) {
+    throw HttpError.badRequest('Sale price must be below the regular price')
+  }
+}
+
 export async function createProduct(input: CreateProductInput): Promise<PublicProduct> {
   if (input.categoryId) await getCategoryOrThrow(input.categoryId)
+  assertSalePrice(input.salePrice, input.price)
 
   const product = await prisma.product.create({
     data: {
@@ -110,6 +120,7 @@ export async function createProduct(input: CreateProductInput): Promise<PublicPr
       description: input.description,
       imageUrl: input.imageUrl,
       price: new Prisma.Decimal(input.price),
+      salePrice: input.salePrice != null ? new Prisma.Decimal(input.salePrice) : null,
       categoryId: input.categoryId,
       prepInfo: input.prepInfo,
       isActive: input.isActive ?? true,
@@ -128,6 +139,12 @@ export async function updateProduct(id: string, input: UpdateProductInput): Prom
 
   const priceChanged = input.price !== undefined && !existing.price.equals(new Prisma.Decimal(input.price))
 
+  // Validate sale price against the resulting list price.
+  if (input.salePrice !== undefined) {
+    const effectivePrice = input.price ?? Number(existing.price)
+    assertSalePrice(input.salePrice, effectivePrice)
+  }
+
   const product = await prisma.product.update({
     where: { id },
     data: {
@@ -135,6 +152,12 @@ export async function updateProduct(id: string, input: UpdateProductInput): Prom
       description: input.description,
       imageUrl: input.imageUrl,
       price: input.price !== undefined ? new Prisma.Decimal(input.price) : undefined,
+      salePrice:
+        input.salePrice === undefined
+          ? undefined
+          : input.salePrice === null
+            ? null
+            : new Prisma.Decimal(input.salePrice),
       categoryId: input.categoryId,
       prepInfo: input.prepInfo,
       isActive: input.isActive,

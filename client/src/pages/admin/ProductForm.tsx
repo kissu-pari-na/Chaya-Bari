@@ -12,6 +12,7 @@ interface ProductFormProps {
 export function ProductForm({ categories, initial, onSubmit, onCancel }: ProductFormProps) {
   const [name, setName] = useState(initial?.name ?? '')
   const [price, setPrice] = useState(initial ? String(initial.price) : '')
+  const [salePrice, setSalePrice] = useState(initial?.salePrice != null ? String(initial.salePrice) : '')
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '')
@@ -29,11 +30,17 @@ export function ProductForm({ categories, initial, onSubmit, onCancel }: Product
       setError('মূল্য অবশ্যই ০-এর বেশি হতে হবে')
       return
     }
+    const saleNum = salePrice.trim() === '' ? null : Number(salePrice)
+    if (saleNum != null && (!Number.isFinite(saleNum) || saleNum <= 0 || saleNum >= priceNum)) {
+      setError('অফার মূল্য নিয়মিত মূল্যের চেয়ে কম হতে হবে')
+      return
+    }
     setSubmitting(true)
     try {
       await onSubmit({
         name,
         price: priceNum,
+        salePrice: saleNum,
         categoryId: categoryId || undefined,
         description: description || undefined,
         imageUrl: imageUrl || undefined,
@@ -65,6 +72,19 @@ export function ProductForm({ categories, initial, onSubmit, onCancel }: Product
           মূল্য (৳)
           <input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required />
         </label>
+        <label>
+          অফার মূল্য (৳, ঐচ্ছিক)
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={salePrice}
+            onChange={(e) => setSalePrice(e.target.value)}
+            placeholder="ছাড় থাকলে"
+          />
+        </label>
+      </div>
+      <div className="admin-form__row">
         <label>
           ক্যাটাগরি
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>

@@ -62,7 +62,10 @@ export function OrderDetail() {
             <tr key={i.id}>
               <td>{i.productName}</td>
               <td>{i.quantity}</td>
-              <td>{formatBdt(i.unitPrice)}</td>
+              <td>
+                {formatBdt(i.unitPrice)}
+                {i.listUnitPrice > i.unitPrice && <s className="product-card__was"> {formatBdt(i.listUnitPrice)}</s>}
+              </td>
               <td>{formatBdt(i.lineTotal)}</td>
             </tr>
           ))}
@@ -72,10 +75,22 @@ export function OrderDetail() {
             <td colSpan={3}>সাবটোটাল</td>
             <td>{formatBdt(order.subtotal)}</td>
           </tr>
+          {order.productDiscount > 0 && (
+            <tr>
+              <td colSpan={3}>ফুড ডিসকাউন্ট{order.couponCode ? ` (${order.couponCode})` : ''}</td>
+              <td>−{formatBdt(order.productDiscount)}</td>
+            </tr>
+          )}
           <tr>
             <td colSpan={3}>ডেলিভারি চার্জ</td>
             <td>{formatBdt(order.customerDeliveryCost)}</td>
           </tr>
+          {order.deliveryDiscount > 0 && (
+            <tr>
+              <td colSpan={3}>ডেলিভারি ডিসকাউন্ট</td>
+              <td>−{formatBdt(order.deliveryDiscount)}</td>
+            </tr>
+          )}
           <tr>
             <td colSpan={3}>সর্বমোট</td>
             <td>

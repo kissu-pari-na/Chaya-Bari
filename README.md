@@ -8,8 +8,9 @@ calculation.
 Built as a **modular monolith** and developed **phase by phase** (see the spec
 in the project docs). This repo currently implements **Phase 0 (business
 identity)**, **Phase 1 (foundation: auth, roles, database)**,
-**Phase 2 (products)**, and **Phase 3 (customer ordering: cart, addresses,
-checkout with advance-order cutoff)**.
+**Phase 2 (products)**, **Phase 3 (customer ordering: cart, addresses,
+checkout with advance-order cutoff)**, and **Phase 4 (orders & discounts:
+admin order management, product sale prices, and coupons)**.
 
 ## Tech stack
 
@@ -139,8 +140,24 @@ admin/kitchen account. Each role lands on its own area:
   receipt-style breakdown and status). Admin/kitchen accounts cannot place
   orders.
 
+## Phase 4 — what's implemented
+
+- **Admin order management**: list orders with filters (status, payment
+  status, search by order/customer, fulfillment date range), an order detail
+  view with the full breakdown and customer info, status updates (validated
+  transitions), and payment-status updates.
+- **Discounts** (food kept separate from delivery, per the business rules):
+  - **Product sale price** — an optional promotional price per product; the
+    reduction is recorded as a food discount on each order line.
+  - **Coupons** — code-based promotions with FOOD/DELIVERY scope and
+    PERCENT / FIXED / FREE_DELIVERY kinds, an optional minimum, and expiry.
+    These cover order-level, percentage, coupon, and delivery discounts.
+  - Customer calculation: `(subtotal − food discount) + delivery − delivery
+    discount = total`. Coupon discounts are previewed at checkout and
+    recomputed authoritatively on the server.
+
 ## Roadmap (next phases)
 
-Orders & discounts (admin order management, coupons, statuses) → Kitchen
-production → Delivery (customer vs. actual cost) → Payments → Inventory &
-recipe costing → Expenses & profit → Analytics & reports → Automation.
+Kitchen production → Delivery (customer vs. actual cost) → Payments →
+Inventory & recipe costing → Expenses & profit → Analytics & reports →
+Automation.

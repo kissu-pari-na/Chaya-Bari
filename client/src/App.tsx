@@ -18,6 +18,9 @@ import { BusinessProfileSettings } from './pages/BusinessProfileSettings'
 import { ProductsAdmin } from './pages/admin/ProductsAdmin'
 import { CategoriesAdmin } from './pages/admin/CategoriesAdmin'
 import { OrderingSettingsAdmin } from './pages/admin/OrderingSettingsAdmin'
+import { OrdersAdmin } from './pages/admin/OrdersAdmin'
+import { OrderDetailAdmin } from './pages/admin/OrderDetailAdmin'
+import { CouponsAdmin } from './pages/admin/CouponsAdmin'
 import { OrderConfirmation } from './pages/OrderConfirmation'
 import { Invoice } from './pages/Invoice'
 import { KitchenHome } from './pages/KitchenHome'
@@ -55,8 +58,11 @@ export default function App() {
             <Route element={<ProtectedRoute roles={['ADMIN']} />}>
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
+                <Route path="orders" element={<OrdersAdmin />} />
+                <Route path="orders/:id" element={<OrderDetailAdmin />} />
                 <Route path="products" element={<ProductsAdmin />} />
                 <Route path="categories" element={<CategoriesAdmin />} />
+                <Route path="coupons" element={<CouponsAdmin />} />
                 <Route path="ordering-settings" element={<OrderingSettingsAdmin />} />
                 <Route path="business-profile" element={<BusinessProfileSettings />} />
               </Route>

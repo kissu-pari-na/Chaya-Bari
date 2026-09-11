@@ -15,9 +15,11 @@ const links: Record<HeaderProps['variant'], { to: string; label: string; end?: b
   ],
   admin: [
     { to: '/admin', label: 'ড্যাশবোর্ড', end: true },
+    { to: '/admin/orders', label: 'অর্ডার' },
     { to: '/admin/products', label: 'পণ্য' },
     { to: '/admin/categories', label: 'ক্যাটাগরি' },
-    { to: '/admin/ordering-settings', label: 'অর্ডার সেটিংস' },
+    { to: '/admin/coupons', label: 'কুপন' },
+    { to: '/admin/ordering-settings', label: 'সেটিংস' },
     { to: '/admin/business-profile', label: 'প্রোফাইল' },
   ],
   kitchen: [{ to: '/kitchen', label: 'প্রোডাকশন', end: true }],

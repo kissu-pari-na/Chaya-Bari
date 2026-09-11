@@ -16,6 +16,8 @@ export const createProductSchema = z.object({
   description: nullableText,
   imageUrl: z.string().url('Image must be a valid URL').max(2000).optional().or(z.literal('').transform(() => undefined)),
   price: priceSchema,
+  // null clears the sale price; a number sets it (must be below the price).
+  salePrice: priceSchema.nullable().optional(),
   categoryId: z.string().cuid().optional().or(z.literal('').transform(() => undefined)),
   prepInfo: nullableText,
   isActive: z.boolean().optional(),

@@ -6,8 +6,11 @@ import {
   checkoutSchema,
   updateAddressSchema,
   updateOrderingSettingSchema,
+  updatePaymentStatusSchema,
+  updateStatusSchema,
 } from './order.schemas.js'
 import * as orderController from './order.controller.js'
+import * as adminOrderController from './admin-order.controller.js'
 
 /// Customer ordering routes. All require authentication; the controller further
 /// requires a customer profile so admin/kitchen accounts can't place orders.
@@ -32,7 +35,7 @@ orderRouter.post('/orders', validateBody(checkoutSchema), asyncHandler(orderCont
 orderRouter.get('/orders', asyncHandler(orderController.listMyOrders))
 orderRouter.get('/orders/:id', asyncHandler(orderController.getMyOrder))
 
-/// Admin ordering settings (cutoff, delivery cost).
+/// Admin ordering settings + order management.
 export const adminOrderingRouter = Router()
 adminOrderingRouter.use(authenticate, requireRole('ADMIN'))
 adminOrderingRouter.get('/ordering-settings', asyncHandler(orderController.getSetting))
@@ -40,4 +43,17 @@ adminOrderingRouter.put(
   '/ordering-settings',
   validateBody(updateOrderingSettingSchema),
   asyncHandler(orderController.updateSetting),
+)
+
+adminOrderingRouter.get('/orders', asyncHandler(adminOrderController.list))
+adminOrderingRouter.get('/orders/:id', asyncHandler(adminOrderController.get))
+adminOrderingRouter.patch(
+  '/orders/:id/status',
+  validateBody(updateStatusSchema),
+  asyncHandler(adminOrderController.updateStatus),
+)
+adminOrderingRouter.patch(
+  '/orders/:id/payment-status',
+  validateBody(updatePaymentStatusSchema),
+  asyncHandler(adminOrderController.updatePaymentStatus),
 )

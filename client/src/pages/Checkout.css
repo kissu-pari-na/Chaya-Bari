@@ -117,6 +117,10 @@
   font-size: 0.95rem;
 }
 
+.checkout__line--discount {
+  color: #1a7a45;
+}
+
 .checkout__line--total {
   border-top: 2px solid #2f5233;
   margin-top: 0.35rem;
@@ -124,6 +128,55 @@
   font-weight: 700;
   font-size: 1.1rem;
   color: #2f5233;
+}
+
+.coupon-box {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.6rem 0;
+  border-top: 1px dashed #e8ddc4;
+}
+
+.coupon-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.coupon-input input {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+}
+
+.coupon-input button,
+.coupon-applied button {
+  background: #2f5233;
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.coupon-applied {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: #1a7a45;
+}
+
+.coupon-applied button {
+  background: transparent;
+  color: #b3261e;
+  border: 1px solid #e6b8b3;
+  padding: 0.25rem 0.6rem;
+}
+
+.hint--err {
+  color: #b3261e;
 }
 
 .checkout__place {

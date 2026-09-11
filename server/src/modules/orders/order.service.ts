@@ -1,8 +1,10 @@
-import { Prisma, type Order, type OrderItem } from '@prisma/client'
+import { type Order, type OrderItem } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { AddressInput, CheckoutInput } from './order.schemas.js'
 import { getOrderingSetting, computeWindow } from './ordering.service.js'
+import { priceOrder } from './pricing.js'
+import { findUsableCoupon } from '../coupons/coupon.service.js'
 
 interface AddressSnapshot {
   recipientName: string
@@ -17,6 +19,7 @@ export interface PublicOrderItem {
   id: string
   productId: string | null
   productName: string
+  listUnitPrice: number
   unitPrice: number
   quantity: number
   lineTotal: number
@@ -34,8 +37,11 @@ export interface PublicOrder {
   fulfillmentDate: string
   notes: string | null
   subtotal: number
+  productDiscount: number
   customerDeliveryCost: number
+  deliveryDiscount: number
   total: number
+  couponCode: string | null
   status: Order['status']
   paymentStatus: Order['paymentStatus']
   createdAt: string
@@ -57,8 +63,11 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
     fulfillmentDate: order.fulfillmentDate.toISOString().slice(0, 10),
     notes: order.notes,
     subtotal: Number(order.subtotal),
+    productDiscount: Number(order.productDiscount),
     customerDeliveryCost: Number(order.customerDeliveryCost),
+    deliveryDiscount: Number(order.deliveryDiscount),
     total: Number(order.total),
+    couponCode: order.couponCode,
     status: order.status,
     paymentStatus: order.paymentStatus,
     createdAt: order.createdAt.toISOString(),
@@ -66,6 +75,7 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
       id: i.id,
       productId: i.productId,
       productName: i.productName,
+      listUnitPrice: Number(i.listUnitPrice),
       unitPrice: Number(i.unitPrice),
       quantity: i.quantity,
       lineTotal: Number(i.lineTotal),
@@ -128,32 +138,18 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
 
   const address = await resolveAddress(customerId, input.addressId, input.address)
 
-  // Load products and capture their current price + name (immutability).
+  // Load products; the pricing helper captures list + charged prices and
+  // applies per-item sale prices plus an optional coupon (immutability).
   const productIds = input.items.map((i) => i.productId)
   const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
-  const productById = new Map(products.map((p) => [p.id, p]))
+  const coupon = input.couponCode ? await findUsableCoupon(input.couponCode) : null
 
-  let subtotal = new Prisma.Decimal(0)
-  const itemsData = input.items.map((item) => {
-    const product = productById.get(item.productId)
-    if (!product) throw HttpError.badRequest(`Product not found: ${item.productId}`)
-    if (!product.isActive || !product.isAvailable) {
-      throw HttpError.badRequest(`"${product.name}" is not available for ordering`)
-    }
-    const unitPrice = product.price
-    const lineTotal = unitPrice.mul(item.quantity)
-    subtotal = subtotal.add(lineTotal)
-    return {
-      productId: product.id,
-      productName: product.name,
-      unitPrice,
-      quantity: item.quantity,
-      lineTotal,
-    }
+  const priced = priceOrder({
+    items: input.items,
+    products: new Map(products.map((p) => [p.id, p])),
+    deliveryCost: setting.defaultDeliveryCost,
+    coupon,
   })
-
-  const deliveryCost = setting.defaultDeliveryCost
-  const total = subtotal.add(deliveryCost)
 
   const [year, month, day] = input.fulfillmentDate.split('-').map(Number)
   const fulfillmentDate = new Date(Date.UTC(year, month - 1, day))
@@ -170,10 +166,22 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
       addressNote: address.addressNote,
       fulfillmentDate,
       notes: input.notes,
-      subtotal,
-      customerDeliveryCost: deliveryCost,
-      total,
-      items: { create: itemsData },
+      subtotal: priced.subtotal,
+      productDiscount: priced.productDiscount,
+      customerDeliveryCost: priced.customerDeliveryCost,
+      deliveryDiscount: priced.deliveryDiscount,
+      total: priced.total,
+      couponCode: priced.couponCode,
+      items: {
+        create: priced.lines.map((l) => ({
+          productId: l.productId,
+          productName: l.productName,
+          listUnitPrice: l.listUnitPrice,
+          unitPrice: l.unitPrice,
+          quantity: l.quantity,
+          lineTotal: l.lineTotal,
+        })),
+      },
     },
     include: { items: true },
   })

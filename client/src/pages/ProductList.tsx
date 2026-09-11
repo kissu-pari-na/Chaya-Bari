@@ -67,7 +67,16 @@ export function ProductList() {
               <h3>{p.name}</h3>
               {p.categoryName && <span className="product-card__cat">{p.categoryName}</span>}
               <div className="product-card__foot">
-                <strong className="product-card__price">{formatBdt(p.price)}</strong>
+                <span className="product-card__price">
+                  {p.salePrice != null && p.salePrice < p.price ? (
+                    <>
+                      <strong>{formatBdt(p.salePrice)}</strong>{' '}
+                      <s className="product-card__was">{formatBdt(p.price)}</s>
+                    </>
+                  ) : (
+                    <strong>{formatBdt(p.price)}</strong>
+                  )}
+                </span>
                 {p.isAvailable && (
                   <button
                     className="product-card__add"

@@ -42,9 +42,29 @@ export const checkoutSchema = z.object({
   address: addressSchema.optional(),
   fulfillmentDate: dateString,
   notes: optionalText(1000),
+  couponCode: z
+    .string()
+    .max(40)
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
 })
 
 // ---- Ordering settings ----
+
+export const orderStatuses = [
+  'PENDING',
+  'CONFIRMED',
+  'PREPARING',
+  'PACKED',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+] as const
+
+export const paymentStatuses = ['PENDING', 'PAID', 'PARTIALLY_PAID', 'REFUNDED', 'FAILED'] as const
+
+export const updateStatusSchema = z.object({ status: z.enum(orderStatuses) })
+export const updatePaymentStatusSchema = z.object({ paymentStatus: z.enum(paymentStatuses) })
 
 export const updateOrderingSettingSchema = z.object({
   cutoffTime: z
