@@ -26,6 +26,24 @@
   border-bottom: 2px solid #c9a84c;
 }
 
+.app-header__cart {
+  position: relative;
+  text-decoration: none;
+  color: #2f5233;
+  font-weight: 600;
+  padding: 0.2rem 0.1rem;
+}
+
+.app-header__cart-count {
+  background: #c9a84c;
+  color: #2f5233;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  margin-left: 0.25rem;
+}
+
 .app-header__user {
   display: flex;
   align-items: center;

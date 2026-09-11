@@ -7,8 +7,9 @@ calculation.
 
 Built as a **modular monolith** and developed **phase by phase** (see the spec
 in the project docs). This repo currently implements **Phase 0 (business
-identity)**, **Phase 1 (foundation: auth, roles, database)**, and
-**Phase 2 (products: categories, products, pricing, availability)**.
+identity)**, **Phase 1 (foundation: auth, roles, database)**,
+**Phase 2 (products)**, and **Phase 3 (customer ordering: cart, addresses,
+checkout with advance-order cutoff)**.
 
 ## Tech stack
 
@@ -122,8 +123,24 @@ admin/kitchen account. Each role lands on its own area:
 - **Customer browsing**: public product grid with category filter and a product
   detail page. Admin-only management is separated under `/api/admin/*`.
 
+## Phase 3 — what's implemented
+
+- **Cart**: client-side cart (localStorage) with quantity controls and a header
+  badge; add-to-cart from the product grid and detail page.
+- **Delivery addresses**: customers manage their own addresses; each order
+  snapshots the address so editing/deleting it never changes past orders.
+- **Advance-order cutoff**: admin-configurable cutoff time, minimum advance
+  days, delivery charge, and timezone (`OrderingSetting`). The server computes
+  the earliest allowed fulfillment date and rejects earlier orders.
+- **Checkout**: pick/enter an address, choose a fulfillment date (bounded by
+  the cutoff), see delivery cost + total, add notes, and place the order.
+  Prices are captured on each order item (historical immutability).
+- **My orders**: customers see only their own orders (list + detail with a
+  receipt-style breakdown and status). Admin/kitchen accounts cannot place
+  orders.
+
 ## Roadmap (next phases)
 
-Customer ordering → Orders & discounts → Kitchen production →
-Delivery (customer vs. actual cost) → Payments → Inventory & recipe costing →
-Expenses & profit → Analytics & reports → Automation.
+Orders & discounts (admin order management, coupons, statuses) → Kitchen
+production → Delivery (customer vs. actual cost) → Payments → Inventory &
+recipe costing → Expenses & profit → Analytics & reports → Automation.

@@ -28,6 +28,7 @@ export function AdminDashboard() {
       <div className="sample-links">
         <Link to="/admin/products">পণ্য ব্যবস্থাপনা</Link>
         <Link to="/admin/categories">ক্যাটাগরি</Link>
+        <Link to="/admin/ordering-settings">অর্ডার সেটিংস</Link>
         <Link to="/admin/business-profile">বিজনেস প্রোফাইল</Link>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { healthRouter } from './modules/health/health.routes.js'
 import { authRouter } from './modules/auth/auth.routes.js'
 import { publicProductRouter, adminProductRouter } from './modules/products/product.routes.js'
+import { orderRouter, adminOrderingRouter } from './modules/orders/order.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
@@ -12,3 +13,7 @@ apiRouter.use('/auth', authRouter)
 // Products: public browsing under /api, admin management under /api/admin.
 apiRouter.use('/', publicProductRouter)
 apiRouter.use('/admin', adminProductRouter)
+
+// Ordering: customer addresses/orders under /api, admin settings under /api/admin.
+apiRouter.use('/', orderRouter)
+apiRouter.use('/admin', adminOrderingRouter)

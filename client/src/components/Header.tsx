@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Logo } from './Logo'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 import './Header.css'
 
 interface HeaderProps {
@@ -16,7 +17,8 @@ const links: Record<HeaderProps['variant'], { to: string; label: string; end?: b
     { to: '/admin', label: 'ড্যাশবোর্ড', end: true },
     { to: '/admin/products', label: 'পণ্য' },
     { to: '/admin/categories', label: 'ক্যাটাগরি' },
-    { to: '/admin/business-profile', label: 'বিজনেস প্রোফাইল' },
+    { to: '/admin/ordering-settings', label: 'অর্ডার সেটিংস' },
+    { to: '/admin/business-profile', label: 'প্রোফাইল' },
   ],
   kitchen: [{ to: '/kitchen', label: 'প্রোডাকশন', end: true }],
 }
@@ -24,6 +26,7 @@ const links: Record<HeaderProps['variant'], { to: string; label: string; end?: b
 /** App header. Business identity stays consistent across customer, admin, and kitchen surfaces. */
 export function Header({ variant }: HeaderProps) {
   const { user, logout } = useAuth()
+  const { count } = useCart()
   const navigate = useNavigate()
 
   function handleLogout() {
@@ -31,22 +34,33 @@ export function Header({ variant }: HeaderProps) {
     navigate('/login', { replace: true })
   }
 
+  const linkClass = ({ isActive }: { isActive: boolean }) =>
+    isActive ? 'app-header__link app-header__link--active' : 'app-header__link'
+
   return (
     <header className="app-header">
       <Logo />
       <nav className="app-header__nav">
         {links[variant].map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.end}
-            className={({ isActive }) =>
-              isActive ? 'app-header__link app-header__link--active' : 'app-header__link'
-            }
-          >
+          <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
             {link.label}
           </NavLink>
         ))}
+
+        {variant === 'customer' && (
+          <>
+            {user && (
+              <NavLink to="/orders" className={linkClass}>
+                আমার অর্ডার
+              </NavLink>
+            )}
+            <NavLink to="/cart" className="app-header__cart">
+              কার্ট
+              {count > 0 && <span className="app-header__cart-count">{count}</span>}
+            </NavLink>
+          </>
+        )}
+
         {user ? (
           <div className="app-header__user">
             <span className="app-header__name">{user.name}</span>

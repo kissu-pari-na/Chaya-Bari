@@ -1,0 +1,150 @@
+.checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.checkout fieldset {
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+  padding: 1rem 1.15rem 1.15rem;
+  margin: 0 0 1.1rem;
+}
+
+.checkout legend {
+  font-weight: 700;
+  color: #2f5233;
+  padding: 0 0.4rem;
+}
+
+.checkout label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  margin-bottom: 0.6rem;
+}
+
+.checkout input,
+.checkout textarea,
+.checkout select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.checkout .admin-form__row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.checkout .admin-form__row > label {
+  flex: 1;
+  min-width: 150px;
+}
+
+.checkout .admin-form__check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #6b6b6b;
+  margin: 0.25rem 0 0;
+}
+
+.address-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.address-opt {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid #e8ddc4;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  flex-direction: row;
+}
+
+.address-opt--on {
+  border-color: #2f5233;
+  background: #f5faf5;
+}
+
+.address-form {
+  border-top: 1px dashed #e8ddc4;
+  padding-top: 0.85rem;
+}
+
+/* Summary */
+.checkout__summary h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+  color: #2f5233;
+}
+
+.checkout__summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.checkout__summary li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.checkout__line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  font-size: 0.95rem;
+}
+
+.checkout__line--total {
+  border-top: 2px solid #2f5233;
+  margin-top: 0.35rem;
+  padding-top: 0.6rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #2f5233;
+}
+
+.checkout__place {
+  width: 100%;
+  margin-top: 0.85rem;
+  background: #2f5233;
+  color: #fff;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.checkout__place:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 780px) {
+  .checkout {
+    grid-template-columns: 1fr;
+  }
+}

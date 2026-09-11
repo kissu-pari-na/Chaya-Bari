@@ -37,13 +37,15 @@ model User {
 }
 
 /// Customer profile (1-1 with a User). Holds ordering-related info and, later,
-/// derived analytics. Addresses are added in the ordering phase.
+/// derived analytics.
 model Customer {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  addresses Address[]
+  orders    Order[]
 }
 
 // -----------------------------------------------------------------------------
@@ -81,6 +83,7 @@ model Product {
   updatedAt   DateTime         @updatedAt
 
   priceHistory ProductPriceHistory[]
+  orderItems   OrderItem[]
 
   @@index([categoryId])
   @@index([isActive, isAvailable])
@@ -96,4 +99,115 @@ model ProductPriceHistory {
   effectiveFrom DateTime @default(now())
 
   @@index([productId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 3 — Customer ordering
+// -----------------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  PACKED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  REFUNDED
+  FAILED
+}
+
+/// A customer's saved delivery address. Orders snapshot the address fields so
+/// editing or deleting an address never changes past orders.
+model Address {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label          String?
+  recipientName  String
+  recipientPhone String
+  addressLine    String
+  area           String?
+  city           String
+  note           String?
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+/// A customer order. Financial fields are captured at checkout and never
+/// recomputed from current product prices (historical immutability). Delivery
+/// discounts, payments, and actual delivery cost arrive in later phases.
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Delivery address snapshot.
+  recipientName  String
+  recipientPhone String
+  addressLine    String
+  area           String?
+  city           String
+  addressNote    String?
+
+  /// The day the food is to be prepared/delivered (advance order).
+  fulfillmentDate DateTime @db.Date
+  notes           String?
+
+  subtotal             Decimal @db.Decimal(10, 2)
+  customerDeliveryCost Decimal @db.Decimal(10, 2)
+  total                Decimal @db.Decimal(10, 2)
+
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([fulfillmentDate])
+}
+
+/// A line in an order. Captures the product name and unit price at order time
+/// so historical orders stay correct even if the product changes later.
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  quantity    Int
+  lineTotal   Decimal  @db.Decimal(10, 2)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+/// Single-row configuration for the advance-order rules. Admin-editable so the
+/// cutoff and delivery charge are never hard-coded.
+model OrderingSetting {
+  id                  String   @id @default("singleton")
+  /// Local cutoff time in HH:mm. After this, next-day ordering closes.
+  cutoffTime          String   @default("22:00")
+  /// Minimum days ahead an order must be placed (1 = order for tomorrow).
+  minAdvanceDays      Int      @default(1)
+  /// Default customer delivery charge applied at checkout.
+  defaultDeliveryCost Decimal  @db.Decimal(10, 2) @default(60)
+  timezone            String   @default("Asia/Dhaka")
+  updatedAt           DateTime @updatedAt
 }
