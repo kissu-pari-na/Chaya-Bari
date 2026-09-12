@@ -328,9 +328,11 @@ model Delivery {
 enum PaymentMethod {
   CASH
   BKASH
+  NAGAD
+  ROCKET
   CARD
+  BANK
   ONLINE
-  COD
 }
 
 enum PaymentTxnStatus {
@@ -338,6 +340,13 @@ enum PaymentTxnStatus {
   SUCCESS
   FAILED
   REFUNDED
+}
+
+/// Who created the payment record. CUSTOMER rows start as PENDING claims that an
+/// admin must verify before they count toward the order's paid total.
+enum PaymentSource {
+  ADMIN
+  CUSTOMER
 }
 
 /// A single payment transaction against an order. Kept separate from the order
@@ -351,6 +360,7 @@ model Payment {
   method    PaymentMethod
   amount    Decimal          @db.Decimal(10, 2)
   status    PaymentTxnStatus @default(SUCCESS)
+  source    PaymentSource    @default(ADMIN)
   reference String?
   note      String?
   createdAt DateTime         @default(now())
@@ -496,6 +506,9 @@ enum NotificationType {
   ORDER_DELIVERED
   ORDER_CANCELLED
   PAYMENT_RECEIVED
+  PAYMENT_SUBMITTED
+  PAYMENT_VERIFIED
+  PAYMENT_REJECTED
   NEW_ORDER
 }
 

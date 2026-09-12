@@ -93,6 +93,35 @@ export async function notifyPaymentReceived(customerId: string, amount: number, 
   await notifyAdmins({ type: 'PAYMENT_RECEIVED', title: 'পেমেন্ট গৃহীত', body: `${orderNumber}: ৳${amount} পেমেন্ট।`, orderId })
 }
 
+/// A customer submitted a manual payment claim that admins must verify.
+export async function notifyPaymentSubmitted(amount: number, method: string, orderNumber: string, orderId: string): Promise<void> {
+  await notifyAdmins({
+    type: 'PAYMENT_SUBMITTED',
+    title: 'পেমেন্ট যাচাইয়ের অপেক্ষায়',
+    body: `${orderNumber}: গ্রাহক ৳${amount} (${method}) পরিশোধের দাবি করেছেন — যাচাই করুন।`,
+    orderId,
+  })
+}
+
+/// An admin verified or rejected a customer's manual payment claim.
+export async function notifyPaymentVerified(customerId: string, verified: boolean, amount: number, orderNumber: string, orderId: string): Promise<void> {
+  if (verified) {
+    await notifyCustomer(customerId, {
+      type: 'PAYMENT_VERIFIED',
+      title: 'পেমেন্ট নিশ্চিত হয়েছে',
+      body: `${orderNumber} অর্ডারের ৳${amount} পেমেন্ট যাচাই করে নিশ্চিত করা হয়েছে। ধন্যবাদ!`,
+      orderId,
+    })
+  } else {
+    await notifyCustomer(customerId, {
+      type: 'PAYMENT_REJECTED',
+      title: 'পেমেন্ট যাচাই করা যায়নি',
+      body: `${orderNumber} অর্ডারের ৳${amount} পেমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে সঠিক তথ্য দিয়ে আবার জানান।`,
+      orderId,
+    })
+  }
+}
+
 // ---- Queries ----
 
 export async function listForUser(userId: string): Promise<{ notifications: PublicNotification[]; unread: number }> {

@@ -2,7 +2,7 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { PublicOrder } from './order.service.js'
-import { paymentTotals } from '../payments/payment.service.js'
+import { paymentTotals, toPublicPayment } from '../payments/payment.service.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 export interface AdminOrder extends PublicOrder {
@@ -59,6 +59,7 @@ function toAdminOrder(order: OrderRow): AdminOrder {
     delivery: order.delivery
       ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
       : null,
+    payments: order.payments.map(toPublicPayment),
     customer: {
       id: order.customer.id,
       name: order.customer.user.name,

@@ -422,3 +422,31 @@
 .quadrant .mini-list li {
   padding: 0.35rem 0;
 }
+
+/* ---- Manual payment verification (admin) ---- */
+.pay-pending-badge {
+  display: inline-block;
+  margin-left: 0.6rem;
+  background: #fff4d6;
+  color: #8a6d1a;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.6rem;
+  border-radius: var(--radius-pill);
+  vertical-align: middle;
+}
+
+.pay-row--pending { background: #fffaf0; }
+
+.btn-mini {
+  border: none;
+  border-radius: 6px;
+  padding: 0.28rem 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 0.3rem;
+}
+.btn-mini--ok { background: var(--success, #2f7d4f); color: #fff; }
+.btn-mini--no { background: transparent; color: var(--danger); border: 1px solid #e6b8b3; }

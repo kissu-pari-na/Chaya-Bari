@@ -83,3 +83,145 @@
   margin: 0 0 0.4rem;
   color: #2f5233;
 }
+
+/* ---- Customer payment panel (order detail) ---- */
+.pay-panel {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--card-border);
+  padding-top: 1.25rem;
+}
+
+.pay-panel h3 {
+  margin: 0 0 0.75rem;
+  color: var(--card-heading);
+}
+
+.pay-panel__summary {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+  font-size: 0.95rem;
+}
+
+.pay-due { color: var(--danger); }
+.pay-paid { color: var(--success); }
+
+.pay-note {
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  margin-bottom: 0.85rem;
+}
+.pay-note--ok { background: #edf7ee; color: #1f6b3a; border: 1px solid #bfe0c6; }
+.pay-note--err { background: var(--danger-bg); color: var(--danger); border: 1px solid #e6b8b3; }
+
+.pay-history {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.pay-history__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+.pay-history__ref { margin-left: auto; font-size: 0.78rem; }
+
+.pay-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  padding: 0.1rem 0.55rem;
+}
+.pay-chip--pending { background: #fff4d6; color: #8a6d1a; }
+.pay-chip--success { background: #e2f2e6; color: #1f6b3a; }
+.pay-chip--failed { background: var(--danger-bg); color: var(--danger); }
+.pay-chip--refunded { background: #eee; color: #555; }
+
+.pay-online { margin-bottom: 0.5rem; }
+.pay-bkash {
+  width: 100%;
+  background: #e2136e;
+  color: #fff;
+  border: none;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(226, 19, 110, 0.28);
+  transition: filter 0.14s ease, transform 0.14s ease;
+}
+.pay-bkash:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
+.pay-bkash:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+
+.pay-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--card-muted);
+  font-size: 0.82rem;
+  margin: 1rem 0;
+}
+.pay-divider::before,
+.pay-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--card-border);
+}
+.pay-divider span { padding: 0 0.75rem; }
+
+.pay-claim {
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.pay-claim__title { margin: 0; font-weight: 700; color: var(--card-heading); }
+.pay-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  background: #fff;
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+}
+.pay-claim__row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.pay-claim__row > label { flex: 1; min-width: 130px; }
+.pay-claim label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: var(--card-text); }
+.pay-claim input,
+.pay-claim select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  background: #fff;
+}
+.pay-claim__submit {
+  align-self: flex-start;
+  background: var(--green-deep);
+  color: var(--cream);
+  border: none;
+  padding: 0.65rem 1.2rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+.pay-claim__submit:disabled { opacity: 0.55; cursor: not-allowed; }

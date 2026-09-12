@@ -5,6 +5,7 @@ import { formatBdt } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { DocumentHeader } from '../components/DocumentHeader'
+import { PaymentPanel } from './PaymentPanel'
 import type { Order } from '../types/order'
 import './Orders.css'
 
@@ -134,6 +135,8 @@ export function OrderDetail() {
         </p>
         {order.notes && <p className="muted">নোট: {order.notes}</p>}
       </div>
+
+      <PaymentPanel order={order} onOrderChange={setOrder} />
 
       <Link to="/orders">← আমার সব অর্ডার</Link>
     </section>
