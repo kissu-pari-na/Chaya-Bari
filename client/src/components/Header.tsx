@@ -15,6 +15,7 @@ const links: Record<HeaderProps['variant'], { to: string; label: string; end?: b
   ],
   admin: [
     { to: '/admin', label: 'ড্যাশবোর্ড', end: true },
+    { to: '/admin/reports', label: 'রিপোর্ট' },
     { to: '/admin/orders', label: 'অর্ডার' },
     { to: '/admin/deliveries', label: 'ডেলিভারি' },
     { to: '/admin/products', label: 'পণ্য' },
@@ -23,6 +24,7 @@ const links: Record<HeaderProps['variant'], { to: string; label: string; end?: b
     { to: '/admin/materials', label: 'ইনভেন্টরি' },
     { to: '/admin/purchases', label: 'ক্রয়' },
     { to: '/admin/costing', label: 'কস্টিং' },
+    { to: '/admin/expenses', label: 'খরচ' },
     { to: '/admin/ordering-settings', label: 'সেটিংস' },
     { to: '/admin/business-profile', label: 'প্রোফাইল' },
   ],

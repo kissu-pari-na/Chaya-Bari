@@ -26,8 +26,10 @@ export function AdminDashboard() {
       </div>
 
       <div className="sample-links">
+        <Link to="/admin/reports">রিপোর্ট ও লাভ</Link>
         <Link to="/admin/orders">অর্ডার</Link>
         <Link to="/admin/deliveries">ডেলিভারি</Link>
+        <Link to="/admin/expenses">খরচ</Link>
         <Link to="/admin/products">পণ্য ব্যবস্থাপনা</Link>
         <Link to="/admin/categories">ক্যাটাগরি</Link>
         <Link to="/admin/coupons">কুপন</Link>

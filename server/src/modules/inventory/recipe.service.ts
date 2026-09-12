@@ -145,6 +145,19 @@ export interface CostingRow {
   marginPct: number | null
 }
 
+/// Map of productId -> current recipe cost per unit (0 when no recipe). Used by
+/// order contribution and profit reporting.
+export async function getProductCostMap(): Promise<Map<string, number>> {
+  const recipes = await prisma.recipe.findMany({
+    include: { items: { include: { material: true } }, product: true },
+  })
+  const map = new Map<string, number>()
+  for (const r of recipes) {
+    map.set(r.productId, toPublicRecipe(r).costing.costPerUnit)
+  }
+  return map
+}
+
 /// Costing overview across all products (recipe cost vs. selling price).
 export async function listCosting(): Promise<CostingRow[]> {
   const products = await prisma.product.findMany({

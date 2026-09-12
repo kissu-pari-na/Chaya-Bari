@@ -15,7 +15,9 @@ admin order management, product sale prices, and coupons)**,
 vs. actual cost, difference, provider/tracking, status)**, **Phase 7
 (payments: transactions, methods, derived payment status)**, and **Phase 8
 (inventory & costing: materials, purchases with weighted-average cost,
-recipes, and per-unit product cost)**.
+recipes, and per-unit product cost)**, and **Phase 9 (expenses & profit:
+business expenses, order contribution, product profitability, and the
+business profit dashboard)**.
 
 ## Tech stack
 
@@ -217,6 +219,25 @@ admin/kitchen account. Each role lands on its own area:
   a link to edit each recipe. Manual stock adjustments are supported for
   corrections/spoilage.
 
+## Phase 9 — what's implemented
+
+- **Business expenses** by category (dynamic categories seeded with Gas,
+  Electricity, Marketing, etc.): record, list by period, and by-category
+  summary. Ingredient/packaging purchases are kept separate (they update
+  inventory, not expenses).
+- **Order contribution** (per order): net food − product cost = product gross
+  profit, then + customer delivery − actual delivery − delivery discount =
+  contribution; marked incomplete until the actual delivery cost is entered.
+- **Product profitability** (per period): units sold, revenue, discount, net
+  revenue, product cost (from recipes), gross profit, and margin — delivery
+  excluded, per the rules.
+- **Business profit dashboard** (per period): total orders, food sales,
+  discounts, net food sales, product cost, gross profit, delivery
+  collected / actual / gain-loss, other expenses, and **net profit**, plus
+  top-selling / most-profitable products, top customers, low-stock materials,
+  and pending / awaiting-delivery counts.
+
 ## Roadmap (next phases)
 
-Expenses & profit → Analytics & reports → Automation.
+Customer analytics & demand/profit classification → richer reports →
+Automation (notifications, provider/gateway APIs).
