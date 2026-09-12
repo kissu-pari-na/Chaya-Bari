@@ -10,7 +10,7 @@ import type { BusinessProfile } from '../types/business'
 export const defaultBusinessProfile: BusinessProfile = {
   name: 'ছায়া বাড়ি',
   nameEnglish: 'Chaya Bari',
-  logoUrl: '/logo.svg',
+  logoUrl: '/logo.png',
   tagline: 'আস্থার ছায়ায় ঘেরা, গুণ ও মানের বসত বাড়ি',
   contact: {
     phone: '+880 1XXXXXXXXX',

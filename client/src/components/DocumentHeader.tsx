@@ -8,7 +8,7 @@ export function DocumentHeader() {
 
   return (
     <div className="doc-header">
-      <Logo size={56} />
+      <Logo size={56} onLight />
       <div className="doc-header__details">
         {profile.tagline && <p className="doc-header__tagline">{profile.tagline}</p>}
         <p>{profile.address.line1 ? `${profile.address.line1}, ` : ''}{profile.address.city}, {profile.address.country}</p>
