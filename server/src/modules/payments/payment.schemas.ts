@@ -19,4 +19,9 @@ export const recordPaymentSchema = z.object({
     .or(z.literal('').transform(() => undefined)),
 })
 
+export const gatewayChargeSchema = z.object({
+  method: z.enum(['BKASH', 'CARD']).optional(),
+  amount: z.number().positive('Amount must be greater than 0').max(1_000_000),
+})
+
 export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>

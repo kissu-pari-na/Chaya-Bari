@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Logo } from './Logo'
+import { NotificationBell } from './NotificationBell'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import './Header.css'
@@ -72,6 +73,7 @@ export function Header({ variant }: HeaderProps) {
 
         {user ? (
           <div className="app-header__user">
+            <NotificationBell />
             <span className="app-header__name">{user.name}</span>
             <button type="button" className="app-header__logout" onClick={handleLogout}>
               লগআউট

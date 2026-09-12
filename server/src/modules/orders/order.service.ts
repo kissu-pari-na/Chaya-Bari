@@ -6,6 +6,7 @@ import { getOrderingSetting, computeWindow } from './ordering.service.js'
 import { priceOrder } from './pricing.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
 import { paymentTotals } from '../payments/payment.service.js'
+import { notifyOrderPlaced } from '../notifications/notification.service.js'
 
 interface AddressSnapshot {
   recipientName: string
@@ -196,6 +197,8 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
     },
     include: { items: true },
   })
+
+  await notifyOrderPlaced(customerId, order.orderNumber, order.id)
 
   return toPublicOrder(order)
 }

@@ -53,6 +53,22 @@ export async function getByOrder(orderId: string): Promise<PublicDelivery | null
   return delivery ? toPublicDelivery(delivery) : null
 }
 
+/// Mock third-party dispatch. A real integration (Pathao/pandago) would call the
+/// provider's API to create the delivery and return its tracking id; here we
+/// simulate that and move the delivery to ASSIGNED. Swap this implementation
+/// for the real client without changing callers.
+export async function dispatchToProvider(id: string, provider: string): Promise<PublicDelivery> {
+  const existing = await prisma.delivery.findUnique({ where: { id } })
+  if (!existing) throw HttpError.notFound('Delivery not found')
+
+  const trackingRef = `${provider.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'PROV'}-${Math.floor(100000 + Math.random() * 900000)}`
+  const delivery = await prisma.delivery.update({
+    where: { id },
+    data: { provider, trackingRef, status: 'ASSIGNED' },
+  })
+  return toPublicDelivery(delivery)
+}
+
 export async function updateDelivery(id: string, input: UpdateDeliveryInput): Promise<PublicDelivery> {
   const existing = await prisma.delivery.findUnique({ where: { id } })
   if (!existing) throw HttpError.notFound('Delivery not found')

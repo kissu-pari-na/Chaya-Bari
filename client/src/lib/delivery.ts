@@ -25,3 +25,12 @@ export function updateDelivery(id: string, input: DeliveryUpdate) {
 export function fetchDeliveries() {
   return apiRequest<{ deliveries: DeliveryListRow[] }>('/admin/deliveries', { auth: true }).then((r) => r.deliveries)
 }
+
+/// Mock third-party dispatch (integration point for Pathao/pandago).
+export function dispatchDelivery(id: string, provider: string) {
+  return apiRequest<{ delivery: Delivery }>(`/admin/deliveries/${id}/dispatch`, {
+    method: 'POST',
+    body: { provider },
+    auth: true,
+  }).then((r) => r.delivery)
+}

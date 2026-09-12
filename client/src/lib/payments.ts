@@ -19,3 +19,12 @@ export function recordPayment(orderId: string, input: RecordPaymentInput) {
 export function deletePayment(id: string) {
   return apiRequest<void>(`/admin/payments/${id}`, { method: 'DELETE', auth: true })
 }
+
+/// Mock online-gateway charge (integration point for bKash / a card gateway).
+export function gatewayCharge(orderId: string, amount: number, method: 'BKASH' | 'CARD' = 'BKASH') {
+  return apiRequest<{ payment: Payment; order: AdminOrder }>(`/admin/orders/${orderId}/payments/gateway`, {
+    method: 'POST',
+    body: { amount, method },
+    auth: true,
+  })
+}

@@ -2,6 +2,7 @@ import { Prisma, type Payment, type PaymentStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { RecordPaymentInput } from './payment.schemas.js'
+import { notifyPaymentReceived } from '../notifications/notification.service.js'
 
 export interface PublicPayment {
   id: string
@@ -76,6 +77,9 @@ export async function recordPayment(orderId: string, input: RecordPaymentInput):
     },
   })
   await recomputeOrderPaymentStatus(orderId)
+  if (payment.status === 'SUCCESS') {
+    await notifyPaymentReceived(order.customerId, Number(payment.amount), order.orderNumber, order.id)
+  }
   return toPublicPayment(payment)
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { deletePayment, fetchPayments, recordPayment } from '../../lib/payments'
+import { deletePayment, fetchPayments, gatewayCharge, recordPayment } from '../../lib/payments'
 import { paymentMethodLabel, paymentMethods, txnStatusLabel, txnStatuses } from '../../lib/paymentLabels'
 import { paymentStatusLabel } from '../../lib/orderStatus'
 import { formatBdt } from '../../lib/format'
@@ -50,6 +50,23 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
     } catch (err) {
       if (err instanceof ApiError && err.details?.length) setError(err.details.map((d) => d.message).join(' · '))
       else setError(err instanceof ApiError ? err.message : 'পেমেন্ট রেকর্ড করা যায়নি')
+    }
+  }
+
+  async function handleGateway() {
+    setError(null)
+    const amt = Number(amount) || order.amountDue
+    if (!amt || amt <= 0) {
+      setError('বকেয়া নেই — পরিমাণ দিন')
+      return
+    }
+    try {
+      const { payment, order: updated } = await gatewayCharge(order.id, amt, 'BKASH')
+      setPayments((ps) => [...ps, payment])
+      onOrderChange(updated)
+      setAmount(String(updated.amountDue || ''))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'গেটওয়ে পেমেন্ট ব্যর্থ')
     }
   }
 
@@ -155,7 +172,11 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
         </div>
         <div className="admin-form__actions">
           <button type="submit">পেমেন্ট রেকর্ড করুন</button>
+          <button type="button" className="btn-ghost" onClick={handleGateway}>
+            অনলাইন পেমেন্ট নিন (বিকাশ মক)
+          </button>
         </div>
+        <p className="hint">অনলাইন পেমেন্ট বিকাশ/গেটওয়ে ইন্টিগ্রেশন পয়েন্ট — মক চার্জ সফল পেমেন্ট হিসেবে রেকর্ড হবে।</p>
       </form>
     </div>
   )

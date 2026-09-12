@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { createOrderDelivery, fetchOrderDelivery, updateDelivery } from '../../lib/delivery'
+import { createOrderDelivery, dispatchDelivery, fetchOrderDelivery, updateDelivery } from '../../lib/delivery'
 import { deliveryStatusLabel, deliveryStatuses } from '../../lib/deliveryStatus'
 import { formatBdt } from '../../lib/format'
 import { ApiError } from '../../lib/apiClient'
@@ -43,6 +43,18 @@ export function DeliverySection({ orderId }: { orderId: string }) {
       syncForm(d)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'ডেলিভারি তৈরি করা যায়নি')
+    }
+  }
+
+  async function handleDispatch() {
+    if (!delivery) return
+    setError(null)
+    try {
+      const d = await dispatchDelivery(delivery.id, provider || 'Pathao')
+      setDelivery(d)
+      syncForm(d)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ডিসপ্যাচ করা যায়নি')
     }
   }
 
@@ -149,8 +161,12 @@ export function DeliverySection({ orderId }: { orderId: string }) {
       </div>
       <div className="admin-form__actions">
         <button type="submit">সংরক্ষণ করুন</button>
+        <button type="button" className="btn-ghost" onClick={handleDispatch}>
+          প্রোভাইডারে পাঠান (মক)
+        </button>
         {saved && <span className="hint" style={{ color: '#2f5233', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
       </div>
+      <p className="hint">প্রোভাইডারে পাঠালে মক ট্র্যাকিং আইডি তৈরি হবে ও স্ট্যাটাস "অ্যাসাইনড" হবে (Pathao/pandago ইন্টিগ্রেশন পয়েন্ট)।</p>
     </form>
   )
 }

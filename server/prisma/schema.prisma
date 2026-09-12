@@ -31,7 +31,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // A user with the CUSTOMER role has a linked customer profile.
-  customer Customer?
+  customer      Customer?
+  notifications Notification[]
 
   @@index([role])
 }
@@ -480,4 +481,36 @@ model Expense {
 
   @@index([spentAt])
   @@index([categoryId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 11 — Automation (notifications)
+// -----------------------------------------------------------------------------
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_CONFIRMED
+  ORDER_PREPARING
+  ORDER_PACKED
+  ORDER_OUT_FOR_DELIVERY
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_RECEIVED
+  NEW_ORDER
+}
+
+/// An in-app notification for a user. Generated from order/payment events.
+/// Email/SMS/push channels can be layered on top later.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  orderId   String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
 }

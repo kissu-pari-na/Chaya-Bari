@@ -10,6 +10,7 @@ import { adminPaymentRouter } from './modules/payments/payment.routes.js'
 import { adminInventoryRouter } from './modules/inventory/inventory.routes.js'
 import { adminExpenseRouter } from './modules/expenses/expense.routes.js'
 import { adminAnalyticsRouter } from './modules/analytics/analytics.routes.js'
+import { notificationRouter } from './modules/notifications/notification.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
@@ -29,8 +30,9 @@ apiRouter.use('/admin', adminOrderingRouter)
 apiRouter.use('/', couponRouter)
 apiRouter.use('/admin', adminCouponRouter)
 
-// Kitchen production (KITCHEN + ADMIN).
-apiRouter.use('/', kitchenRouter)
+// Kitchen production (KITCHEN + ADMIN). Mounted under /kitchen so its role
+// gate applies only to kitchen paths, not to every fall-through request.
+apiRouter.use('/kitchen', kitchenRouter)
 
 // Delivery management (ADMIN).
 apiRouter.use('/admin', adminDeliveryRouter)
@@ -46,3 +48,6 @@ apiRouter.use('/admin', adminExpenseRouter)
 
 // Analytics & reports (ADMIN).
 apiRouter.use('/admin', adminAnalyticsRouter)
+
+// Notifications (any authenticated user).
+apiRouter.use('/', notificationRouter)

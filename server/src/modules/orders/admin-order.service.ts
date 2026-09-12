@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { PublicOrder } from './order.service.js'
 import { paymentTotals } from '../payments/payment.service.js'
+import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 export interface AdminOrder extends PublicOrder {
   customer: {
@@ -127,6 +128,9 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
   await prisma.order.update({ where: { id }, data: { status } })
+  if (order.status !== status) {
+    await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
+  }
   return getOrder(id)
 }
 

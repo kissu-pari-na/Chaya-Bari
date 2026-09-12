@@ -5,20 +5,28 @@ customers place advance orders, the kitchen sees what to prepare, a third-party
 service delivers, and the owner sees sales, costs and profit without manual
 calculation.
 
-Built as a **modular monolith** and developed **phase by phase** (see the spec
-in the project docs). This repo currently implements **Phase 0 (business
-identity)**, **Phase 1 (foundation: auth, roles, database)**,
-**Phase 2 (products)**, **Phase 3 (customer ordering: cart, addresses,
-checkout with advance-order cutoff)**, **Phase 4 (orders & discounts:
-admin order management, product sale prices, and coupons)**,
-**Phase 5 (kitchen production dashboard)**, **Phase 6 (delivery: customer
-vs. actual cost, difference, provider/tracking, status)**, **Phase 7
-(payments: transactions, methods, derived payment status)**, and **Phase 8
-(inventory & costing: materials, purchases with weighted-average cost,
-recipes, and per-unit product cost)**, **Phase 9 (expenses & profit:
-business expenses, order contribution, product profitability, and the
-business profit dashboard)**, and **Phase 10 (analytics: customer behavior,
-product demand×profit classification, and sales-by-day)**.
+Built as a **modular monolith** and developed **phase by phase**. This repo
+implements **all 11 phases** of the spec:
+
+- **Phase 0** — business identity, partners/ownership, roles vs. ownership
+- **Phase 1** — foundation: auth, roles, PostgreSQL/Prisma
+- **Phase 2** — products, categories, pricing, availability
+- **Phase 3** — customer ordering: cart, addresses, checkout with the
+  configurable advance-order cutoff
+- **Phase 4** — orders & discounts: admin order management, product sale
+  prices, coupons (food vs. delivery)
+- **Phase 5** — kitchen production dashboard
+- **Phase 6** — delivery: customer vs. actual cost, difference,
+  provider/tracking, status (no estimated cost)
+- **Phase 7** — payments: transactions, methods, derived payment status
+- **Phase 8** — inventory & costing: materials, purchases with weighted-average
+  cost, recipes, per-unit product cost
+- **Phase 9** — expenses & profit: business expenses, order contribution,
+  product profitability, business profit dashboard
+- **Phase 10** — analytics: customer behavior, product demand×profit
+  classification, sales-by-day
+- **Phase 11** — automation: in-app notifications, and integration points for a
+  delivery provider and a payment gateway
 
 ## Tech stack
 
@@ -251,7 +259,26 @@ admin/kitchen account. Each role lands on its own area:
 - **Sales by day**: daily orders, food sales, discounts, net sales, and
   delivery collected — the core of the sales report.
 
-## Roadmap (next phase)
+## Phase 11 — what's implemented
 
-Automation (Phase 11): notifications, third-party delivery provider APIs,
-and payment gateway integration.
+- **In-app notifications** (fully working): emitted from real events — order
+  placed (→ customer + admins), order status changes (→ customer), and
+  successful payments (→ customer + admins). A header bell shows the unread
+  count with a dropdown to read and mark-all-read. Email/SMS/push channels can
+  be layered on the same events later.
+- **Delivery provider integration point** (mock): "dispatch to provider"
+  generates a tracking reference and moves the delivery to *assigned* —
+  swap the adapter for a real Pathao/pandago client without changing callers.
+- **Payment gateway integration point** (mock): "take online payment" records a
+  successful charge with a gateway reference — swap for a real bKash / card
+  gateway (redirect + webhook) later.
+
+> The provider and gateway pieces are working **mock adapters** with clean
+> seams; wiring real third-party APIs needs live credentials and webhooks.
+
+## Status
+
+All 11 phases of the spec are implemented — the full flow works end to end:
+**customer orders → kitchen sees what to prepare → food is packed → delivery is
+tracked → payment is recorded → the owner sees sales, costs and profit without
+manual calculation.**

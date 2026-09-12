@@ -17,3 +17,8 @@ export async function update(req: Request, res: Response) {
 export async function list(_req: Request, res: Response) {
   res.json({ deliveries: await deliveryService.listDeliveries() })
 }
+
+export async function dispatch(req: Request, res: Response) {
+  const provider = typeof req.body?.provider === 'string' && req.body.provider ? req.body.provider : 'Pathao'
+  res.json({ delivery: await deliveryService.dispatchToProvider(req.params.id, provider) })
+}
