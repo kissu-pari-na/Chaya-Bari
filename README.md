@@ -12,8 +12,10 @@ identity)**, **Phase 1 (foundation: auth, roles, database)**,
 checkout with advance-order cutoff)**, **Phase 4 (orders & discounts:
 admin order management, product sale prices, and coupons)**,
 **Phase 5 (kitchen production dashboard)**, **Phase 6 (delivery: customer
-vs. actual cost, difference, provider/tracking, status)**, and **Phase 7
-(payments: transactions, methods, derived payment status)**.
+vs. actual cost, difference, provider/tracking, status)**, **Phase 7
+(payments: transactions, methods, derived payment status)**, and **Phase 8
+(inventory & costing: materials, purchases with weighted-average cost,
+recipes, and per-unit product cost)**.
 
 ## Tech stack
 
@@ -200,7 +202,21 @@ admin/kitchen account. Each role lands on its own area:
   records new ones (with a live paid/due/status summary); refunds are recorded
   as a refunded transaction. **Customer**: sees paid/due on their order.
 
+## Phase 8 — what's implemented
+
+- **Materials** (ingredients & packaging) with a unit, current stock, and a
+  **weighted-average unit cost** maintained from purchases (no FIFO/LIFO).
+- **Purchases**: a bulk buy with multiple lines updates each material's stock
+  and average cost and logs an inventory transaction. (e.g. Milk 20L @ ৳1,800
+  → ৳90/L, then 20L @ ৳2,100 → ৳97.5/L weighted average.)
+- **Recipes / BOM**: each product can have a recipe (ingredient + packaging
+  lines and a batch yield). The **cost per unit** is derived from the
+  materials' average costs ÷ yield, and **gross profit per unit** and
+  **margin** follow from the selling price.
+- **Costing overview**: cost / price / gross profit / margin per product, with
+  a link to edit each recipe. Manual stock adjustments are supported for
+  corrections/spoilage.
+
 ## Roadmap (next phases)
 
-Inventory & recipe costing → Expenses & profit → Analytics & reports →
-Automation.
+Expenses & profit → Analytics & reports → Automation.

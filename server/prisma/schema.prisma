@@ -88,6 +88,7 @@ model Product {
   priceHistory ProductPriceHistory[]
   orderItems   OrderItem[]
   kitchenTasks KitchenTask[]
+  recipe       Recipe?
 
   @@index([categoryId])
   @@index([isActive, isAvailable])
@@ -354,4 +355,100 @@ model Payment {
   createdAt DateTime         @default(now())
 
   @@index([orderId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 8 — Inventory & costing
+// -----------------------------------------------------------------------------
+
+enum MaterialKind {
+  INGREDIENT
+  PACKAGING
+}
+
+/// A raw ingredient or packaging item. Stock quantity and a weighted-average
+/// unit cost are maintained from purchases (no FIFO/LIFO). `unit` is free text
+/// (kg, L, g, pcs); purchase and recipe quantities are in this unit.
+model Material {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  kind        MaterialKind
+  unit        String
+  stockQty    Decimal      @db.Decimal(12, 3) @default(0)
+  avgUnitCost Decimal      @db.Decimal(12, 4) @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  purchaseItems PurchaseItem[]
+  recipeItems   RecipeItem[]
+  inventoryTxns InventoryTransaction[]
+}
+
+/// A purchase (bulk buy). Its items update inventory and average cost.
+model Purchase {
+  id          String         @id @default(cuid())
+  purchasedAt DateTime       @default(now())
+  supplier    String?
+  note        String?
+  totalCost   Decimal        @db.Decimal(12, 2)
+  createdAt   DateTime       @default(now())
+  items       PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  quantity   Decimal  @db.Decimal(12, 3)
+  totalCost  Decimal  @db.Decimal(12, 2)
+
+  @@index([purchaseId])
+  @@index([materialId])
+}
+
+enum InventoryTxnType {
+  PURCHASE
+  ADJUSTMENT
+}
+
+/// Append-only log of stock movements for auditing.
+model InventoryTransaction {
+  id            String           @id @default(cuid())
+  materialId    String
+  material      Material         @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  type          InventoryTxnType
+  quantityDelta Decimal          @db.Decimal(12, 3)
+  unitCost      Decimal          @db.Decimal(12, 4)
+  note          String?
+  createdAt     DateTime         @default(now())
+
+  @@index([materialId])
+}
+
+/// A product's recipe / bill of materials. `yieldQty` is how many sellable
+/// units one batch produces; cost per unit is derived from the items'
+/// materials' average costs divided by the yield.
+model Recipe {
+  id        String       @id @default(cuid())
+  productId String       @unique
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  yieldQty  Int
+  note      String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  items     RecipeItem[]
+}
+
+model RecipeItem {
+  id         String   @id @default(cuid())
+  recipeId   String
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  quantity   Decimal  @db.Decimal(12, 3)
+
+  @@index([recipeId])
+  @@index([materialId])
 }

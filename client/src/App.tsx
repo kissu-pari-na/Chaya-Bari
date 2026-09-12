@@ -22,6 +22,10 @@ import { OrdersAdmin } from './pages/admin/OrdersAdmin'
 import { OrderDetailAdmin } from './pages/admin/OrderDetailAdmin'
 import { CouponsAdmin } from './pages/admin/CouponsAdmin'
 import { DeliveriesAdmin } from './pages/admin/DeliveriesAdmin'
+import { MaterialsAdmin } from './pages/admin/MaterialsAdmin'
+import { PurchasesAdmin } from './pages/admin/PurchasesAdmin'
+import { CostingAdmin } from './pages/admin/CostingAdmin'
+import { RecipeAdmin } from './pages/admin/RecipeAdmin'
 import { OrderConfirmation } from './pages/OrderConfirmation'
 import { Invoice } from './pages/Invoice'
 import { KitchenHome } from './pages/KitchenHome'
@@ -65,6 +69,10 @@ export default function App() {
                 <Route path="products" element={<ProductsAdmin />} />
                 <Route path="categories" element={<CategoriesAdmin />} />
                 <Route path="coupons" element={<CouponsAdmin />} />
+                <Route path="materials" element={<MaterialsAdmin />} />
+                <Route path="purchases" element={<PurchasesAdmin />} />
+                <Route path="costing" element={<CostingAdmin />} />
+                <Route path="products/:id/recipe" element={<RecipeAdmin />} />
                 <Route path="ordering-settings" element={<OrderingSettingsAdmin />} />
                 <Route path="business-profile" element={<BusinessProfileSettings />} />
               </Route>
