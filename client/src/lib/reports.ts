@@ -67,3 +67,25 @@ export function fetchOrderContribution(orderId: string) {
     auth: true,
   }).then((r) => r.contribution)
 }
+
+// ---- Phase 10 analytics ----
+
+import type { CustomerAnalyticsRow, DemandProfitRow, SalesByDayRow } from '../types/reports'
+
+export function fetchCustomerAnalytics(from: string, to: string) {
+  return apiRequest<{ customers: CustomerAnalyticsRow[] }>(`/admin/reports/customers?from=${from}&to=${to}`, {
+    auth: true,
+  }).then((r) => r.customers)
+}
+
+export function fetchDemandProfit(from: string, to: string) {
+  return apiRequest<{ products: DemandProfitRow[] }>(`/admin/reports/demand-profit?from=${from}&to=${to}`, {
+    auth: true,
+  }).then((r) => r.products)
+}
+
+export function fetchSalesByDay(from: string, to: string) {
+  return apiRequest<{ days: SalesByDayRow[] }>(`/admin/reports/sales-by-day?from=${from}&to=${to}`, {
+    auth: true,
+  }).then((r) => r.days)
+}

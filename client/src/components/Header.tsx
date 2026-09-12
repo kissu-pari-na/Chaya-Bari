@@ -16,6 +16,7 @@ const links: Record<HeaderProps['variant'], { to: string; label: string; end?: b
   admin: [
     { to: '/admin', label: 'ড্যাশবোর্ড', end: true },
     { to: '/admin/reports', label: 'রিপোর্ট' },
+    { to: '/admin/analytics', label: 'অ্যানালিটিক্স' },
     { to: '/admin/orders', label: 'অর্ডার' },
     { to: '/admin/deliveries', label: 'ডেলিভারি' },
     { to: '/admin/products', label: 'পণ্য' },

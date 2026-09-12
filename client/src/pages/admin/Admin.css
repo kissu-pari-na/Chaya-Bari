@@ -389,3 +389,36 @@
 .mini-list li:last-child {
   border-bottom: none;
 }
+
+.quadrant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.quadrant {
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-top: 4px solid #cbb98a;
+  border-radius: 10px;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.quadrant h3 {
+  margin: 0 0 0.15rem;
+  font-size: 0.98rem;
+}
+
+.quadrant .small {
+  margin: 0 0 0.6rem;
+}
+
+.quadrant .mini-list {
+  border: none;
+  background: transparent;
+}
+
+.quadrant .mini-list li {
+  padding: 0.35rem 0;
+}

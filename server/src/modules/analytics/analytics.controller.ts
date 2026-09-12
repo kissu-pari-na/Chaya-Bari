@@ -24,3 +24,18 @@ export async function products(req: Request, res: Response) {
 export async function contribution(req: Request, res: Response) {
   res.json({ contribution: await analyticsService.orderContribution(req.params.id) })
 }
+
+export async function customers(req: Request, res: Response) {
+  const { from, to } = requireRange(req)
+  res.json({ customers: await analyticsService.customerAnalytics(from, to) })
+}
+
+export async function demandProfit(req: Request, res: Response) {
+  const { from, to } = requireRange(req)
+  res.json({ products: await analyticsService.demandProfitAnalysis(from, to) })
+}
+
+export async function salesByDay(req: Request, res: Response) {
+  const { from, to } = requireRange(req)
+  res.json({ days: await analyticsService.salesByDay(from, to) })
+}

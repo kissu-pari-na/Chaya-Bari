@@ -72,3 +72,42 @@ export interface BusinessSummary {
   ordersAwaitingDelivery: number
   lowStockMaterials: { name: string; unit: string; stockQty: number }[]
 }
+
+// Phase 10 — analytics
+
+export interface CustomerAnalyticsRow {
+  customerId: string
+  name: string
+  email: string
+  totalOrders: number
+  totalSpent: number
+  avgOrderValue: number
+  totalQuantity: number
+  discountsReceived: number
+  lastOrderDate: string
+  topProducts: { name: string; quantity: number }[]
+  approxProfit: number
+}
+
+export type ProductQuadrant = 'BEST' | 'OPTIMIZE' | 'MARKETING' | 'REVIEW'
+
+export interface DemandProfitRow {
+  productId: string | null
+  productName: string
+  unitsSold: number
+  revenue: number
+  grossProfit: number
+  marginPct: number | null
+  highDemand: boolean
+  highProfit: boolean
+  quadrant: ProductQuadrant
+}
+
+export interface SalesByDayRow {
+  date: string
+  orders: number
+  foodSales: number
+  discounts: number
+  netSales: number
+  deliveryCollected: number
+}

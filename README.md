@@ -15,9 +15,10 @@ admin order management, product sale prices, and coupons)**,
 vs. actual cost, difference, provider/tracking, status)**, **Phase 7
 (payments: transactions, methods, derived payment status)**, and **Phase 8
 (inventory & costing: materials, purchases with weighted-average cost,
-recipes, and per-unit product cost)**, and **Phase 9 (expenses & profit:
+recipes, and per-unit product cost)**, **Phase 9 (expenses & profit:
 business expenses, order contribution, product profitability, and the
-business profit dashboard)**.
+business profit dashboard)**, and **Phase 10 (analytics: customer behavior,
+product demand×profit classification, and sales-by-day)**.
 
 ## Tech stack
 
@@ -237,7 +238,20 @@ admin/kitchen account. Each role lands on its own area:
   top-selling / most-profitable products, top customers, low-stock materials,
   and pending / awaiting-delivery counts.
 
-## Roadmap (next phases)
+## Phase 10 — what's implemented
 
-Customer analytics & demand/profit classification → richer reports →
-Automation (notifications, provider/gateway APIs).
+- **Customer analytics** (per period): total orders, total spent, average
+  order value, total quantity, discounts received, last order date, favourite
+  products, and an approximate profit contribution — answering who buys most,
+  most often, and which customers are valuable.
+- **Product demand × profit classification**: each product is placed in a
+  quadrant relative to the median units sold (demand) and median gross profit
+  — **Best** (push), **Optimize** (popular, low profit), **Marketing
+  opportunity** (low demand, high profit), and **Review** (low/low).
+- **Sales by day**: daily orders, food sales, discounts, net sales, and
+  delivery collected — the core of the sales report.
+
+## Roadmap (next phase)
+
+Automation (Phase 11): notifications, third-party delivery provider APIs,
+and payment gateway integration.

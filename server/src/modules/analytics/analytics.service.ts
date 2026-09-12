@@ -234,3 +234,182 @@ export async function businessSummary(from: string, to: string): Promise<Busines
     lowStockMaterials: lowStock.map((m) => ({ name: m.name, unit: m.unit, stockQty: Number(m.stockQty) })),
   }
 }
+
+// -----------------------------------------------------------------------------
+// Phase 10 — Analytics
+// -----------------------------------------------------------------------------
+
+function median(nums: number[]): number {
+  if (nums.length === 0) return 0
+  const sorted = [...nums].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}
+
+// ---- Customer analytics (Section 16) ----
+
+export interface CustomerAnalyticsRow {
+  customerId: string
+  name: string
+  email: string
+  totalOrders: number
+  totalSpent: number
+  avgOrderValue: number
+  totalQuantity: number
+  discountsReceived: number
+  lastOrderDate: string
+  topProducts: { name: string; quantity: number }[]
+  approxProfit: number
+}
+
+export async function customerAnalytics(from: string, to: string): Promise<CustomerAnalyticsRow[]> {
+  const orders = await prisma.order.findMany({
+    where: salesWhere(from, to),
+    include: { items: true, delivery: true, customer: { include: { user: true } } },
+  })
+  const costMap = await getProductCostMap()
+
+  interface Agg {
+    name: string
+    email: string
+    orders: number
+    spent: number
+    qty: number
+    discounts: number
+    lastOrder: Date
+    products: Map<string, number>
+    profit: number
+  }
+  const byCustomer = new Map<string, Agg>()
+
+  for (const o of orders) {
+    const agg = byCustomer.get(o.customerId) ?? {
+      name: o.customer.user.name,
+      email: o.customer.user.email,
+      orders: 0,
+      spent: 0,
+      qty: 0,
+      discounts: 0,
+      lastOrder: o.createdAt,
+      products: new Map<string, number>(),
+      profit: 0,
+    }
+    agg.orders += 1
+    agg.spent += Number(o.total)
+    agg.discounts += Number(o.productDiscount) + Number(o.deliveryDiscount)
+    if (o.createdAt > agg.lastOrder) agg.lastOrder = o.createdAt
+
+    let productCost = 0
+    for (const i of o.items) {
+      agg.qty += i.quantity
+      agg.products.set(i.productName, (agg.products.get(i.productName) ?? 0) + i.quantity)
+      productCost += (i.productId ? (costMap.get(i.productId) ?? 0) : 0) * i.quantity
+    }
+    const netFood = Number(o.subtotal) - Number(o.productDiscount)
+    const netDelivery = Number(o.customerDeliveryCost) - Number(o.deliveryDiscount)
+    const actual = o.delivery?.actualDeliveryCost != null ? Number(o.delivery.actualDeliveryCost) : null
+    agg.profit += netFood - productCost + (actual != null ? netDelivery - actual : 0)
+    byCustomer.set(o.customerId, agg)
+  }
+
+  return [...byCustomer.entries()]
+    .map(([customerId, a]) => ({
+      customerId,
+      name: a.name,
+      email: a.email,
+      totalOrders: a.orders,
+      totalSpent: round2(a.spent),
+      avgOrderValue: round2(a.orders > 0 ? a.spent / a.orders : 0),
+      totalQuantity: a.qty,
+      discountsReceived: round2(a.discounts),
+      lastOrderDate: a.lastOrder.toISOString().slice(0, 10),
+      topProducts: [...a.products.entries()]
+        .sort((x, y) => y[1] - x[1])
+        .slice(0, 3)
+        .map(([name, quantity]) => ({ name, quantity })),
+      approxProfit: round2(a.profit),
+    }))
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+}
+
+// ---- Product demand + profit classification (Section 17) ----
+
+export type ProductQuadrant = 'BEST' | 'OPTIMIZE' | 'MARKETING' | 'REVIEW'
+
+export interface DemandProfitRow {
+  productId: string | null
+  productName: string
+  unitsSold: number
+  revenue: number
+  grossProfit: number
+  marginPct: number | null
+  highDemand: boolean
+  highProfit: boolean
+  quadrant: ProductQuadrant
+}
+
+/// Classifies each product into a demand×profit quadrant relative to the median
+/// units sold (demand) and median gross profit (profit) across the period.
+export async function demandProfitAnalysis(from: string, to: string): Promise<DemandProfitRow[]> {
+  const rows = await productProfitability(from, to)
+  const demandThreshold = median(rows.map((r) => r.unitsSold))
+  const profitThreshold = median(rows.map((r) => r.grossProfit))
+
+  const quadrantFor = (highDemand: boolean, highProfit: boolean): ProductQuadrant => {
+    if (highDemand && highProfit) return 'BEST'
+    if (highDemand && !highProfit) return 'OPTIMIZE'
+    if (!highDemand && highProfit) return 'MARKETING'
+    return 'REVIEW'
+  }
+
+  return rows.map((r) => {
+    const highDemand = r.unitsSold >= demandThreshold
+    const highProfit = r.grossProfit >= profitThreshold
+    return {
+      productId: r.productId,
+      productName: r.productName,
+      unitsSold: r.unitsSold,
+      revenue: r.revenue,
+      grossProfit: r.grossProfit,
+      marginPct: r.marginPct,
+      highDemand,
+      highProfit,
+      quadrant: quadrantFor(highDemand, highProfit),
+    }
+  })
+}
+
+// ---- Sales by day (Section 22 sales report) ----
+
+export interface SalesByDayRow {
+  date: string
+  orders: number
+  foodSales: number
+  discounts: number
+  netSales: number
+  deliveryCollected: number
+}
+
+export async function salesByDay(from: string, to: string): Promise<SalesByDayRow[]> {
+  const orders = await prisma.order.findMany({ where: salesWhere(from, to) })
+  const byDay = new Map<string, SalesByDayRow>()
+  for (const o of orders) {
+    const date = o.fulfillmentDate.toISOString().slice(0, 10)
+    const row = byDay.get(date) ?? { date, orders: 0, foodSales: 0, discounts: 0, netSales: 0, deliveryCollected: 0 }
+    row.orders += 1
+    row.foodSales += Number(o.subtotal)
+    row.discounts += Number(o.productDiscount)
+    row.netSales += Number(o.subtotal) - Number(o.productDiscount)
+    row.deliveryCollected += Number(o.customerDeliveryCost) - Number(o.deliveryDiscount)
+    byDay.set(date, row)
+  }
+  return [...byDay.values()]
+    .map((r) => ({
+      ...r,
+      foodSales: round2(r.foodSales),
+      discounts: round2(r.discounts),
+      netSales: round2(r.netSales),
+      deliveryCollected: round2(r.deliveryCollected),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
