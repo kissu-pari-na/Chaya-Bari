@@ -1,7 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
+import { fetchPaymentInfo, updatePaymentInfo } from '../lib/payments'
 import type { ApplicationRole, BusinessPartner, BusinessProfile } from '../types/business'
+import type { PaymentInfo } from '../types/payment'
 import './BusinessProfileSettings.css'
+
+const emptyPaymentInfo: PaymentInfo = { bkash: '', nagad: '', rocket: '', bankInfo: '' }
 
 const roleLabels: Record<ApplicationRole, string> = {
   business_owner_admin: 'বিজনেস ওনার / অ্যাডমিন',
@@ -17,11 +21,27 @@ export function BusinessProfileSettings() {
   const { profile, updateProfile } = useBusinessProfile()
   const [draft, setDraft] = useState<BusinessProfile>(profile)
   const [deliveryAreasText, setDeliveryAreasText] = useState(profile.deliveryAreas.join(', '))
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>(emptyPaymentInfo)
   const [saved, setSaved] = useState(false)
 
   const totalOwnership = draft.partners.reduce((sum, p) => sum + p.ownershipPercent, 0)
 
-  function handleSubmit(event: FormEvent) {
+  // Payment-account details are server-persisted (customers read them), unlike
+  // the rest of this form which is in-memory for now.
+  useEffect(() => {
+    fetchPaymentInfo()
+      .then((info) =>
+        setPaymentInfo({
+          bkash: info.bkash ?? '',
+          nagad: info.nagad ?? '',
+          rocket: info.rocket ?? '',
+          bankInfo: info.bankInfo ?? '',
+        }),
+      )
+      .catch(() => setPaymentInfo(emptyPaymentInfo))
+  }, [])
+
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     updateProfile({
       ...draft,
@@ -30,6 +50,11 @@ export function BusinessProfileSettings() {
         .map((s) => s.trim())
         .filter(Boolean),
     })
+    try {
+      await updatePaymentInfo(paymentInfo)
+    } catch {
+      /* non-blocking: the rest of the profile still saves */
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -209,6 +234,46 @@ export function BusinessProfileSettings() {
             onChange={(e) =>
               setDraft((d) => ({ ...d, defaultSettings: { ...d.defaultSettings, orderIdPrefix: e.target.value } }))
             }
+          />
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>পেমেন্ট অ্যাকাউন্ট</legend>
+        <p className="hint">
+          এই নম্বরগুলো গ্রাহকদের পেমেন্টের সময় দেখানো হয় (সরাসরি/ম্যানুয়াল পেমেন্টের জন্য)। খালি রাখলে
+          দেখানো হবে না।
+        </p>
+        <label>
+          বিকাশ নম্বর
+          <input
+            value={paymentInfo.bkash ?? ''}
+            onChange={(e) => setPaymentInfo((p) => ({ ...p, bkash: e.target.value }))}
+            placeholder="01XXXXXXXXX (Personal)"
+          />
+        </label>
+        <label>
+          নগদ নম্বর
+          <input
+            value={paymentInfo.nagad ?? ''}
+            onChange={(e) => setPaymentInfo((p) => ({ ...p, nagad: e.target.value }))}
+            placeholder="01XXXXXXXXX (Personal)"
+          />
+        </label>
+        <label>
+          রকেট নম্বর
+          <input
+            value={paymentInfo.rocket ?? ''}
+            onChange={(e) => setPaymentInfo((p) => ({ ...p, rocket: e.target.value }))}
+            placeholder="01XXXXXXXXX-X"
+          />
+        </label>
+        <label>
+          ব্যাংক তথ্য
+          <input
+            value={paymentInfo.bankInfo ?? ''}
+            onChange={(e) => setPaymentInfo((p) => ({ ...p, bankInfo: e.target.value }))}
+            placeholder="Bank, A/C No, Name"
           />
         </label>
       </fieldset>

@@ -1,6 +1,22 @@
 import { apiRequest } from './apiClient'
-import type { BkashStart, ClaimPaymentInput, Payment, RecordPaymentInput } from '../types/payment'
+import type { BkashStart, ClaimPaymentInput, Payment, PaymentInfo, RecordPaymentInput } from '../types/payment'
 import type { AdminOrder, Order } from '../types/order'
+
+// ---- Payment-account settings ----
+
+/// Public: the account numbers customers send manual payments to.
+export function fetchPaymentInfo() {
+  return apiRequest<{ paymentInfo: PaymentInfo }>('/payment-info').then((r) => r.paymentInfo)
+}
+
+/// Admin: update the payment-account settings.
+export function updatePaymentInfo(input: PaymentInfo) {
+  return apiRequest<{ paymentInfo: PaymentInfo }>('/admin/payment-info', {
+    method: 'PUT',
+    body: input,
+    auth: true,
+  }).then((r) => r.paymentInfo)
+}
 
 // ---- Admin ----
 

@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { bkashCreate, bkashExecute, submitClaim } from '../lib/payments'
+import { bkashCreate, bkashExecute, fetchPaymentInfo, submitClaim } from '../lib/payments'
 import { claimMethods, paymentMethodLabel, txnStatusLabel } from '../lib/paymentLabels'
 import { formatBdt } from '../lib/format'
 import { ApiError } from '../lib/apiClient'
-import { useBusinessProfile } from '../context/BusinessProfileContext'
 import type { Order } from '../types/order'
-import type { PaymentMethod } from '../types/payment'
+import type { PaymentInfo, PaymentMethod } from '../types/payment'
 
 interface PaymentPanelProps {
   order: Order
@@ -16,8 +15,14 @@ interface PaymentPanelProps {
 /// Customer payment options on an order: pay online via bKash, or report a
 /// manual payment (cash / transfer) that an admin then verifies.
 export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
-  const { profile } = useBusinessProfile()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [info, setInfo] = useState<PaymentInfo | null>(null)
+
+  useEffect(() => {
+    fetchPaymentInfo()
+      .then(setInfo)
+      .catch(() => setInfo(null))
+  }, [])
 
   const [method, setMethod] = useState<PaymentMethod>('BKASH')
   const [amount, setAmount] = useState(String(order.amountDue || ''))
@@ -113,8 +118,6 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
       setBusy(false)
     }
   }
-
-  const info = profile.paymentInfo
 
   return (
     <div className="pay-panel">

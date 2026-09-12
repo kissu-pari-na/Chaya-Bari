@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import * as paymentService from './payment.service.js'
+import * as paymentSettingService from './payment-setting.service.js'
 import { getOrder } from '../orders/admin-order.service.js'
 import { getMyOrder } from '../orders/order.service.js'
 import { requireCustomerId } from '../orders/customer.js'
@@ -57,4 +58,16 @@ export async function bkashExecute(req: Request, res: Response) {
   const result = await paymentService.executeBkashPayment(req.params.id, customerId, req.body.paymentID)
   const order = await getMyOrder(customerId, req.params.id)
   res.json({ ...result, order })
+}
+
+// ---- Payment-account settings ----
+
+/// Public: the account numbers customers send manual payments to.
+export async function getPaymentInfo(_req: Request, res: Response) {
+  res.json({ paymentInfo: await paymentSettingService.getPaymentSetting() })
+}
+
+/// Admin: update the payment-account settings.
+export async function updatePaymentInfo(req: Request, res: Response) {
+  res.json({ paymentInfo: await paymentSettingService.updatePaymentSetting(req.body) })
 }

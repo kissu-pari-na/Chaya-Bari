@@ -5,6 +5,7 @@ import {
   bkashCreateSchema,
   bkashExecuteSchema,
   claimPaymentSchema,
+  paymentSettingSchema,
   recordPaymentSchema,
   verifyPaymentSchema,
 } from './payment.schemas.js'
@@ -26,6 +27,15 @@ adminPaymentRouter.patch(
   asyncHandler(paymentController.verify),
 )
 adminPaymentRouter.delete('/payments/:id', asyncHandler(paymentController.remove))
+adminPaymentRouter.put(
+  '/payment-info',
+  validateBody(paymentSettingSchema),
+  asyncHandler(paymentController.updatePaymentInfo),
+)
+
+/// Public payment-account details (shown to customers at payment time).
+export const publicPaymentRouter = Router()
+publicPaymentRouter.get('/payment-info', asyncHandler(paymentController.getPaymentInfo))
 
 /// Customer payment actions (own orders): manual claim + bKash online payment.
 export const customerPaymentRouter = Router()

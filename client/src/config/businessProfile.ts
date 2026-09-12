@@ -43,11 +43,4 @@ export const defaultBusinessProfile: BusinessProfile = {
     orderIdPrefix: 'CB',
     timezone: 'Asia/Dhaka',
   },
-  // Manual-payment destinations shown to customers (replace with real numbers).
-  paymentInfo: {
-    bkash: '01XXXXXXXXX (Personal)',
-    nagad: '01XXXXXXXXX (Personal)',
-    rocket: '01XXXXXXXXX-X',
-    bankInfo: 'Bank: —, A/C: —, Name: ছায়া বাড়ি',
-  },
 }

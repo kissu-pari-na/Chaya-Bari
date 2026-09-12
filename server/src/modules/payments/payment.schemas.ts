@@ -50,6 +50,15 @@ export const bkashExecuteSchema = z.object({
   paymentID: z.string().min(1).max(200),
 })
 
+/// Admin-editable payment-account details shown to customers.
+export const paymentSettingSchema = z.object({
+  bkash: optionalText(120),
+  nagad: optionalText(120),
+  rocket: optionalText(120),
+  bankInfo: optionalText(300),
+})
+
 export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>
 export type ClaimPaymentInput = z.infer<typeof claimPaymentSchema>
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentSchema>
+export type PaymentSettingInput = z.infer<typeof paymentSettingSchema>

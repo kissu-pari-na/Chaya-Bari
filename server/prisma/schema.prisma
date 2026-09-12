@@ -349,6 +349,17 @@ enum PaymentSource {
   CUSTOMER
 }
 
+/// Public payment-account details shown to customers for manual payments.
+/// Singleton row (id = "singleton"); editable by admins in Business Profile.
+model PaymentSetting {
+  id        String   @id @default("singleton")
+  bkash     String?
+  nagad     String?
+  rocket    String?
+  bankInfo  String?
+  updatedAt DateTime @updatedAt
+}
+
 /// A single payment transaction against an order. Kept separate from the order
 /// (not a full ledger) so gateway integration can be added later. The order's
 /// paymentStatus is recomputed from these rows. Refunds are recorded as a row

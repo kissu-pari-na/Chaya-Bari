@@ -36,3 +36,11 @@ export interface BkashStart {
   mock: boolean
   mode: 'live' | 'sandbox'
 }
+
+/// Public payment-account details customers send manual payments to.
+export interface PaymentInfo {
+  bkash: string | null
+  nagad: string | null
+  rocket: string | null
+  bankInfo: string | null
+}

@@ -6,7 +6,7 @@ import { orderRouter, adminOrderingRouter } from './modules/orders/order.routes.
 import { couponRouter, adminCouponRouter } from './modules/coupons/coupon.routes.js'
 import { kitchenRouter } from './modules/kitchen/kitchen.routes.js'
 import { adminDeliveryRouter } from './modules/delivery/delivery.routes.js'
-import { adminPaymentRouter, customerPaymentRouter } from './modules/payments/payment.routes.js'
+import { adminPaymentRouter, customerPaymentRouter, publicPaymentRouter } from './modules/payments/payment.routes.js'
 import { adminInventoryRouter } from './modules/inventory/inventory.routes.js'
 import { adminExpenseRouter } from './modules/expenses/expense.routes.js'
 import { adminAnalyticsRouter } from './modules/analytics/analytics.routes.js'
@@ -21,6 +21,11 @@ apiRouter.use('/auth', authRouter)
 // Products: public browsing under /api, admin management under /api/admin.
 apiRouter.use('/', publicProductRouter)
 apiRouter.use('/admin', adminProductRouter)
+
+// Public payment-account details. Must precede routers that mount at '/' with a
+// blanket authenticate (order/customer-payment), or their auth gate would 401
+// this public GET before it is reached.
+apiRouter.use('/', publicPaymentRouter)
 
 // Ordering: customer addresses/orders under /api, admin settings under /api/admin.
 apiRouter.use('/', orderRouter)
