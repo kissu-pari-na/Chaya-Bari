@@ -80,7 +80,7 @@ export function Header({ variant }: HeaderProps) {
             </button>
           </div>
         ) : (
-          <NavLink to="/login" className="app-header__link">
+          <NavLink to="/login" className="btn btn--brand app-header__login">
             লগইন
           </NavLink>
         )}

@@ -1,9 +1,67 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap');
 
+/* ============================================================
+   ছায়া বাড়ি — design tokens (see /design.md)
+   ============================================================ */
 :root {
-  --color-heading: #2f5233;
-  --color-muted: #6b6b6b;
-  font-family: 'Noto Sans Bengali', system-ui, sans-serif;
+  /* Brand — herb green */
+  --green-900: #1e3320;
+  --green-800: #24401f;
+  --green-700: #2f5233;
+  --green-600: #3d6b42;
+  --green-100: #e7efe4;
+  --green-050: #f1f6ef;
+
+  /* Action — terracotta */
+  --terra-700: #a8431c;
+  --terra-600: #c65a2e;
+  --terra-500: #d97642;
+  --terra-100: #f8e6db;
+
+  /* Highlight — saffron */
+  --saffron-600: #d4952a;
+  --saffron-500: #e0a12e;
+  --saffron-100: #f8eccf;
+
+  /* Canvas — warm cream */
+  --cream-000: #fffdf7;
+  --cream-050: #fdf9ef;
+  --cream-100: #f7edd6;
+  --cream-200: #eee1c3;
+
+  /* Ink — warm neutrals */
+  --ink-900: #2a2118;
+  --ink-700: #4a4034;
+  --ink-500: #857a68;
+  --line: #e8ddc4;
+
+  /* Feedback */
+  --success: #2f7d4f;
+  --danger: #b3261e;
+  --danger-bg: #fdecea;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(58, 42, 24, 0.06);
+  --shadow-md: 0 6px 18px rgba(58, 42, 24, 0.08);
+  --shadow-lg: 0 16px 40px rgba(47, 82, 51, 0.14);
+  --shadow-cta: 0 8px 20px rgba(198, 90, 46, 0.3);
+
+  /* Fonts */
+  --font-display: 'Baloo Da 2', 'Noto Sans Bengali', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, sans-serif;
+
+  /* Back-compat aliases (older component CSS references these) */
+  --color-heading: var(--green-700);
+  --color-muted: var(--ink-500);
+
+  font-family: var(--font-body);
+  color-scheme: light;
 }
 
 * {
@@ -12,10 +70,69 @@
 
 body {
   margin: 0;
-  background: #fdf9ef;
-  color: #262626;
+  background: var(--cream-050);
+  color: var(--ink-900);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+img {
+  max-width: 100%;
+}
+
+/* ---------- Typography ---------- */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--green-900);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+a {
+  color: var(--green-700);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--saffron-600);
+  font-family: var(--font-body);
+}
+
+.muted {
+  color: var(--ink-500);
+}
+
+/* ---------- Layout shell ---------- */
 .page {
   min-height: 100vh;
   display: flex;
@@ -24,41 +141,173 @@ body {
 
 .page__content {
   flex: 1;
-  padding: 1.5rem;
-  max-width: 960px;
+  padding: 1.75rem 1rem 3rem;
+  max-width: 1040px;
   width: 100%;
   margin: 0 auto;
 }
 
+/* ---------- Cards ---------- */
 .card {
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 10px;
+  background: var(--cream-000);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow-sm);
 }
 
-.muted {
-  color: var(--color-muted);
+.card--pad-lg {
+  padding: 2rem 2.25rem;
 }
 
+/* ---------- Buttons ---------- */
+.btn,
+button.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease,
+    border-color 0.12s ease;
+  text-decoration: none;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--primary {
+  background: var(--terra-600);
+  color: #fff;
+  box-shadow: var(--shadow-cta);
+}
+
+.btn--primary:hover {
+  background: var(--terra-700);
+  transform: translateY(-1px);
+}
+
+.btn--brand {
+  background: var(--green-700);
+  color: #fff;
+}
+
+.btn--brand:hover {
+  background: var(--green-800);
+  transform: translateY(-1px);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-900);
+}
+
+.btn--ghost:hover {
+  background: var(--cream-100);
+}
+
+.btn--on-dark {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+.btn--on-dark:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.btn--lg {
+  padding: 0.9rem 1.8rem;
+  font-size: 1.05rem;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.55;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  padding: 0.15rem 0.6rem;
+  line-height: 1.5;
+}
+
+.badge--sale {
+  background: var(--terra-600);
+  color: #fff;
+}
+
+.badge--new {
+  background: var(--saffron-500);
+  color: var(--green-900);
+}
+
+.badge--muted {
+  background: var(--cream-100);
+  color: var(--ink-700);
+}
+
+/* ---------- Section header ---------- */
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2.25rem 0 1.25rem;
+  flex-wrap: wrap;
+}
+
+.section-head__title {
+  margin: 0;
+}
+
+.section-head__sub {
+  margin: 0.25rem 0 0;
+  color: var(--ink-500);
+  font-size: 0.92rem;
+}
+
+/* ---------- Stats (dashboards) ---------- */
 .sample-links {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .stat-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   margin: 1.25rem 0;
   flex-wrap: wrap;
 }
 
 .stat {
-  background: #fdf9ef;
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
-  padding: 0.75rem 1.25rem;
+  background: var(--cream-050);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -66,16 +315,38 @@ body {
 
 .stat__label {
   font-size: 0.8rem;
-  color: var(--color-muted);
+  color: var(--ink-500);
 }
 
 .stat__value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--color-heading);
+  font-family: var(--font-display);
+  color: var(--green-700);
 }
 
-h1 {
-  color: var(--color-heading);
-  margin-top: 0;
+/* ---------- Global inputs ---------- */
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px var(--green-100);
+}
+
+:focus-visible {
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

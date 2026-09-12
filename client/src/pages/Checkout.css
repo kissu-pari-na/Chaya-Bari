@@ -182,17 +182,27 @@
 .checkout__place {
   width: 100%;
   margin-top: 0.85rem;
-  background: #2f5233;
+  background: var(--terra-600);
   color: #fff;
   border: none;
-  padding: 0.8rem;
-  border-radius: 6px;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
   font-size: 1rem;
+  font-family: var(--font-body);
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--shadow-cta);
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.checkout__place:hover:not(:disabled) {
+  background: var(--terra-700);
+  transform: translateY(-1px);
 }
 
 .checkout__place:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
+  box-shadow: none;
   cursor: not-allowed;
 }
 

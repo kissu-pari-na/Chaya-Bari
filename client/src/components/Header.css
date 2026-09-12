@@ -1,71 +1,119 @@
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.9rem 1.5rem;
-  background: #fffaf0;
-  border-bottom: 1px solid #e8ddc4;
+  padding: 0.75rem 1.25rem;
+  background: color-mix(in srgb, var(--cream-000) 88%, transparent);
+  backdrop-filter: saturate(140%) blur(8px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
 .app-header__nav {
   display: flex;
-  gap: 1.25rem;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
 }
 
 .app-header__link {
+  position: relative;
   text-decoration: none;
-  color: #4a4a4a;
+  color: var(--ink-700);
   font-weight: 500;
-  padding-bottom: 2px;
+  padding: 0.35rem 0.1rem;
+  transition: color 0.12s ease;
+}
+
+.app-header__link:hover {
+  color: var(--green-700);
+  text-decoration: none;
 }
 
 .app-header__link--active {
-  color: #2f5233;
-  border-bottom: 2px solid #c9a84c;
+  color: var(--green-800);
+  font-weight: 600;
+}
+
+.app-header__link--active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2.5px;
+  border-radius: var(--radius-pill);
+  background: var(--saffron-500);
 }
 
 .app-header__cart {
   position: relative;
   text-decoration: none;
-  color: #2f5233;
+  color: var(--green-700);
   font-weight: 600;
-  padding: 0.2rem 0.1rem;
+  padding: 0.35rem 0.1rem;
+}
+
+.app-header__cart:hover {
+  text-decoration: none;
 }
 
 .app-header__cart-count {
-  background: #c9a84c;
-  color: #2f5233;
+  background: var(--saffron-500);
+  color: var(--green-900);
   font-size: 0.72rem;
   font-weight: 700;
-  border-radius: 999px;
-  padding: 0.05rem 0.4rem;
-  margin-left: 0.25rem;
+  border-radius: var(--radius-pill);
+  padding: 0.05rem 0.42rem;
+  margin-left: 0.3rem;
 }
 
 .app-header__user {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.7rem;
 }
 
 .app-header__name {
   font-size: 0.88rem;
-  color: #4a4a4a;
+  color: var(--ink-700);
   font-weight: 500;
+}
+
+.app-header__login {
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
 }
 
 .app-header__logout {
   background: transparent;
-  border: 1px solid #d6cba9;
-  color: #2f5233;
-  padding: 0.3rem 0.7rem;
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  color: var(--green-700);
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
+  font-family: var(--font-body);
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.12s ease;
 }
 
 .app-header__logout:hover {
-  background: #f4ead1;
+  background: var(--cream-100);
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0.6rem 1rem;
+  }
+  .app-header__nav {
+    gap: 0.8rem;
+    width: 100%;
+    justify-content: space-between;
+  }
 }

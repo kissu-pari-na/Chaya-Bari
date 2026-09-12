@@ -1,0 +1,221 @@
+/* ============================================================
+   Customer landing — see /design.md §6
+   ============================================================ */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--green-800) 0%, var(--green-700) 55%, var(--green-600) 100%);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 1.5rem;
+  align-items: center;
+  padding: clamp(1.75rem, 4vw, 3.25rem);
+  isolation: isolate;
+}
+
+/* soft dotted / glow texture */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(224, 161, 46, 0.28), transparent 42%),
+    radial-gradient(circle at 12% 90%, rgba(198, 90, 46, 0.24), transparent 40%);
+}
+
+.hero__content {
+  animation: hero-rise 0.6s ease-out both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero__eyebrow {
+  color: var(--saffron-500);
+  display: inline-block;
+  margin-bottom: 0.85rem;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1.08;
+  color: #fff;
+  margin: 0 0 0.85rem;
+  letter-spacing: -0.015em;
+}
+
+.hero__title span {
+  color: var(--saffron-500);
+}
+
+.hero__lede {
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 46ch;
+  margin: 0 0 1.5rem;
+}
+
+.hero__cta {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.hero__welcome {
+  margin-top: 1.4rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hero__welcome strong {
+  color: #fff;
+}
+
+/* decorative plate */
+.hero__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero__plate {
+  width: min(300px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 253, 247, 0.95), var(--cream-100) 70%);
+  box-shadow: 0 0 0 12px rgba(255, 255, 255, 0.12), var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1;
+  animation: plate-float 6s ease-in-out infinite;
+}
+
+@keyframes plate-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .hero__lede {
+    margin-inline: auto;
+  }
+  .hero__cta {
+    justify-content: center;
+  }
+  .hero__art {
+    order: -1;
+  }
+  .hero__plate {
+    width: min(200px, 60%);
+  }
+}
+
+/* ---------- Trust strip ---------- */
+.trust {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.trust__tile {
+  background: var(--cream-100);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.trust__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.trust__title {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--green-800);
+}
+
+.trust__text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-500);
+}
+
+/* ---------- Featured ---------- */
+.home__featured-empty {
+  color: var(--ink-500);
+}
+
+/* ---------- Closing CTA band ---------- */
+.cta-band {
+  margin-top: 2.5rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(120deg, var(--terra-600), var(--terra-500));
+  color: #fff;
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-md);
+}
+
+.cta-band__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: #fff;
+  margin: 0 0 0.35rem;
+}
+
+.cta-band__text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 48ch;
+}
+
+.cta-band__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
