@@ -58,7 +58,7 @@ export function CustomerHome() {
           <h1 className="hero__title">
             খাঁটি <span>ঘরোয়া</span> খাবার
           </h1>
-          <p className="hero__sub">তাজা রান্না, একদম ঘরের মতো</p>
+          <p className="hero__sub">{profile.tagline}</p>
           <p className="hero__lede">
             {profile.name} থেকে ঘরের মমতায় তৈরি খাবার আগাম অর্ডার করুন — {profile.address.city},{' '}
             {profile.address.country}-জুড়ে আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।

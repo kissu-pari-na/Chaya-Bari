@@ -1,5 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="ছায়া বাড়ি logo">
-  <circle cx="60" cy="60" r="58" fill="#2f5233" stroke="#c9a84c" stroke-width="4"/>
-  <path d="M60 26 L92 54 V96 H70 V72 H50 V96 H28 V54 Z" fill="#f4ead1"/>
-  <text x="60" y="112" text-anchor="middle" font-family="'Noto Sans Bengali', sans-serif" font-size="12" fill="#f4ead1">ছায়া বাড়ি</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 112" width="128" height="112" role="img" aria-label="ছায়া বাড়ি logo">
+  <g fill="none" stroke="#4f9ec6" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- palm trunk -->
+    <path d="M34 92 C31 72 33 56 44 44" fill="none"/>
+    <!-- palm fronds -->
+    <path d="M44 44 C34 34 22 33 13 38" />
+    <path d="M44 44 C36 30 25 22 14 21" />
+    <path d="M44 44 C45 30 42 18 35 10" />
+    <path d="M44 44 C54 32 66 27 77 29" />
+    <path d="M44 44 C55 38 68 38 78 44" />
+  </g>
+  <!-- coconuts -->
+  <g fill="#4f9ec6">
+    <circle cx="45" cy="49" r="3.2"/>
+    <circle cx="52" cy="47" r="3.2"/>
+    <circle cx="40" cy="46" r="3"/>
+  </g>
+  <!-- house -->
+  <g fill="#4f9ec6" stroke="#4f9ec6" stroke-width="2" stroke-linejoin="round">
+    <!-- roof -->
+    <path d="M60 62 L84 44 L108 62 Z"/>
+    <!-- body -->
+    <rect x="66" y="62" width="36" height="30" rx="1.5"/>
+    <!-- chimney -->
+    <rect x="96" y="49" width="7" height="11"/>
+  </g>
+  <!-- door + window (knockout) -->
+  <g fill="#ffffff">
+    <rect x="80" y="74" width="9" height="18" rx="1"/>
+    <rect x="70" y="68" width="8" height="8" rx="1"/>
+  </g>
+  <!-- island / ground -->
+  <path d="M14 96 C34 88 96 88 116 96 C96 104 34 104 14 96 Z" fill="#4f9ec6"/>
 </svg>
