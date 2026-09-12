@@ -87,6 +87,7 @@ model Product {
 
   priceHistory ProductPriceHistory[]
   orderItems   OrderItem[]
+  kitchenTasks KitchenTask[]
 
   @@index([categoryId])
   @@index([isActive, isAvailable])
@@ -253,4 +254,32 @@ model OrderingSetting {
   defaultDeliveryCost Decimal  @db.Decimal(10, 2) @default(60)
   timezone            String   @default("Asia/Dhaka")
   updatedAt           DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Phase 5 — Kitchen production
+// -----------------------------------------------------------------------------
+
+enum KitchenStatus {
+  PENDING
+  PREPARING
+  PREPARED
+  PACKED
+}
+
+/// Tracks the kitchen's preparation progress for one product on one
+/// fulfillment day. The quantity to make is derived from confirmed orders;
+/// this row just carries the prep/pack status the kitchen taps through.
+model KitchenTask {
+  id              String        @id @default(cuid())
+  fulfillmentDate DateTime      @db.Date
+  productId       String?
+  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName     String
+  status          KitchenStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([fulfillmentDate, productId])
+  @@index([fulfillmentDate])
 }

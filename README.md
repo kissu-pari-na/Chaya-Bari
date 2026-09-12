@@ -9,8 +9,9 @@ Built as a **modular monolith** and developed **phase by phase** (see the spec
 in the project docs). This repo currently implements **Phase 0 (business
 identity)**, **Phase 1 (foundation: auth, roles, database)**,
 **Phase 2 (products)**, **Phase 3 (customer ordering: cart, addresses,
-checkout with advance-order cutoff)**, and **Phase 4 (orders & discounts:
-admin order management, product sale prices, and coupons)**.
+checkout with advance-order cutoff)**, **Phase 4 (orders & discounts:
+admin order management, product sale prices, and coupons)**, and
+**Phase 5 (kitchen production dashboard)**.
 
 ## Tech stack
 
@@ -156,8 +157,20 @@ admin/kitchen account. Each role lands on its own area:
     discount = total`. Coupon discounts are previewed at checkout and
     recomputed authoritatively on the server.
 
+## Phase 5 — what's implemented
+
+- **Kitchen production dashboard** (KITCHEN + ADMIN): for a chosen fulfillment
+  day, the confirmed orders' items are aggregated per product into a simple
+  "what to make" list — product, quantity to prepare, and how many orders it
+  spans — with total orders and total items at a glance.
+- **Prep/pack status**: each product's status (Pending → Preparing → Prepared
+  → Packed) is tapped through on large, phone/tablet-friendly controls and
+  persists per day (`KitchenTask`). Only admin-confirmed, non-cancelled orders
+  count toward production.
+- **Special notes**: customer order notes for the day are surfaced for the
+  kitchen.
+
 ## Roadmap (next phases)
 
-Kitchen production → Delivery (customer vs. actual cost) → Payments →
-Inventory & recipe costing → Expenses & profit → Analytics & reports →
-Automation.
+Delivery (customer vs. actual cost) → Payments → Inventory & recipe costing →
+Expenses & profit → Analytics & reports → Automation.
