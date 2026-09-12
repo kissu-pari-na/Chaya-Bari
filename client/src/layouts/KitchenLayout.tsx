@@ -3,7 +3,7 @@ import { Header } from '../components/Header'
 
 export function KitchenLayout() {
   return (
-    <div className="page">
+    <div className="page theme-light">
       <Header variant="kitchen" />
       <main className="page__content">
         <Outlet />

@@ -10,10 +10,31 @@ import './Home.css'
 import './Products.css'
 
 const TRUST = [
-  { icon: '🏠', title: 'ঘরে তৈরি', text: 'প্রতিটি পদ যত্ন করে বাড়িতে রান্না করা।' },
+  { icon: '🏠', title: '১০০% ঘরে তৈরি', text: 'প্রতিটি পদ যত্ন করে বাড়িতে রান্না করা।' },
   { icon: '🥬', title: 'তাজা উপকরণ', text: 'প্রতিদিন বাছাই করা টাটকা উপকরণে।' },
-  { icon: '🛵', title: 'সময়মতো ডেলিভারি', text: 'আপনার দুয়ারে নির্ভরযোগ্য পৌঁছানো।' },
-  { icon: '📱', title: 'সহজ অর্ডার', text: 'কয়েক ক্লিকেই আগাম অর্ডার করুন।' },
+  { icon: '🛵', title: 'দ্রুত ডেলিভারি', text: 'আপনার দুয়ারে নির্ভরযোগ্য পৌঁছানো।' },
+  { icon: '🧼', title: 'স্বাস্থ্যসম্মত', text: 'পরিচ্ছন্ন রান্নাঘর, নিরাপদ প্যাকেজিং।' },
+]
+
+const REVIEWS = [
+  {
+    name: 'সাদিয়া রহমান',
+    meta: 'নিয়মিত ক্রেতা',
+    stars: 5,
+    text: 'একদম ঘরের মতো স্বাদ! বিরিয়ানি আর পায়েস দুটোই অসাধারণ ছিল। সময়মতো পৌঁছেছে।',
+  },
+  {
+    name: 'তানভীর হাসান',
+    meta: 'ঢাকা',
+    stars: 5,
+    text: 'তাজা, গরম আর পরিমাণে ভালো। পরিবারের সবাই পছন্দ করেছে। আবার অর্ডার করব।',
+  },
+  {
+    name: 'নুসরাত জাহান',
+    meta: 'কম্বো ক্রেতা',
+    stars: 4,
+    text: 'কম্বো ডিলগুলো দারুণ সাশ্রয়ী। খাবারের মান নিয়ে কোনো অভিযোগ নেই।',
+  },
 ]
 
 export function CustomerHome() {
@@ -33,25 +54,22 @@ export function CustomerHome() {
       {/* ---------- Hero ---------- */}
       <section className="hero">
         <div className="hero__content">
-          <span className="eyebrow hero__eyebrow">{profile.tagline}</span>
+          <span className="hero__trust">✦ ১০০% ঘরে তৈরি</span>
           <h1 className="hero__title">
-            <span>{profile.name}</span>-এ
-            <br />
-            স্বাগতম
+            খাঁটি <span>ঘরোয়া</span> খাবার
           </h1>
+          <p className="hero__sub">তাজা রান্না, একদম ঘরের মতো</p>
           <p className="hero__lede">
-            ঘরের মমতায় তৈরি খাঁটি স্বাদ — {profile.address.city}, {profile.address.country}-জুড়ে
-            আগাম অর্ডার করুন, আর আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।
+            {profile.name} থেকে ঘরের মমতায় তৈরি খাবার আগাম অর্ডার করুন — {profile.address.city},{' '}
+            {profile.address.country}-জুড়ে আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।
           </p>
           <div className="hero__cta">
             <Link to="/products" className="btn btn--primary btn--lg">
-              পণ্য দেখুন
+              অর্ডার করুন
             </Link>
-            {!user && (
-              <Link to="/register" className="btn btn--on-dark btn--lg">
-                অ্যাকাউন্ট খুলুন
-              </Link>
-            )}
+            <Link to="/products" className="btn btn--on-dark btn--lg">
+              মেনু দেখুন
+            </Link>
           </div>
           {user && (
             <p className="hero__welcome">
@@ -60,7 +78,12 @@ export function CustomerHome() {
           )}
         </div>
         <div className="hero__art" aria-hidden="true">
-          <div className="hero__plate">🍲</div>
+          <div className="hero__plate">
+            🍲
+            <div className="hero__rating">
+              ৪.৯ ★<span>৫০০+ রিভিউ</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -79,7 +102,7 @@ export function CustomerHome() {
         ))}
       </div>
 
-      {/* ---------- Featured ---------- */}
+      {/* ---------- Featured dishes ---------- */}
       <div className="section-head">
         <div>
           <span className="eyebrow">আমাদের রান্নাঘর থেকে</span>
@@ -140,25 +163,60 @@ export function CustomerHome() {
         </div>
       )}
 
-      {/* ---------- Closing CTA ---------- */}
-      <section className="cta-band">
+      {/* ---------- Promo / combo band ---------- */}
+      <section className="promo">
         <div>
-          <h2 className="cta-band__title">{profile.tagline}</h2>
-          <p className="cta-band__text">
-            আজই অর্ডার করুন — ঘরে তৈরি টাটকা খাবার পৌঁছে যাবে আপনার কাছে।
+          <h2 className="promo__title">
+            সেরা কম্বো — <span>আরও সাশ্রয়ে!</span>
+          </h2>
+          <p className="promo__text">
+            পরিবারের জন্য বাছাই করা কম্বো প্যাকে বেশি খাবার, কম দামে। ঘরে তৈরি স্বাদ উপভোগ করুন
+            আরও সাশ্রয়ে।
           </p>
         </div>
-        <div className="cta-band__actions">
-          <Link to="/products" className="btn btn--on-dark btn--lg">
-            অর্ডার শুরু করুন
-          </Link>
-          {!user && (
-            <Link to="/login" className="btn btn--on-dark btn--lg">
-              লগইন
-            </Link>
-          )}
-        </div>
+        <Link to="/products" className="btn btn--primary btn--lg">
+          কম্বো দেখুন
+        </Link>
       </section>
+
+      {/* ---------- Reviews ---------- */}
+      <div className="section-head">
+        <div>
+          <span className="eyebrow">ক্রেতাদের কথা</span>
+          <h2 className="section-head__title">সবাই যা বলছেন</h2>
+        </div>
+      </div>
+      <div className="reviews">
+        {REVIEWS.map((r) => (
+          <div key={r.name} className="review">
+            <div className="review__stars" aria-label={`${r.stars} star`}>
+              {'★'.repeat(r.stars)}
+              {'☆'.repeat(5 - r.stars)}
+            </div>
+            <p className="review__text">“{r.text}”</p>
+            <div className="review__who">
+              <span className="review__avatar" aria-hidden="true">
+                {r.name.charAt(0)}
+              </span>
+              <div>
+                <div className="review__name">{r.name}</div>
+                <div className="review__meta">{r.meta}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ---------- Footer ---------- */}
+      <footer className="home-footer">
+        <div>
+          <div className="home-footer__brand">{profile.name}</div>
+          <div>{profile.tagline}</div>
+        </div>
+        <div>
+          {profile.contact.phone} · {profile.contact.email}
+        </div>
+      </footer>
     </div>
   )
 }

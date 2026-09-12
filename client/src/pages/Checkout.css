@@ -3,18 +3,22 @@
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
+  color: var(--card-text);
 }
 
 .checkout fieldset {
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
-  padding: 1rem 1.15rem 1.15rem;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem 1.3rem;
   margin: 0 0 1.1rem;
+  box-shadow: var(--shadow-card);
 }
 
 .checkout legend {
+  font-family: var(--font-display);
   font-weight: 700;
-  color: #2f5233;
+  color: var(--card-heading);
   padding: 0 0.4rem;
 }
 
@@ -24,16 +28,19 @@
   gap: 0.3rem;
   font-size: 0.88rem;
   margin-bottom: 0.6rem;
+  color: var(--card-text);
 }
 
 .checkout input,
 .checkout textarea,
 .checkout select {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;
+  background: #fff;
+  color: var(--card-text);
 }
 
 .checkout .admin-form__row {
@@ -55,7 +62,7 @@
 
 .hint {
   font-size: 0.8rem;
-  color: #6b6b6b;
+  color: var(--card-muted);
   margin: 0.25rem 0 0;
 }
 
@@ -70,8 +77,8 @@
   display: flex;
   gap: 0.6rem;
   align-items: flex-start;
-  border: 1px solid #e8ddc4;
-  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
   font-size: 0.88rem;
   cursor: pointer;
@@ -79,20 +86,29 @@
 }
 
 .address-opt--on {
-  border-color: #2f5233;
-  background: #f5faf5;
+  border-color: var(--accent);
+  background: #f2f7ea;
 }
 
 .address-form {
-  border-top: 1px dashed #e8ddc4;
+  border-top: 1px dashed var(--card-border);
   padding-top: 0.85rem;
 }
 
-/* Summary */
+/* Summary panel */
+.checkout__summary {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.4rem;
+  box-shadow: var(--shadow-card);
+  color: var(--card-text);
+}
+
 .checkout__summary h2 {
   margin-top: 0;
-  font-size: 1.15rem;
-  color: #2f5233;
+  font-size: 1.2rem;
+  color: var(--card-heading);
 }
 
 .checkout__summary ul {
@@ -118,22 +134,22 @@
 }
 
 .checkout__line--discount {
-  color: #1a7a45;
+  color: var(--success);
 }
 
 .checkout__line--total {
-  border-top: 2px solid #2f5233;
+  border-top: 2px solid var(--green-deep);
   margin-top: 0.35rem;
   padding-top: 0.6rem;
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #2f5233;
+  font-size: 1.15rem;
+  color: var(--green-deep);
 }
 
 .coupon-box {
   margin: 0.5rem 0 0.75rem;
   padding: 0.6rem 0;
-  border-top: 1px dashed #e8ddc4;
+  border-top: 1px dashed var(--card-border);
 }
 
 .coupon-input {
@@ -143,20 +159,21 @@
 
 .coupon-input input {
   flex: 1;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
 }
 
 .coupon-input button,
 .coupon-applied button {
-  background: #2f5233;
-  color: #fff;
+  background: var(--green-deep);
+  color: var(--cream);
   border: none;
-  padding: 0.45rem 0.9rem;
-  border-radius: 6px;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .coupon-applied {
@@ -165,43 +182,43 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.88rem;
-  color: #1a7a45;
+  color: var(--success);
 }
 
 .coupon-applied button {
   background: transparent;
-  color: #b3261e;
+  color: var(--danger);
   border: 1px solid #e6b8b3;
-  padding: 0.25rem 0.6rem;
+  padding: 0.3rem 0.65rem;
 }
 
 .hint--err {
-  color: #b3261e;
+  color: var(--danger);
 }
 
 .checkout__place {
   width: 100%;
   margin-top: 0.85rem;
-  background: var(--terra-600);
-  color: #fff;
+  background: var(--accent);
+  color: #0b0d0a;
   border: none;
-  padding: 0.85rem;
+  padding: 0.9rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-cta);
-  transition: background 0.12s ease, transform 0.12s ease;
+  box-shadow: var(--glow-accent);
+  transition: background 0.14s ease, transform 0.14s ease;
 }
 
 .checkout__place:hover:not(:disabled) {
-  background: var(--terra-700);
+  background: var(--accent-bright);
   transform: translateY(-1px);
 }
 
 .checkout__place:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   box-shadow: none;
   cursor: not-allowed;
 }
