@@ -21,6 +21,7 @@ import { OrderingSettingsAdmin } from './pages/admin/OrderingSettingsAdmin'
 import { OrdersAdmin } from './pages/admin/OrdersAdmin'
 import { OrderDetailAdmin } from './pages/admin/OrderDetailAdmin'
 import { CouponsAdmin } from './pages/admin/CouponsAdmin'
+import { DeliveriesAdmin } from './pages/admin/DeliveriesAdmin'
 import { OrderConfirmation } from './pages/OrderConfirmation'
 import { Invoice } from './pages/Invoice'
 import { KitchenHome } from './pages/KitchenHome'
@@ -60,6 +61,7 @@ export default function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="orders" element={<OrdersAdmin />} />
                 <Route path="orders/:id" element={<OrderDetailAdmin />} />
+                <Route path="deliveries" element={<DeliveriesAdmin />} />
                 <Route path="products" element={<ProductsAdmin />} />
                 <Route path="categories" element={<CategoriesAdmin />} />
                 <Route path="coupons" element={<CouponsAdmin />} />

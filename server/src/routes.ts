@@ -5,6 +5,7 @@ import { publicProductRouter, adminProductRouter } from './modules/products/prod
 import { orderRouter, adminOrderingRouter } from './modules/orders/order.routes.js'
 import { couponRouter, adminCouponRouter } from './modules/coupons/coupon.routes.js'
 import { kitchenRouter } from './modules/kitchen/kitchen.routes.js'
+import { adminDeliveryRouter } from './modules/delivery/delivery.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
@@ -26,3 +27,6 @@ apiRouter.use('/admin', adminCouponRouter)
 
 // Kitchen production (KITCHEN + ADMIN).
 apiRouter.use('/', kitchenRouter)
+
+// Delivery management (ADMIN).
+apiRouter.use('/admin', adminDeliveryRouter)

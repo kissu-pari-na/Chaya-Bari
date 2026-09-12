@@ -9,6 +9,7 @@ import { formatBdt } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { nextStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { ApiError } from '../../lib/apiClient'
+import { DeliverySection } from './DeliverySection'
 import type { AdminOrder, PaymentStatus } from '../../types/order'
 import '../Orders.css'
 import './Admin.css'
@@ -151,6 +152,8 @@ export function OrderDetailAdmin() {
             </tr>
           </tfoot>
         </table>
+
+        <DeliverySection orderId={order.id} />
 
         <div className="order-detail__address">
           <h3>গ্রাহক ও ঠিকানা</h3>

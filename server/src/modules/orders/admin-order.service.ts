@@ -15,6 +15,7 @@ export interface AdminOrder extends PublicOrder {
 const orderWithRelations = {
   items: true,
   customer: { include: { user: true } },
+  delivery: true,
 } satisfies Prisma.OrderInclude
 
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderWithRelations }>
@@ -49,6 +50,9 @@ function toAdminOrder(order: OrderRow): AdminOrder {
       quantity: i.quantity,
       lineTotal: Number(i.lineTotal),
     })),
+    delivery: order.delivery
+      ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
+      : null,
     customer: {
       id: order.customer.id,
       name: order.customer.user.name,

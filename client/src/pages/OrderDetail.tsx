@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { fetchMyOrder } from '../lib/orders'
 import { formatBdt } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
+import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { DocumentHeader } from '../components/DocumentHeader'
 import type { Order } from '../types/order'
 import './Orders.css'
@@ -99,6 +100,17 @@ export function OrderDetail() {
           </tr>
         </tfoot>
       </table>
+
+      {order.delivery && (
+        <div className="order-detail__address">
+          <h3>ডেলিভারি</h3>
+          <p>
+            স্ট্যাটাস: <span className="status status--payment">{deliveryStatusLabel[order.delivery.status]}</span>
+            {order.delivery.provider ? ` · ${order.delivery.provider}` : ''}
+          </p>
+          {order.delivery.trackingRef && <p className="muted">ট্র্যাকিং: {order.delivery.trackingRef}</p>}
+        </div>
+      )}
 
       <div className="order-detail__address">
         <h3>ডেলিভারি ঠিকানা</h3>

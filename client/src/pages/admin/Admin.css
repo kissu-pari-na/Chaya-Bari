@@ -212,3 +212,71 @@
   border: 1px solid #d6cba9;
   border-radius: 6px;
 }
+
+/* Delivery panel */
+.delivery-panel {
+  border: 1px solid #eee1c3;
+  border-radius: 10px;
+  padding: 1rem 1.15rem 1.15rem;
+  margin: 1.25rem 0;
+  background: #fffdf7;
+}
+
+.delivery-panel h3 {
+  margin: 0 0 0.75rem;
+  color: #2f5233;
+}
+
+.delivery-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+.delivery-panel input,
+.delivery-panel select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.delivery-costs {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.delivery-costs > div {
+  flex: 1;
+  min-width: 130px;
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.delivery-costs__label {
+  font-size: 0.75rem;
+  color: #8a7d5c;
+}
+
+.delivery-costs__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2f5233;
+}
+
+.delivery-gain {
+  color: #1a7a45;
+}
+
+.delivery-loss {
+  color: #b3261e;
+}

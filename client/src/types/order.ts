@@ -1,3 +1,5 @@
+import type { DeliverySummary } from './delivery'
+
 export type OrderStatus =
   | 'PENDING'
   | 'CONFIRMED'
@@ -63,6 +65,7 @@ export interface Order {
   paymentStatus: PaymentStatus
   createdAt: string
   items: OrderItem[]
+  delivery: DeliverySummary | null
 }
 
 export interface AdminOrder extends Order {

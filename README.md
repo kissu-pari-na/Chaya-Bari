@@ -10,8 +10,9 @@ in the project docs). This repo currently implements **Phase 0 (business
 identity)**, **Phase 1 (foundation: auth, roles, database)**,
 **Phase 2 (products)**, **Phase 3 (customer ordering: cart, addresses,
 checkout with advance-order cutoff)**, **Phase 4 (orders & discounts:
-admin order management, product sale prices, and coupons)**, and
-**Phase 5 (kitchen production dashboard)**.
+admin order management, product sale prices, and coupons)**,
+**Phase 5 (kitchen production dashboard)**, and **Phase 6 (delivery: customer
+vs. actual cost, difference, provider/tracking, status)**.
 
 ## Tech stack
 
@@ -170,7 +171,21 @@ admin/kitchen account. Each role lands on its own area:
 - **Special notes**: customer order notes for the day are surfaced for the
   kitchen.
 
+## Phase 6 — what's implemented
+
+- **Delivery record per order** with exactly two cost values: the **customer
+  delivery cost** (fixed at checkout, net of any delivery discount) and the
+  **actual delivery cost** (what the business pays the provider, entered
+  later). The **difference** (customer − actual = delivery gain/loss) is
+  derived, never stored, and is `null` until the actual cost is entered. There
+  is deliberately **no** `EstimatedDeliveryCost`.
+- **Admin delivery management**: create a delivery on the order, set provider,
+  tracking reference, actual cost, and status; a deliveries list with the
+  per-order difference and rolled-up delivery gain/loss.
+- **Customer view**: a read-only delivery summary (status, provider, tracking)
+  on their order — cost details are never exposed to customers.
+
 ## Roadmap (next phases)
 
-Delivery (customer vs. actual cost) → Payments → Inventory & recipe costing →
-Expenses & profit → Analytics & reports → Automation.
+Payments → Inventory & recipe costing → Expenses & profit →
+Analytics & reports → Automation.

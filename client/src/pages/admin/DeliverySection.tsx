@@ -1,0 +1,156 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { createOrderDelivery, fetchOrderDelivery, updateDelivery } from '../../lib/delivery'
+import { deliveryStatusLabel, deliveryStatuses } from '../../lib/deliveryStatus'
+import { formatBdt } from '../../lib/format'
+import { ApiError } from '../../lib/apiClient'
+import type { Delivery, DeliveryStatus } from '../../types/delivery'
+import './Admin.css'
+
+/// Delivery panel embedded in the admin order detail. Exactly two cost values:
+/// the customer delivery cost (fixed at checkout) and the actual delivery cost
+/// (entered here); the difference is shown, never an estimate.
+export function DeliverySection({ orderId }: { orderId: string }) {
+  const [delivery, setDelivery] = useState<Delivery | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [provider, setProvider] = useState('')
+  const [trackingRef, setTrackingRef] = useState('')
+  const [actualCost, setActualCost] = useState('')
+  const [status, setStatus] = useState<DeliveryStatus>('PENDING')
+  const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    fetchOrderDelivery(orderId)
+      .then((d) => {
+        setDelivery(d)
+        if (d) syncForm(d)
+      })
+      .finally(() => setLoading(false))
+  }, [orderId])
+
+  function syncForm(d: Delivery) {
+    setProvider(d.provider ?? '')
+    setTrackingRef(d.trackingRef ?? '')
+    setActualCost(d.actualDeliveryCost != null ? String(d.actualDeliveryCost) : '')
+    setStatus(d.status)
+  }
+
+  async function handleCreate() {
+    setError(null)
+    try {
+      const d = await createOrderDelivery(orderId)
+      setDelivery(d)
+      syncForm(d)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ডেলিভারি তৈরি করা যায়নি')
+    }
+  }
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault()
+    if (!delivery) return
+    setError(null)
+    setSaved(false)
+    try {
+      const d = await updateDelivery(delivery.id, {
+        provider: provider || undefined,
+        trackingRef: trackingRef || undefined,
+        actualDeliveryCost: actualCost.trim() === '' ? null : Number(actualCost),
+        status,
+      })
+      setDelivery(d)
+      syncForm(d)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      if (err instanceof ApiError && err.details?.length) setError(err.details.map((x) => x.message).join(' · '))
+      else setError(err instanceof ApiError ? err.message : 'সংরক্ষণ করা যায়নি')
+    }
+  }
+
+  if (loading) return <p className="muted">ডেলিভারি লোড হচ্ছে…</p>
+
+  if (!delivery) {
+    return (
+      <div className="delivery-panel">
+        <h3>ডেলিভারি</h3>
+        <p className="muted">এই অর্ডারের জন্য এখনো ডেলিভারি তৈরি হয়নি।</p>
+        <button className="btn-ghost" onClick={handleCreate}>ডেলিভারি তৈরি করুন</button>
+      </div>
+    )
+  }
+
+  return (
+    <form className="delivery-panel" onSubmit={handleSave}>
+      <h3>ডেলিভারি</h3>
+      {error && <div className="auth-error">{error}</div>}
+
+      <div className="delivery-costs">
+        <div>
+          <span className="delivery-costs__label">কাস্টমার ডেলিভারি খরচ</span>
+          <span className="delivery-costs__value">{formatBdt(delivery.customerDeliveryCost)}</span>
+        </div>
+        <div>
+          <span className="delivery-costs__label">প্রকৃত ডেলিভারি খরচ</span>
+          <span className="delivery-costs__value">
+            {delivery.actualDeliveryCost != null ? formatBdt(delivery.actualDeliveryCost) : '—'}
+          </span>
+        </div>
+        <div>
+          <span className="delivery-costs__label">পার্থক্য</span>
+          <span
+            className={
+              delivery.difference == null
+                ? 'delivery-costs__value muted'
+                : delivery.difference >= 0
+                  ? 'delivery-costs__value delivery-gain'
+                  : 'delivery-costs__value delivery-loss'
+            }
+          >
+            {delivery.difference == null
+              ? 'অসম্পূর্ণ'
+              : `${delivery.difference >= 0 ? '+' : '−'}${formatBdt(Math.abs(delivery.difference))}`}
+          </span>
+        </div>
+      </div>
+
+      <div className="admin-form__row">
+        <label>
+          প্রোভাইডার
+          <input value={provider} onChange={(e) => setProvider(e.target.value)} placeholder="Pathao / pandago…" />
+        </label>
+        <label>
+          ট্র্যাকিং রেফারেন্স
+          <input value={trackingRef} onChange={(e) => setTrackingRef(e.target.value)} />
+        </label>
+      </div>
+      <div className="admin-form__row">
+        <label>
+          প্রকৃত ডেলিভারি খরচ (৳)
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={actualCost}
+            onChange={(e) => setActualCost(e.target.value)}
+            placeholder="পরে প্রবেশ করান"
+          />
+        </label>
+        <label>
+          স্ট্যাটাস
+          <select value={status} onChange={(e) => setStatus(e.target.value as DeliveryStatus)}>
+            {deliveryStatuses.map((s) => (
+              <option key={s} value={s}>
+                {deliveryStatusLabel[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="admin-form__actions">
+        <button type="submit">সংরক্ষণ করুন</button>
+        {saved && <span className="hint" style={{ color: '#2f5233', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
+      </div>
+    </form>
+  )
+}

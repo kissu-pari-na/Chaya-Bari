@@ -1,4 +1,4 @@
-import { type Order, type OrderItem } from '@prisma/client'
+import { type Delivery, type Order, type OrderItem } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { AddressInput, CheckoutInput } from './order.schemas.js'
@@ -46,9 +46,11 @@ export interface PublicOrder {
   paymentStatus: Order['paymentStatus']
   createdAt: string
   items: PublicOrderItem[]
+  /// Read-only delivery summary for the customer (no cost details).
+  delivery: { status: Delivery['status']; provider: string | null; trackingRef: string | null } | null
 }
 
-type OrderWithItems = Order & { items: OrderItem[] }
+type OrderWithItems = Order & { items: OrderItem[]; delivery?: Delivery | null }
 
 function toPublicOrder(order: OrderWithItems): PublicOrder {
   return {
@@ -80,6 +82,9 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
       quantity: i.quantity,
       lineTotal: Number(i.lineTotal),
     })),
+    delivery: order.delivery
+      ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
+      : null,
   }
 }
 
@@ -192,14 +197,14 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
 export async function listMyOrders(customerId: string): Promise<PublicOrder[]> {
   const orders = await prisma.order.findMany({
     where: { customerId },
-    include: { items: true },
+    include: { items: true, delivery: true },
     orderBy: { createdAt: 'desc' },
   })
   return orders.map(toPublicOrder)
 }
 
 export async function getMyOrder(customerId: string, id: string): Promise<PublicOrder> {
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } })
+  const order = await prisma.order.findUnique({ where: { id }, include: { items: true, delivery: true } })
   if (!order || order.customerId !== customerId) {
     throw HttpError.notFound('Order not found')
   }
