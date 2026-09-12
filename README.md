@@ -11,8 +11,9 @@ identity)**, **Phase 1 (foundation: auth, roles, database)**,
 **Phase 2 (products)**, **Phase 3 (customer ordering: cart, addresses,
 checkout with advance-order cutoff)**, **Phase 4 (orders & discounts:
 admin order management, product sale prices, and coupons)**,
-**Phase 5 (kitchen production dashboard)**, and **Phase 6 (delivery: customer
-vs. actual cost, difference, provider/tracking, status)**.
+**Phase 5 (kitchen production dashboard)**, **Phase 6 (delivery: customer
+vs. actual cost, difference, provider/tracking, status)**, and **Phase 7
+(payments: transactions, methods, derived payment status)**.
 
 ## Tech stack
 
@@ -185,7 +186,21 @@ admin/kitchen account. Each role lands on its own area:
 - **Customer view**: a read-only delivery summary (status, provider, tracking)
   on their order — cost details are never exposed to customers.
 
+## Phase 7 — what's implemented
+
+- **Payment transactions** recorded separately from the order (not a ledger),
+  so a payment gateway can be integrated later. Each has a method
+  (cash, bKash, card, online, cash-on-delivery), amount, transaction status
+  (success / pending / failed / refunded), and an optional reference.
+- **Derived order payment status**: the order's status
+  (Pending → Partially Paid → Paid, or Refunded) is recomputed from its
+  payments — net collected = successful payments minus refunds — along with
+  `amountPaid` / `amountDue`.
+- **Admin**: a payments panel on the order detail lists transactions and
+  records new ones (with a live paid/due/status summary); refunds are recorded
+  as a refunded transaction. **Customer**: sees paid/due on their order.
+
 ## Roadmap (next phases)
 
-Payments → Inventory & recipe costing → Expenses & profit →
-Analytics & reports → Automation.
+Inventory & recipe costing → Expenses & profit → Analytics & reports →
+Automation.

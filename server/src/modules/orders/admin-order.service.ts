@@ -2,6 +2,7 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { PublicOrder } from './order.service.js'
+import { paymentTotals } from '../payments/payment.service.js'
 
 export interface AdminOrder extends PublicOrder {
   customer: {
@@ -16,11 +17,13 @@ const orderWithRelations = {
   items: true,
   customer: { include: { user: true } },
   delivery: true,
+  payments: true,
 } satisfies Prisma.OrderInclude
 
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderWithRelations }>
 
 function toAdminOrder(order: OrderRow): AdminOrder {
+  const totals = paymentTotals(order.payments, order.total)
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -40,6 +43,8 @@ function toAdminOrder(order: OrderRow): AdminOrder {
     couponCode: order.couponCode,
     status: order.status,
     paymentStatus: order.paymentStatus,
+    amountPaid: totals.amountPaid,
+    amountDue: totals.amountDue,
     createdAt: order.createdAt.toISOString(),
     items: order.items.map((i) => ({
       id: i.id,

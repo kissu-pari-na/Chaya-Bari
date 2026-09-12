@@ -63,6 +63,8 @@ export interface Order {
   couponCode: string | null
   status: OrderStatus
   paymentStatus: PaymentStatus
+  amountPaid: number
+  amountDue: number
   createdAt: string
   items: OrderItem[]
   delivery: DeliverySummary | null

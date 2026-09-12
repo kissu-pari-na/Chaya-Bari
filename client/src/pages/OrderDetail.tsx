@@ -98,6 +98,18 @@ export function OrderDetail() {
               <strong>{formatBdt(order.total)}</strong>
             </td>
           </tr>
+          {order.amountPaid > 0 && (
+            <tr>
+              <td colSpan={3}>পরিশোধিত</td>
+              <td>{formatBdt(order.amountPaid)}</td>
+            </tr>
+          )}
+          {order.amountDue > 0 && (
+            <tr>
+              <td colSpan={3}>বাকি</td>
+              <td>{formatBdt(order.amountDue)}</td>
+            </tr>
+          )}
         </tfoot>
       </table>
 

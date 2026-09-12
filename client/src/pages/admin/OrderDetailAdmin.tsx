@@ -10,6 +10,7 @@ import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { nextStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { ApiError } from '../../lib/apiClient'
 import { DeliverySection } from './DeliverySection'
+import { PaymentsSection } from './PaymentsSection'
 import type { AdminOrder, PaymentStatus } from '../../types/order'
 import '../Orders.css'
 import './Admin.css'
@@ -152,6 +153,8 @@ export function OrderDetailAdmin() {
             </tr>
           </tfoot>
         </table>
+
+        <PaymentsSection order={order} onOrderChange={setOrder} />
 
         <DeliverySection orderId={order.id} />
 
