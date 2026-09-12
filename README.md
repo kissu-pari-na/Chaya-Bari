@@ -5,10 +5,28 @@ customers place advance orders, the kitchen sees what to prepare, a third-party
 service delivers, and the owner sees sales, costs and profit without manual
 calculation.
 
-Built as a **modular monolith** and developed **phase by phase** (see the spec
-in the project docs). This repo currently implements **Phase 0 (business
-identity)**, **Phase 1 (foundation: auth, roles, database)**, and
-**Phase 2 (products: categories, products, pricing, availability)**.
+Built as a **modular monolith** and developed **phase by phase**. This repo
+implements **all 11 phases** of the spec:
+
+- **Phase 0** — business identity, partners/ownership, roles vs. ownership
+- **Phase 1** — foundation: auth, roles, PostgreSQL/Prisma
+- **Phase 2** — products, categories, pricing, availability
+- **Phase 3** — customer ordering: cart, addresses, checkout with the
+  configurable advance-order cutoff
+- **Phase 4** — orders & discounts: admin order management, product sale
+  prices, coupons (food vs. delivery)
+- **Phase 5** — kitchen production dashboard
+- **Phase 6** — delivery: customer vs. actual cost, difference,
+  provider/tracking, status (no estimated cost)
+- **Phase 7** — payments: transactions, methods, derived payment status
+- **Phase 8** — inventory & costing: materials, purchases with weighted-average
+  cost, recipes, per-unit product cost
+- **Phase 9** — expenses & profit: business expenses, order contribution,
+  product profitability, business profit dashboard
+- **Phase 10** — analytics: customer behavior, product demand×profit
+  classification, sales-by-day
+- **Phase 11** — automation: in-app notifications, and integration points for a
+  delivery provider and a payment gateway
 
 ## Tech stack
 
@@ -122,8 +140,145 @@ admin/kitchen account. Each role lands on its own area:
 - **Customer browsing**: public product grid with category filter and a product
   detail page. Admin-only management is separated under `/api/admin/*`.
 
-## Roadmap (next phases)
+## Phase 3 — what's implemented
 
-Customer ordering → Orders & discounts → Kitchen production →
-Delivery (customer vs. actual cost) → Payments → Inventory & recipe costing →
-Expenses & profit → Analytics & reports → Automation.
+- **Cart**: client-side cart (localStorage) with quantity controls and a header
+  badge; add-to-cart from the product grid and detail page.
+- **Delivery addresses**: customers manage their own addresses; each order
+  snapshots the address so editing/deleting it never changes past orders.
+- **Advance-order cutoff**: admin-configurable cutoff time, minimum advance
+  days, delivery charge, and timezone (`OrderingSetting`). The server computes
+  the earliest allowed fulfillment date and rejects earlier orders.
+- **Checkout**: pick/enter an address, choose a fulfillment date (bounded by
+  the cutoff), see delivery cost + total, add notes, and place the order.
+  Prices are captured on each order item (historical immutability).
+- **My orders**: customers see only their own orders (list + detail with a
+  receipt-style breakdown and status). Admin/kitchen accounts cannot place
+  orders.
+
+## Phase 4 — what's implemented
+
+- **Admin order management**: list orders with filters (status, payment
+  status, search by order/customer, fulfillment date range), an order detail
+  view with the full breakdown and customer info, status updates (validated
+  transitions), and payment-status updates.
+- **Discounts** (food kept separate from delivery, per the business rules):
+  - **Product sale price** — an optional promotional price per product; the
+    reduction is recorded as a food discount on each order line.
+  - **Coupons** — code-based promotions with FOOD/DELIVERY scope and
+    PERCENT / FIXED / FREE_DELIVERY kinds, an optional minimum, and expiry.
+    These cover order-level, percentage, coupon, and delivery discounts.
+  - Customer calculation: `(subtotal − food discount) + delivery − delivery
+    discount = total`. Coupon discounts are previewed at checkout and
+    recomputed authoritatively on the server.
+
+## Phase 5 — what's implemented
+
+- **Kitchen production dashboard** (KITCHEN + ADMIN): for a chosen fulfillment
+  day, the confirmed orders' items are aggregated per product into a simple
+  "what to make" list — product, quantity to prepare, and how many orders it
+  spans — with total orders and total items at a glance.
+- **Prep/pack status**: each product's status (Pending → Preparing → Prepared
+  → Packed) is tapped through on large, phone/tablet-friendly controls and
+  persists per day (`KitchenTask`). Only admin-confirmed, non-cancelled orders
+  count toward production.
+- **Special notes**: customer order notes for the day are surfaced for the
+  kitchen.
+
+## Phase 6 — what's implemented
+
+- **Delivery record per order** with exactly two cost values: the **customer
+  delivery cost** (fixed at checkout, net of any delivery discount) and the
+  **actual delivery cost** (what the business pays the provider, entered
+  later). The **difference** (customer − actual = delivery gain/loss) is
+  derived, never stored, and is `null` until the actual cost is entered. There
+  is deliberately **no** `EstimatedDeliveryCost`.
+- **Admin delivery management**: create a delivery on the order, set provider,
+  tracking reference, actual cost, and status; a deliveries list with the
+  per-order difference and rolled-up delivery gain/loss.
+- **Customer view**: a read-only delivery summary (status, provider, tracking)
+  on their order — cost details are never exposed to customers.
+
+## Phase 7 — what's implemented
+
+- **Payment transactions** recorded separately from the order (not a ledger),
+  so a payment gateway can be integrated later. Each has a method
+  (cash, bKash, card, online, cash-on-delivery), amount, transaction status
+  (success / pending / failed / refunded), and an optional reference.
+- **Derived order payment status**: the order's status
+  (Pending → Partially Paid → Paid, or Refunded) is recomputed from its
+  payments — net collected = successful payments minus refunds — along with
+  `amountPaid` / `amountDue`.
+- **Admin**: a payments panel on the order detail lists transactions and
+  records new ones (with a live paid/due/status summary); refunds are recorded
+  as a refunded transaction. **Customer**: sees paid/due on their order.
+
+## Phase 8 — what's implemented
+
+- **Materials** (ingredients & packaging) with a unit, current stock, and a
+  **weighted-average unit cost** maintained from purchases (no FIFO/LIFO).
+- **Purchases**: a bulk buy with multiple lines updates each material's stock
+  and average cost and logs an inventory transaction. (e.g. Milk 20L @ ৳1,800
+  → ৳90/L, then 20L @ ৳2,100 → ৳97.5/L weighted average.)
+- **Recipes / BOM**: each product can have a recipe (ingredient + packaging
+  lines and a batch yield). The **cost per unit** is derived from the
+  materials' average costs ÷ yield, and **gross profit per unit** and
+  **margin** follow from the selling price.
+- **Costing overview**: cost / price / gross profit / margin per product, with
+  a link to edit each recipe. Manual stock adjustments are supported for
+  corrections/spoilage.
+
+## Phase 9 — what's implemented
+
+- **Business expenses** by category (dynamic categories seeded with Gas,
+  Electricity, Marketing, etc.): record, list by period, and by-category
+  summary. Ingredient/packaging purchases are kept separate (they update
+  inventory, not expenses).
+- **Order contribution** (per order): net food − product cost = product gross
+  profit, then + customer delivery − actual delivery − delivery discount =
+  contribution; marked incomplete until the actual delivery cost is entered.
+- **Product profitability** (per period): units sold, revenue, discount, net
+  revenue, product cost (from recipes), gross profit, and margin — delivery
+  excluded, per the rules.
+- **Business profit dashboard** (per period): total orders, food sales,
+  discounts, net food sales, product cost, gross profit, delivery
+  collected / actual / gain-loss, other expenses, and **net profit**, plus
+  top-selling / most-profitable products, top customers, low-stock materials,
+  and pending / awaiting-delivery counts.
+
+## Phase 10 — what's implemented
+
+- **Customer analytics** (per period): total orders, total spent, average
+  order value, total quantity, discounts received, last order date, favourite
+  products, and an approximate profit contribution — answering who buys most,
+  most often, and which customers are valuable.
+- **Product demand × profit classification**: each product is placed in a
+  quadrant relative to the median units sold (demand) and median gross profit
+  — **Best** (push), **Optimize** (popular, low profit), **Marketing
+  opportunity** (low demand, high profit), and **Review** (low/low).
+- **Sales by day**: daily orders, food sales, discounts, net sales, and
+  delivery collected — the core of the sales report.
+
+## Phase 11 — what's implemented
+
+- **In-app notifications** (fully working): emitted from real events — order
+  placed (→ customer + admins), order status changes (→ customer), and
+  successful payments (→ customer + admins). A header bell shows the unread
+  count with a dropdown to read and mark-all-read. Email/SMS/push channels can
+  be layered on the same events later.
+- **Delivery provider integration point** (mock): "dispatch to provider"
+  generates a tracking reference and moves the delivery to *assigned* —
+  swap the adapter for a real Pathao/pandago client without changing callers.
+- **Payment gateway integration point** (mock): "take online payment" records a
+  successful charge with a gateway reference — swap for a real bKash / card
+  gateway (redirect + webhook) later.
+
+> The provider and gateway pieces are working **mock adapters** with clean
+> seams; wiring real third-party APIs needs live credentials and webhooks.
+
+## Status
+
+All 11 phases of the spec are implemented — the full flow works end to end:
+**customer orders → kitchen sees what to prepare → food is packed → delivery is
+tracked → payment is recorded → the owner sees sales, costs and profit without
+manual calculation.**

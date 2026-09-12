@@ -1,0 +1,85 @@
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.order-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.order-row:hover {
+  box-shadow: 0 3px 12px rgba(47, 82, 51, 0.1);
+}
+
+.order-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.status {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #f0e8d2;
+  color: #6b5f3c;
+  white-space: nowrap;
+}
+
+.status--pending { background: #fff4d6; color: #8a6d1a; }
+.status--confirmed { background: #e0eefc; color: #1a5b8a; }
+.status--preparing,
+.status--packed { background: #efe3fb; color: #6b3a9a; }
+.status--out_for_delivery { background: #dff0e6; color: #1a7a45; }
+.status--delivered { background: #e6f0e6; color: #2f5233; }
+.status--cancelled { background: #fdecea; color: #b3261e; }
+.status--payment { background: #f0e8d2; color: #6b5f3c; }
+
+.order-placed {
+  background: #e6f0e6;
+  border: 1px solid #b9d8bd;
+  color: #2f5233;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.order-detail__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.order-detail__head h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.3rem;
+}
+
+.order-detail__badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.order-detail__address {
+  margin: 1.25rem 0;
+}
+
+.order-detail__address h3 {
+  margin: 0 0 0.4rem;
+  color: #2f5233;
+}

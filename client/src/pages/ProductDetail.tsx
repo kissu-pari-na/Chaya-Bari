@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchProduct } from '../lib/products'
 import { formatBdt } from '../lib/format'
+import { useCart } from '../context/CartContext'
 import type { Product } from '../types/product'
 import './Products.css'
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
+  const { addItem } = useCart()
+  const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [added, setAdded] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -47,13 +51,35 @@ export function ProductDetail() {
         <div className="product-detail__info">
           <h1>{product.name}</h1>
           {product.categoryName && <span className="product-card__cat">{product.categoryName}</span>}
-          <p className="product-detail__price">{formatBdt(product.price)}</p>
+          <p className="product-detail__price">
+            {product.salePrice != null && product.salePrice < product.price ? (
+              <>
+                {formatBdt(product.salePrice)}{' '}
+                <s className="product-card__was">{formatBdt(product.price)}</s>
+              </>
+            ) : (
+              formatBdt(product.price)
+            )}
+          </p>
           {product.description && <p>{product.description}</p>}
           {product.prepInfo && <p className="muted">প্রস্তুতি: {product.prepInfo}</p>}
           {product.isAvailable ? (
-            <button className="product-detail__order" disabled title="অর্ডার পরবর্তী ধাপে যুক্ত হবে">
-              কার্টে যোগ করুন (শীঘ্রই)
-            </button>
+            <div className="product-detail__actions">
+              <button
+                className="product-detail__order product-detail__order--active"
+                onClick={() => {
+                  addItem(product)
+                  setAdded(true)
+                }}
+              >
+                কার্টে যোগ করুন
+              </button>
+              {added && (
+                <button className="btn-ghost" onClick={() => navigate('/cart')}>
+                  কার্টে যান →
+                </button>
+              )}
+            </div>
           ) : (
             <p className="product-detail__soldout">এই মুহূর্তে সোল্ড আউট</p>
           )}

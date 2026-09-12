@@ -1,9 +1,77 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
+/* ============================================================
+   ছায়া বাড়ি — Dark Luxury Food design system (see /design.md)
+   ============================================================ */
 :root {
-  --color-heading: #2f5233;
-  --color-muted: #6b6b6b;
-  font-family: 'Noto Sans Bengali', system-ui, sans-serif;
+  /* --- Brand palette (fixed) --- */
+  --bg-900: #0b0d0a; /* primary background */
+  --bg-800: #151a12; /* secondary dark */
+  --bg-700: #1a2015;
+  --green-deep: #1f3516; /* deep green */
+  --accent: #7faf35; /* accent green */
+  --accent-bright: #9acb45; /* bright accent */
+  --cream: #f5f1e7; /* warm cream */
+  --muted-cream: #b8b9b2; /* muted text on dark */
+  --border-dark: #30352a; /* border on dark */
+
+  /* --- Light surfaces (cards / menus / admin) --- */
+  --card: #ffffff;
+  --card-2: #faf7ee;
+  --card-text: #23261d;
+  --card-muted: #6a6d5f;
+  --card-border: #e6e0d0;
+  --card-heading: #1f3516;
+
+  /* Feedback */
+  --success: #4b8a3a;
+  --danger: #c0453a;
+  --danger-bg: #f7e4e2;
+
+  /* Radius (design.md §15) */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.42);
+  --shadow-card: 0 8px 24px rgba(15, 20, 12, 0.1);
+  --glow-accent: 0 8px 22px rgba(127, 175, 53, 0.28);
+
+  /* Fonts */
+  --font-display: 'Anek Bangla', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* --- Semantic tokens (LIGHT theme defaults: admin / kitchen) --- */
+  --page-bg: #f3efe4;
+  --on-page: #23261d;
+  --on-page-muted: #6a6d5f;
+  --heading: #1f3516;
+  --ghost-border: var(--card-border);
+  --ghost-fg: var(--card-text);
+  --link: #4a7a1f;
+
+  /* Back-compat aliases (older component CSS references these) */
+  --color-heading: var(--heading);
+  --color-muted: var(--on-page-muted);
+
+  font-family: var(--font-body);
+  color-scheme: light;
+}
+
+/* --- DARK theme (customer storefront + auth) --- */
+.theme-dark {
+  --page-bg: var(--bg-900);
+  --on-page: var(--cream);
+  --on-page-muted: var(--muted-cream);
+  --heading: var(--cream);
+  --ghost-border: rgba(245, 241, 231, 0.32);
+  --ghost-fg: var(--cream);
+  --link: var(--accent-bright);
+  color-scheme: dark;
 }
 
 * {
@@ -12,53 +80,268 @@
 
 body {
   margin: 0;
-  background: #fdf9ef;
-  color: #262626;
+  background: var(--bg-900);
+  color: var(--on-page);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+img {
+  max-width: 100%;
+}
+
+/* ---------- Typography ---------- */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--heading);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: clamp(1.7rem, 3.2vw, 2.3rem);
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  font-family: var(--font-body);
+}
+
+.muted {
+  color: var(--on-page-muted);
+}
+
+/* ---------- Layout shell ---------- */
 .page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--page-bg);
+  color: var(--on-page);
 }
 
 .page__content {
   flex: 1;
-  padding: 1.5rem;
-  max-width: 960px;
+  padding: 2rem 1.25rem 4rem;
+  max-width: 1240px;
   width: 100%;
   margin: 0 auto;
 }
 
+/* ---------- Cards (light surfaces on any theme) ---------- */
 .card {
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow-card);
+  color: var(--card-text);
 }
 
-.muted {
-  color: var(--color-muted);
+.card h1,
+.card h2,
+.card h3,
+.card h4 {
+  color: var(--card-heading);
 }
 
+.card .muted {
+  color: var(--card-muted);
+}
+
+.card--pad-lg {
+  padding: 2rem 2.25rem;
+}
+
+/* ---------- Buttons ---------- */
+.btn,
+button.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease,
+    border-color 0.14s ease;
+  text-decoration: none;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Primary: accent green, dark readable text */
+.btn--primary {
+  background: var(--accent);
+  color: #0b0d0a;
+  box-shadow: var(--glow-accent);
+}
+
+.btn--primary:hover {
+  background: var(--accent-bright);
+  transform: translateY(-1px);
+}
+
+/* Brand: deep green with cream text */
+.btn--brand {
+  background: var(--green-deep);
+  color: var(--cream);
+  border-color: rgba(127, 175, 53, 0.35);
+}
+
+.btn--brand:hover {
+  background: #274219;
+  transform: translateY(-1px);
+}
+
+/* Ghost: adapts to theme */
+.btn--ghost {
+  background: transparent;
+  border-color: var(--ghost-border);
+  color: var(--ghost-fg);
+}
+
+.btn--ghost:hover {
+  background: rgba(127, 175, 53, 0.1);
+  border-color: var(--accent);
+  color: var(--accent-bright);
+}
+
+/* On-dark: for use inside dark hero/promo panels */
+.btn--on-dark {
+  background: transparent;
+  border-color: rgba(245, 241, 231, 0.55);
+  color: var(--cream);
+}
+
+.btn--on-dark:hover {
+  background: rgba(245, 241, 231, 0.12);
+}
+
+.btn--lg {
+  padding: 0.9rem 1.85rem;
+  font-size: 1.05rem;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  padding: 0.15rem 0.65rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+
+.badge--sale {
+  background: var(--accent);
+  color: #0b0d0a;
+}
+
+.badge--new {
+  background: var(--green-deep);
+  color: var(--accent-bright);
+}
+
+.badge--muted {
+  background: var(--card-2);
+  color: var(--card-muted);
+}
+
+/* ---------- Section header ---------- */
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2.75rem 0 1.35rem;
+  flex-wrap: wrap;
+}
+
+.section-head__title {
+  margin: 0;
+}
+
+.section-head__sub {
+  margin: 0.25rem 0 0;
+  color: var(--on-page-muted);
+  font-size: 0.95rem;
+}
+
+/* ---------- Stats ---------- */
 .sample-links {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .stat-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   margin: 1.25rem 0;
   flex-wrap: wrap;
 }
 
 .stat {
-  background: #fdf9ef;
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
-  padding: 0.75rem 1.25rem;
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -66,16 +349,38 @@ body {
 
 .stat__label {
   font-size: 0.8rem;
-  color: var(--color-muted);
+  color: var(--card-muted);
 }
 
 .stat__value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--color-heading);
+  font-family: var(--font-display);
+  color: var(--green-deep);
 }
 
-h1 {
-  color: var(--color-heading);
-  margin-top: 0;
+/* ---------- Global inputs ---------- */
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(127, 175, 53, 0.25);
+}
+
+:focus-visible {
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

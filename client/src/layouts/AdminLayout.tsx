@@ -3,7 +3,7 @@ import { Header } from '../components/Header'
 
 export function AdminLayout() {
   return (
-    <div className="page">
+    <div className="page theme-light">
       <Header variant="admin" />
       <main className="page__content">
         <Outlet />

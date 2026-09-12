@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchCategories, fetchProducts } from '../lib/products'
 import { formatBdt } from '../lib/format'
+import { useCart } from '../context/CartContext'
 import type { Category, Product } from '../types/product'
 import './Products.css'
 
 export function ProductList() {
+  const { addItem } = useCart()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined)
@@ -64,7 +66,29 @@ export function ProductList() {
             <div className="product-card__body">
               <h3>{p.name}</h3>
               {p.categoryName && <span className="product-card__cat">{p.categoryName}</span>}
-              <strong className="product-card__price">{formatBdt(p.price)}</strong>
+              <div className="product-card__foot">
+                <span className="product-card__price">
+                  {p.salePrice != null && p.salePrice < p.price ? (
+                    <>
+                      <strong>{formatBdt(p.salePrice)}</strong>{' '}
+                      <s className="product-card__was">{formatBdt(p.price)}</s>
+                    </>
+                  ) : (
+                    <strong>{formatBdt(p.price)}</strong>
+                  )}
+                </span>
+                {p.isAvailable && (
+                  <button
+                    className="product-card__add"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      addItem(p)
+                    }}
+                  >
+                    + কার্ট
+                  </button>
+                )}
+              </div>
             </div>
           </Link>
         ))}

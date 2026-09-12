@@ -158,3 +158,267 @@
   border: 1px solid #d6cba9;
   border-radius: 6px;
 }
+
+.order-filters {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+  align-items: end;
+}
+
+.order-filters input,
+.order-filters select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  color: #8a7d5c;
+}
+
+.admin-order-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  margin: 0.5rem 0 1rem;
+  border-top: 1px solid #f0e8d2;
+  border-bottom: 1px solid #f0e8d2;
+}
+
+.admin-order-controls > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.control-label {
+  font-size: 0.85rem;
+  color: #6b5f3c;
+  font-weight: 600;
+}
+
+.admin-order-controls select {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+}
+
+/* Delivery panel */
+.delivery-panel {
+  border: 1px solid #eee1c3;
+  border-radius: 10px;
+  padding: 1rem 1.15rem 1.15rem;
+  margin: 1.25rem 0;
+  background: #fffdf7;
+}
+
+.delivery-panel h3 {
+  margin: 0 0 0.75rem;
+  color: #2f5233;
+}
+
+.delivery-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+.delivery-panel input,
+.delivery-panel select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.delivery-costs {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.delivery-costs > div {
+  flex: 1;
+  min-width: 130px;
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.delivery-costs__label {
+  font-size: 0.75rem;
+  color: #8a7d5c;
+}
+
+.delivery-costs__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2f5233;
+}
+
+.delivery-gain {
+  color: #1a7a45;
+}
+
+.delivery-loss {
+  color: #b3261e;
+}
+
+/* Payments panel */
+.payments-panel {
+  border: 1px solid #eee1c3;
+  border-radius: 10px;
+  padding: 1rem 1.15rem 1.15rem;
+  margin: 1.25rem 0;
+  background: #fffdf7;
+}
+
+.payments-panel h3 {
+  margin: 0 0 0.75rem;
+  color: #2f5233;
+}
+
+.pay-summary {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.pay-summary > div {
+  flex: 1;
+  min-width: 120px;
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pay-table {
+  margin-bottom: 1rem;
+}
+
+.pay-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+.pay-form input,
+.pay-form select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d6cba9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+/* Reports / profit */
+.profit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.4rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.profit-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 0.1rem;
+  border-bottom: 1px solid #f0e8d2;
+  font-size: 0.95rem;
+}
+
+.profit-line--strong {
+  font-weight: 700;
+  color: #2f5233;
+  border-bottom: 2px solid #2f5233;
+}
+
+.reports-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.reports-columns h3 {
+  margin: 0 0 0.5rem;
+  color: #2f5233;
+  font-size: 1rem;
+}
+
+.mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-radius: 8px;
+}
+
+.mini-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid #f0e8d2;
+  font-size: 0.88rem;
+}
+
+.mini-list li:last-child {
+  border-bottom: none;
+}
+
+.quadrant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.quadrant {
+  background: #fff;
+  border: 1px solid #eee1c3;
+  border-top: 4px solid #cbb98a;
+  border-radius: 10px;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.quadrant h3 {
+  margin: 0 0 0.15rem;
+  font-size: 0.98rem;
+}
+
+.quadrant .small {
+  margin: 0 0 0.6rem;
+}
+
+.quadrant .mini-list {
+  border: none;
+  background: transparent;
+}
+
+.quadrant .mini-list li {
+  padding: 0.35rem 0;
+}

@@ -41,6 +41,16 @@ async function main() {
   console.log(`  KITCHEN -> ${kitchenEmail} / ${kitchenPassword}`)
 
   await seedCatalog()
+  await seedExpenseCategories()
+}
+
+// Default general-expense categories.
+async function seedExpenseCategories() {
+  const names = ['গ্যাস', 'বিদ্যুৎ', 'মার্কেটিং', 'যন্ত্রপাতি', 'বিবিধ', 'অন্যান্য']
+  for (const name of names) {
+    await prisma.expenseCategory.upsert({ where: { name }, update: {}, create: { name } })
+  }
+  console.log(`Seeded ${names.length} expense categories.`)
 }
 
 // Sample categories + products so the catalog isn't empty in a fresh install.
