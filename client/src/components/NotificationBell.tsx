@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  clearAllNotifications,
   fetchNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -44,6 +45,11 @@ export function NotificationBell() {
     await load()
   }
 
+  async function handleClearAll() {
+    await clearAllNotifications()
+    await load()
+  }
+
   async function handleItem(n: AppNotification) {
     if (!n.read) {
       await markNotificationRead(n.id)
@@ -67,11 +73,18 @@ export function NotificationBell() {
         <div className="notif__panel">
           <div className="notif__head">
             <span>নোটিফিকেশন</span>
-            {unread > 0 && (
-              <button className="notif__markall" onClick={handleMarkAll}>
-                সব পড়া হয়েছে
-              </button>
-            )}
+            <span className="notif__actions">
+              {unread > 0 && (
+                <button className="notif__markall" onClick={handleMarkAll}>
+                  সব পড়া হয়েছে
+                </button>
+              )}
+              {items.length > 0 && (
+                <button className="notif__clear" onClick={handleClearAll}>
+                  সব মুছুন
+                </button>
+              )}
+            </span>
           </div>
           <div className="notif__list">
             {items.length === 0 && <p className="notif__empty">কোনো নোটিফিকেশন নেই।</p>}

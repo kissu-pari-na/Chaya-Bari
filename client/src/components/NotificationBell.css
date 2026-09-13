@@ -54,16 +54,32 @@
   color: var(--cream);
 }
 
-.notif__markall {
+.notif__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notif__markall,
+.notif__clear {
   background: transparent;
   border: none;
-  color: var(--accent-bright);
   font-size: 0.78rem;
   cursor: pointer;
   font-family: var(--font-body);
+  padding: 0;
 }
 
-.notif__markall:hover {
+.notif__markall {
+  color: var(--accent-bright);
+}
+
+.notif__clear {
+  color: #e8837a;
+}
+
+.notif__markall:hover,
+.notif__clear:hover {
   text-decoration: underline;
 }
 

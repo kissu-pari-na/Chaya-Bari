@@ -191,3 +191,8 @@ export async function markRead(userId: string, id: string): Promise<void> {
 export async function markAllRead(userId: string): Promise<void> {
   await prisma.notification.updateMany({ where: { userId, read: false }, data: { read: true } })
 }
+
+/// Permanently removes all of the user's notifications.
+export async function clearAll(userId: string): Promise<void> {
+  await prisma.notification.deleteMany({ where: { userId } })
+}

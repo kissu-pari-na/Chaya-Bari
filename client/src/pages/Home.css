@@ -121,6 +121,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Orb discs are sized in cqw (see below) so the whole composition scales with
+     the stage and the orbs never overlap regardless of how wide the stage is. */
+  container-type: inline-size;
 }
 
 /* Slowly spinning decorative rings. */
@@ -186,30 +189,31 @@
   z-index: 4;
 }
 
-/* The next three orbit around the ring; each floats on its own rhythm. The top
-   orb's caption sits ABOVE its disc so it never runs into the centre orb. */
+/* The other three sit in three corners (top-left, top-right, bottom-right), all
+   off the centre's vertical axis, so their names never stack onto the centre
+   image and nothing is clipped by the hero. Disc sizes are cqw, so these
+   percentage offsets hold at every width. */
 .hero__orb--1 {
-  top: 0;
-  left: 50%;
-  margin-left: -59px;
-  flex-direction: column-reverse;
+  top: 4%;
+  left: -5%;
   animation-delay: 0s;
 }
 .hero__orb--2 {
-  bottom: -3%;
-  left: -10%;
+  top: 4%;
+  right: -5%;
   animation-delay: 0.9s;
 }
 .hero__orb--3 {
-  bottom: -3%;
-  right: -10%;
+  bottom: 2%;
+  right: -5%;
   animation-delay: 1.8s;
 }
 
 .hero__orb-disc {
   position: relative;
-  width: 84px;
-  height: 84px;
+  /* Sized relative to the stage (21% of its width) so it scales with the stage. */
+  width: 21cqw;
+  height: 21cqw;
   border-radius: 50%;
   overflow: visible;
   display: flex;
@@ -224,8 +228,8 @@
   width: 130px;
 }
 .hero__orb--center .hero__orb-disc {
-  width: 108px;
-  height: 108px;
+  width: 27cqw;
+  height: 27cqw;
   border-color: var(--accent-bright);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(154, 203, 69, 0.16);
 }
@@ -288,8 +292,8 @@
 .hero__rating {
   position: absolute;
   z-index: 4;
-  top: 3%;
-  right: -3%;
+  bottom: 12%;
+  left: -3%;
   background: var(--cream);
   color: #0b0d0a;
   border-radius: var(--radius-md);
@@ -314,7 +318,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-12px);
+    transform: translateY(-6px);
   }
 }
 @keyframes hero-spin {
@@ -358,25 +362,19 @@
   .hero__art {
     order: -1;
   }
+  /* Disc sizes scale with the stage via cqw, so only the stage width and the
+     top-orb centring need adjusting at phone widths. */
   .hero__stage {
-    width: min(300px, 82%);
+    width: min(420px, 94%);
   }
   .hero__orb {
-    width: 96px;
-  }
-  .hero__orb-disc {
-    width: 70px;
-    height: 70px;
+    width: 30cqw;
   }
   .hero__orb--center {
-    width: 104px;
-  }
-  .hero__orb--center .hero__orb-disc {
-    width: 92px;
-    height: 92px;
+    width: 34cqw;
   }
   .hero__orb--1 {
-    margin-left: -48px;
+    margin-left: -15cqw;
   }
 }
 
