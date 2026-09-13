@@ -11,6 +11,7 @@ import { adminInventoryRouter } from './modules/inventory/inventory.routes.js'
 import { adminExpenseRouter } from './modules/expenses/expense.routes.js'
 import { adminAnalyticsRouter } from './modules/analytics/analytics.routes.js'
 import { notificationRouter } from './modules/notifications/notification.routes.js'
+import { adminBusinessRouter, publicBusinessRouter } from './modules/business/business.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
@@ -26,6 +27,9 @@ apiRouter.use('/admin', adminProductRouter)
 // blanket authenticate (order/customer-payment), or their auth gate would 401
 // this public GET before it is reached.
 apiRouter.use('/', publicPaymentRouter)
+
+// Public business identity (read by every client); same ordering requirement.
+apiRouter.use('/', publicBusinessRouter)
 
 // Ordering: customer addresses/orders under /api, admin settings under /api/admin.
 apiRouter.use('/', orderRouter)
@@ -56,6 +60,9 @@ apiRouter.use('/admin', adminExpenseRouter)
 
 // Analytics & reports (ADMIN).
 apiRouter.use('/admin', adminAnalyticsRouter)
+
+// Business profile management (ADMIN).
+apiRouter.use('/admin', adminBusinessRouter)
 
 // Notifications (any authenticated user).
 apiRouter.use('/', notificationRouter)

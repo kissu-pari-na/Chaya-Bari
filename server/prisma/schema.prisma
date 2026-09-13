@@ -360,6 +360,15 @@ model PaymentSetting {
   updatedAt DateTime @updatedAt
 }
 
+/// Business identity/profile (name, logo, contact, address, partners, defaults).
+/// Stored as a JSON blob in a singleton row so the whole profile persists and is
+/// shared across all clients; editable by admins in Business Profile settings.
+model BusinessProfileSetting {
+  id        String   @id @default("singleton")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 /// A single payment transaction against an order. Kept separate from the order
 /// (not a full ledger) so gateway integration can be added later. The order's
 /// paymentStatus is recomputed from these rows. Refunds are recorded as a row

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { fetchPaymentInfo, updatePaymentInfo } from '../lib/payments'
+import { ApiError } from '../lib/apiClient'
 import type { ApplicationRole, BusinessPartner, BusinessProfile } from '../types/business'
 import type { PaymentInfo } from '../types/payment'
 import './BusinessProfileSettings.css'
@@ -41,22 +42,27 @@ export function BusinessProfileSettings() {
       .catch(() => setPaymentInfo(emptyPaymentInfo))
   }, [])
 
+  const [error, setError] = useState<string | null>(null)
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    updateProfile({
-      ...draft,
-      deliveryAreas: deliveryAreasText
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    })
+    setError(null)
     try {
-      await updatePaymentInfo(paymentInfo)
-    } catch {
-      /* non-blocking: the rest of the profile still saves */
+      await Promise.all([
+        updateProfile({
+          ...draft,
+          deliveryAreas: deliveryAreasText
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+        }),
+        updatePaymentInfo(paymentInfo),
+      ])
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'সংরক্ষণ করা যায়নি')
     }
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
   }
 
   return (
@@ -281,6 +287,7 @@ export function BusinessProfileSettings() {
       <div className="profile-form__actions">
         <button type="submit">সংরক্ষণ করুন</button>
         {saved && <span className="hint hint--success">সংরক্ষিত হয়েছে</span>}
+        {error && <span className="hint hint--warning">{error}</span>}
       </div>
     </form>
   )
