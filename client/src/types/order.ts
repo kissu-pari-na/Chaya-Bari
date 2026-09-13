@@ -5,6 +5,7 @@ export type OrderStatus =
   | 'PENDING'
   | 'CONFIRMED'
   | 'PREPARING'
+  | 'READY'
   | 'PACKED'
   | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'

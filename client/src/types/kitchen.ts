@@ -1,5 +1,5 @@
 export type KitchenStage = 'TO_COOK' | 'PREPARING' | 'READY'
-export type OrderDerivedStatus = 'CONFIRMED' | 'PREPARING' | 'PACKED'
+export type OrderKitchenStatus = 'CONFIRMED' | 'PREPARING' | 'READY' | 'PACKED'
 
 export interface StageLineRef {
   lineId: string
@@ -26,7 +26,7 @@ export interface KitchenOrder {
   id: string
   orderNumber: string
   recipientName: string
-  status: OrderDerivedStatus
+  status: OrderKitchenStatus
   createdAt: string
   note: string | null
   lines: OrderLine[]

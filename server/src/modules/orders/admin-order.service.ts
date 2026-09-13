@@ -115,7 +115,8 @@ export async function getOrder(id: string): Promise<AdminOrder> {
 const transitions: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['PREPARING', 'CANCELLED'],
-  PREPARING: ['PACKED', 'CANCELLED'],
+  PREPARING: ['READY', 'CANCELLED'],
+  READY: ['PACKED', 'CANCELLED'],
   PACKED: ['OUT_FOR_DELIVERY', 'CANCELLED'],
   OUT_FOR_DELIVERY: ['DELIVERED', 'CANCELLED'],
   DELIVERED: [],

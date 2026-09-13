@@ -28,3 +28,12 @@ export function moveProduct(date: string, productId: string | null, from: Kitche
     auth: true,
   }).then((r) => r.production)
 }
+
+/// Pack (or un-pack) a ready order — an order-level step after cooking.
+export function packOrder(orderId: string, packed: boolean) {
+  return apiRequest<{ production: ProductionDay }>(`/kitchen/orders/${orderId}/pack`, {
+    method: 'PATCH',
+    body: { packed },
+    auth: true,
+  }).then((r) => r.production)
+}

@@ -61,6 +61,7 @@ export async function notifyAdmins(input: Omit<NotifyInput, 'userId'>): Promise<
 const statusMessage: Partial<Record<OrderStatus, { type: NotificationType; title: string; body: string }>> = {
   CONFIRMED: { type: 'ORDER_CONFIRMED', title: 'অর্ডার নিশ্চিত হয়েছে', body: 'আপনার অর্ডারটি নিশ্চিত করা হয়েছে।' },
   PREPARING: { type: 'ORDER_PREPARING', title: 'খাবার তৈরি হচ্ছে', body: 'আপনার অর্ডারের খাবার তৈরি হচ্ছে।' },
+  READY: { type: 'ORDER_READY', title: 'খাবার প্রস্তুত', body: 'আপনার অর্ডারের খাবার তৈরি হয়ে গেছে।' },
   PACKED: { type: 'ORDER_PACKED', title: 'প্যাকিং সম্পন্ন', body: 'আপনার অর্ডার প্যাক করা হয়েছে।' },
   OUT_FOR_DELIVERY: { type: 'ORDER_OUT_FOR_DELIVERY', title: 'ডেলিভারিতে', body: 'আপনার অর্ডার ডেলিভারির পথে।' },
   DELIVERED: { type: 'ORDER_DELIVERED', title: 'ডেলিভার্ড', body: 'আপনার অর্ডার ডেলিভার হয়েছে। ধন্যবাদ!' },

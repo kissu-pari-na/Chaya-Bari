@@ -17,5 +17,10 @@ export const bulkMoveSchema = z.object({
   to: z.enum(kitchenStages),
 })
 
+/// Pack (or un-pack) a ready order — an order-level step after cooking.
+export const packOrderSchema = z.object({
+  packed: z.boolean(),
+})
+
 export type MoveLineInput = z.infer<typeof moveLineSchema>
 export type BulkMoveInput = z.infer<typeof bulkMoveSchema>

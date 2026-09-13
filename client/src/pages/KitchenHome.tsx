@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
-import { fetchProduction, fetchProductionDates, moveLine, moveProduct } from '../lib/kitchen'
+import { fetchProduction, fetchProductionDates, moveLine, moveProduct, packOrder } from '../lib/kitchen'
 import type {
   KitchenStage,
-  OrderDerivedStatus,
+  OrderKitchenStatus,
   ProductControl,
   ProductionDate,
   ProductionDay,
@@ -18,10 +18,11 @@ const stageLabel: Record<KitchenStage, string> = {
   PREPARING: 'তৈরি হচ্ছে',
   READY: 'প্রস্তুত',
 }
-const orderStatusLabel: Record<OrderDerivedStatus, string> = {
+const orderStatusLabel: Record<OrderKitchenStatus, string> = {
   CONFIRMED: 'রান্নার জন্য',
   PREPARING: 'তৈরি হচ্ছে',
-  PACKED: 'প্রস্তুত',
+  READY: 'প্রস্তুত (প্যাক বাকি)',
+  PACKED: 'প্যাকড ✓',
 }
 const NEXT: Record<KitchenStage, KitchenStage | null> = { TO_COOK: 'PREPARING', PREPARING: 'READY', READY: null }
 const PREV: Record<KitchenStage, KitchenStage | null> = { TO_COOK: null, PREPARING: 'TO_COOK', READY: 'PREPARING' }
@@ -82,6 +83,7 @@ export function KitchenHome() {
   const line = (lineId: string, stage: KitchenStage) => run(() => moveLine(lineId, stage))
   const bulk = (p: ProductControl, from: KitchenStage, to: KitchenStage) =>
     run(() => moveProduct(activeDate!, p.productId, from, to))
+  const pack = (orderId: string, packed: boolean) => run(() => packOrder(orderId, packed))
 
   function openPicker(p: ProductControl, stage: KitchenStage) {
     const target = PREV[stage]
@@ -196,6 +198,21 @@ export function KitchenHome() {
                     </li>
                   ))}
                 </ul>
+
+                {/* Order-level packing — a step after all items are cooked. */}
+                {o.status === 'READY' && (
+                  <button className="ord-pack ord-pack--do" onClick={() => pack(o.id, true)}>
+                    📦 প্যাক সম্পন্ন
+                  </button>
+                )}
+                {o.status === 'PACKED' && (
+                  <div className="ord-packed">
+                    <span>✓ প্যাক করা হয়েছে — ডেলিভারির জন্য প্রস্তুত</span>
+                    <button className="mini mini--back" onClick={() => pack(o.id, false)}>
+                      ↩ আনপ্যাক
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

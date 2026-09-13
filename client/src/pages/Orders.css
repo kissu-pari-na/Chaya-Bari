@@ -39,8 +39,9 @@
 
 .status--pending { background: #fff4d6; color: #8a6d1a; }
 .status--confirmed { background: #e0eefc; color: #1a5b8a; }
-.status--preparing,
-.status--packed { background: #efe3fb; color: #6b3a9a; }
+.status--preparing { background: #efe3fb; color: #6b3a9a; }
+.status--ready { background: #dce9fb; color: #1c5fa8; }
+.status--packed { background: #d5ecd9; color: #26743a; }
 .status--out_for_delivery { background: #dff0e6; color: #1a7a45; }
 .status--delivered { background: #e6f0e6; color: #2f5233; }
 .status--cancelled { background: #fdecea; color: #b3261e; }

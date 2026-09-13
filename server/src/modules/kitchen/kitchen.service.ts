@@ -4,15 +4,17 @@ import { HttpError } from '../../utils/httpError.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 /// Orders that are the kitchen's responsibility (CONFIRMED..PACKED).
-export const KITCHEN_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'PACKED']
+export const KITCHEN_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'READY', 'PACKED']
 
 export const STAGES: KitchenLineStage[] = ['TO_COOK', 'PREPARING', 'READY']
 const STAGE_IDX: Record<KitchenLineStage, number> = { TO_COOK: 0, PREPARING: 1, READY: 2 }
-const ORDER_IDX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1, PACKED: 2 }
+const ORDER_IDX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1, READY: 2, PACKED: 3 }
 
-/// Derives an order's overall status from its line stages.
+/// Derives an order's cooking status from its line stages. Note this only
+/// reaches READY (all items cooked); PACKED is a separate, explicit step the
+/// kitchen takes once a ready order is physically packed.
 function deriveStatus(stages: KitchenLineStage[]): OrderStatus {
-  if (stages.length > 0 && stages.every((s) => s === 'READY')) return 'PACKED'
+  if (stages.length > 0 && stages.every((s) => s === 'READY')) return 'READY'
   if (stages.every((s) => s === 'TO_COOK')) return 'CONFIRMED'
   return 'PREPARING'
 }
@@ -65,16 +67,45 @@ function toUtcDate(dateStr: string): Date {
 // ---- Order status sync ----
 
 /// Recomputes an order's status from its line stages; updates and (on forward
-/// progress only) notifies the customer.
+/// progress only) notifies the customer. A PACKED order stays packed while all
+/// its lines remain READY; if a line is sent back, it drops to the derived
+/// cooking status (i.e. it un-packs automatically).
 async function syncOrderStatus(orderId: string): Promise<void> {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })
   if (!order || !KITCHEN_STATUSES.includes(order.status)) return
-  const next = deriveStatus(order.items.map((i) => i.kitchenStage))
+  const derived = deriveStatus(order.items.map((i) => i.kitchenStage))
+  // Packing is a manual state on top of all-lines-READY; keep it unless a line
+  // is no longer READY.
+  const next = order.status === 'PACKED' && derived === 'READY' ? 'PACKED' : derived
   if (next === order.status) return
   await prisma.order.update({ where: { id: orderId }, data: { status: next } })
   if (ORDER_IDX[next] > ORDER_IDX[order.status]) {
     await notifyOrderStatus(order.customerId, next, order.orderNumber, order.id)
   }
+}
+
+/// Explicitly pack (or un-pack) a ready order — a separate step from cooking.
+export async function packOrder(orderId: string, packed: boolean): Promise<ProductionDay> {
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })
+  if (!order) throw HttpError.notFound('Order not found')
+  if (!KITCHEN_STATUSES.includes(order.status)) {
+    throw HttpError.badRequest(`Order is not in the kitchen (status: ${order.status})`)
+  }
+  const derived = deriveStatus(order.items.map((i) => i.kitchenStage))
+
+  if (packed) {
+    if (derived !== 'READY') throw HttpError.badRequest('All items must be ready before packing')
+    if (order.status !== 'PACKED') {
+      await prisma.order.update({ where: { id: orderId }, data: { status: 'PACKED' } })
+      await notifyOrderStatus(order.customerId, 'PACKED', order.orderNumber, order.id)
+    }
+  } else {
+    // Un-pack back to its cooking status (READY) — a silent correction.
+    if (order.status === 'PACKED') {
+      await prisma.order.update({ where: { id: orderId }, data: { status: derived } })
+    }
+  }
+  return getProductionDay(order.fulfillmentDate.toISOString().slice(0, 10))
 }
 
 // ---- Reads ----
@@ -139,12 +170,14 @@ export async function getProductionDay(dateStr: string): Promise<ProductionDay> 
       id: o.id,
       orderNumber: o.orderNumber,
       recipientName: o.recipientName,
-      status: deriveStatus(o.items.map((i) => i.kitchenStage)),
+      // The stored status is kept in sync with the lines and also carries the
+      // manual PACKED state, so use it directly.
+      status: o.status,
       createdAt: o.createdAt.toISOString(),
       note: o.notes,
       lines: o.items.map((i) => ({ id: i.id, productName: i.productName, quantity: i.quantity, stage: i.kitchenStage })),
     }))
-    .sort((a, b) => ORDER_IDX[a.status] - ORDER_IDX[b.status] || a.createdAt.localeCompare(b.createdAt))
+    .sort((a, b) => (ORDER_IDX[a.status] ?? 0) - (ORDER_IDX[b.status] ?? 0) || a.createdAt.localeCompare(b.createdAt))
 
   let toCook = 0
   let preparing = 0
