@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { fetchOrderReview, submitOrderReviews } from '../lib/reviews'
 import { StarPicker } from '../components/StarPicker'
 import { RatingStars } from '../components/RatingStars'
-import type { OrderReviewData } from '../types/review'
+import type { OrderReviewData, OrderReviewSubmit } from '../types/review'
 import './OrderReview.css'
 
 interface Draft {
@@ -13,7 +13,6 @@ interface Draft {
 
 // Reviews start at a full 5 stars; the customer lowers them only if they wish.
 const DEFAULT_RATING = 5
-const OVERALL_KEY = '__overall__'
 
 export function OrderReview() {
   const { id } = useParams<{ id: string }>()
@@ -23,16 +22,18 @@ export function OrderReview() {
 
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
   const [overall, setOverall] = useState<Draft>({ rating: DEFAULT_RATING, comment: '' })
-  // Which target (productId or OVERALL_KEY) is currently submitting.
-  const [pending, setPending] = useState<string | null>(null)
-  // Per-target feedback message.
-  const [msg, setMsg] = useState<Record<string, { ok: boolean; text: string }>>({})
+  const [saving, setSaving] = useState(false)
+  const [done, setDone] = useState(false)
+  const [submitErr, setSubmitErr] = useState<string | null>(null)
 
   function hydrate(d: OrderReviewData) {
     setData(d)
     const next: Record<string, Draft> = {}
     for (const p of d.products) {
-      next[p.productId] = { rating: p.rating ?? DEFAULT_RATING, comment: p.comment ?? '' }
+      next[p.productId] = {
+        rating: p.rating ?? DEFAULT_RATING,
+        comment: p.comment ?? '',
+      }
     }
     setDrafts(next)
     setOverall({ rating: d.overall?.rating ?? DEFAULT_RATING, comment: d.overall?.comment ?? '' })
@@ -55,28 +56,35 @@ export function OrderReview() {
     setDrafts((d) => ({ ...d, [productId]: { ...d[productId], ...patch } }))
   }
 
-  // Submit a single product review (key = productId) or the overall review
-  // (key = OVERALL_KEY). Only the submitted target is locked; other in-progress
-  // rows keep their drafts.
-  async function submitOne(key: string) {
-    if (!id) return
-    const body =
-      key === OVERALL_KEY
-        ? { overall: { rating: overall.rating, comment: overall.comment.trim() || undefined } }
-        : { items: [{ productId: key, rating: drafts[key].rating, comment: drafts[key].comment.trim() || undefined }] }
-    setPending(key)
-    setMsg((m) => ({ ...m, [key]: { ok: false, text: '' } }))
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!id || !data) return
+    // Only products that have not already been reviewed can be submitted.
+    const items = data.products
+      .filter((p) => p.rating == null)
+      .map((p) => ({
+        productId: p.productId,
+        rating: drafts[p.productId]?.rating ?? DEFAULT_RATING,
+        comment: drafts[p.productId]?.comment.trim() || undefined,
+      }))
+    const body: OrderReviewSubmit = { items }
+    if (data.overall == null) {
+      body.overall = { rating: overall.rating, comment: overall.comment.trim() || undefined }
+    }
+    if ((body.items?.length ?? 0) === 0 && !body.overall) {
+      setSubmitErr('জমা দেওয়ার মতো কিছু নেই')
+      return
+    }
+    setSaving(true)
+    setSubmitErr(null)
     try {
       const updated = await submitOrderReviews(id, body)
-      setData(updated) // lock the just-submitted target; leave other drafts intact
-      setMsg((m) => ({ ...m, [key]: { ok: true, text: '✓ ধন্যবাদ! রিভিউ সংরক্ষণ করা হয়েছে।' } }))
+      hydrate(updated)
+      setDone(true)
     } catch (err) {
-      setMsg((m) => ({
-        ...m,
-        [key]: { ok: false, text: err instanceof Error ? err.message : 'রিভিউ জমা দেওয়া যায়নি' },
-      }))
+      setSubmitErr(err instanceof Error ? err.message : 'রিভিউ জমা দেওয়া যায়নি')
     } finally {
-      setPending(null)
+      setSaving(false)
     }
   }
 
@@ -97,25 +105,19 @@ export function OrderReview() {
         ← অর্ডার {data.orderNumber}
       </Link>
       <h1>রিভিউ দিন</h1>
-      <p className="muted">
-        অর্ডার {data.orderNumber} এর প্রতিটি পণ্যের রিভিউ ও রেটিং আলাদাভাবে জমা দিন। একবার জমা দিলে রিভিউ
-        পরিবর্তন করা যাবে না।
-      </p>
+      <p className="muted">অর্ডার {data.orderNumber} এর পণ্যগুলোর রিভিউ ও রেটিং দিন। একবার জমা দিলে রিভিউ পরিবর্তন করা যাবে না।</p>
 
       {!data.canReview ? (
         <p className="order-review__gate">
           এই অর্ডারটি এখনও ডেলিভার হয়নি। ডেলিভারি সম্পন্ন হলে আপনি রিভিউ দিতে পারবেন।
         </p>
+      ) : allReviewed ? (
+        <p className="order-review__done">✓ এই অর্ডারের রিভিউ দেওয়া হয়ে গেছে। ধন্যবাদ!</p>
       ) : (
-        <>
-          {allReviewed && (
-            <p className="order-review__done">✓ এই অর্ডারের সব রিভিউ দেওয়া হয়ে গেছে। ধন্যবাদ!</p>
-          )}
-
+        <form onSubmit={handleSubmit}>
           <div className="rev-list">
             {data.products.map((p) => {
               const locked = p.rating != null
-              const m = msg[p.productId]
               return (
                 <div key={p.productId} className={`rev-row ${locked ? 'rev-row--locked' : ''}`}>
                   <div className="rev-row__head">
@@ -145,15 +147,6 @@ export function OrderReview() {
                         value={drafts[p.productId]?.comment ?? ''}
                         onChange={(e) => setDraft(p.productId, { comment: e.target.value })}
                       />
-                      {m && <p className={m.ok ? 'rev-ok' : 'rev-err'}>{m.text}</p>}
-                      <button
-                        type="button"
-                        className="rev-submit rev-submit--row"
-                        onClick={() => submitOne(p.productId)}
-                        disabled={pending === p.productId}
-                      >
-                        {pending === p.productId ? 'জমা হচ্ছে…' : 'এই পণ্যের রিভিউ জমা দিন'}
-                      </button>
                     </>
                   )}
                 </div>
@@ -189,21 +182,17 @@ export function OrderReview() {
                   value={overall.comment}
                   onChange={(e) => setOverall((o) => ({ ...o, comment: e.target.value }))}
                 />
-                {msg[OVERALL_KEY] && (
-                  <p className={msg[OVERALL_KEY].ok ? 'rev-ok' : 'rev-err'}>{msg[OVERALL_KEY].text}</p>
-                )}
-                <button
-                  type="button"
-                  className="rev-submit rev-submit--row"
-                  onClick={() => submitOne(OVERALL_KEY)}
-                  disabled={pending === OVERALL_KEY}
-                >
-                  {pending === OVERALL_KEY ? 'জমা হচ্ছে…' : 'সামগ্রিক রিভিউ জমা দিন'}
-                </button>
               </>
             )}
           </div>
-        </>
+
+          {submitErr && <p className="rev-err">{submitErr}</p>}
+          {done && <p className="rev-ok">✓ ধন্যবাদ! আপনার রিভিউ সংরক্ষণ করা হয়েছে।</p>}
+
+          <button className="rev-submit" type="submit" disabled={saving}>
+            {saving ? 'জমা হচ্ছে…' : 'রিভিউ জমা দিন'}
+          </button>
+        </form>
       )}
     </section>
   )
