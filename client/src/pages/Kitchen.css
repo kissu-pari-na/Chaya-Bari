@@ -21,6 +21,11 @@
 }
 
 .kitchen-date {
+  /* Neutralise native button rendering, which on some platforms constrains and
+     clips its content (Bengali descenders were cut off at the bottom). */
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,20 +33,22 @@
   border: 1px solid var(--card-border);
   background: var(--card);
   border-radius: var(--radius-md);
-  padding: 0.55rem 1.1rem;
+  padding: 0.55rem 1.1rem 0.75rem;
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 600;
-  /* Bengali needs generous line-height so the top bar (শিরোরেখা) is not clipped. */
+  /* Bengali needs generous line-height so neither the top bar (শিরোরেখা) nor the
+     descenders are clipped. */
   line-height: 1.5;
   color: var(--card-text);
   font-family: var(--font-body);
 }
 
 .kitchen-date span {
+  display: block;
   font-size: 0.75rem;
   font-weight: 500;
-  line-height: 1.6;
+  line-height: 1.9;
   white-space: nowrap;
   color: var(--card-muted);
 }
