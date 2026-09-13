@@ -163,7 +163,7 @@
 
 .order-detail__address h3 {
   margin: 0 0 0.4rem;
-  color: #2f5233;
+  color: var(--card-heading);
 }
 
 /* ---- Customer payment panel (order detail) ---- */
@@ -279,7 +279,8 @@
   flex-direction: column;
   gap: 0.2rem;
   font-size: 0.85rem;
-  background: #fff;
+  background: var(--card-2);
+  color: var(--card-text);
   border: 1px dashed var(--card-border);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
@@ -293,7 +294,8 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   font-size: 0.92rem;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--card-text);
 }
 .pay-claim__submit {
   align-self: flex-start;

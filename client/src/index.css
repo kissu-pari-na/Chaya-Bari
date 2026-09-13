@@ -202,22 +202,17 @@ a:hover {
   padding: 2rem 2.25rem;
 }
 
-/* ---------- Paper: light document sheet (invoices, receipts, order view).
-   Resets the surface tokens to light so descendants render on white. ---------- */
+/* ---------- Paper: document sheet (invoices, receipts, order view).
+   On screen it uses the same dark glass surface as the rest of the app;
+   when printed it flips to a clean white sheet (see @media print below). ---------- */
 .paper {
-  --card: #ffffff;
-  --card-2: #faf7ee;
-  --card-text: #23261d;
-  --card-muted: #6a6d5f;
-  --card-border: #e6e0d0;
-  --card-heading: #1f3516;
-  background: #fff;
+  background: var(--glass-bg);
   color: var(--card-text);
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
-  box-shadow: var(--shadow-lg);
-  color-scheme: light;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
 }
 
 .paper h1,
@@ -233,6 +228,23 @@ a:hover {
 
 .paper a {
   color: var(--link);
+}
+
+@media print {
+  .paper {
+    --card: #ffffff;
+    --card-2: #faf7ee;
+    --card-text: #23261d;
+    --card-muted: #6a6d5f;
+    --card-border: #e6e0d0;
+    --card-heading: #1f3516;
+    background: #fff;
+    color: var(--card-text);
+    border-color: var(--card-border);
+    box-shadow: none;
+    backdrop-filter: none;
+    color-scheme: light;
+  }
 }
 
 /* ---------- Buttons ---------- */
@@ -435,13 +447,15 @@ textarea::placeholder {
   color: #7c7f74;
 }
 
-/* Inside a light paper sheet, inputs stay light. */
-.paper input,
-.paper select,
-.paper textarea {
-  background: #fff;
-  color: var(--card-text);
-  border-color: var(--card-border);
+/* When a paper sheet is printed, its inputs render light too. */
+@media print {
+  .paper input,
+  .paper select,
+  .paper textarea {
+    background: #fff;
+    color: var(--card-text);
+    border-color: var(--card-border);
+  }
 }
 
 input:focus-visible,
