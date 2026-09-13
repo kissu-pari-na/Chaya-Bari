@@ -17,6 +17,9 @@ export interface Product {
   prepInfo: string | null
   categoryId: string | null
   categoryName: string | null
+  /// Average star rating (0 when no reviews) and how many reviews it has.
+  avgRating: number
+  reviewCount: number
 }
 
 export interface ProductInput {

@@ -159,6 +159,14 @@
   margin-top: 0.35rem;
 }
 
+.product-card__rating {
+  margin: 0.15rem 0 0.1rem;
+}
+
+.product-detail__rating {
+  margin: 0.15rem 0 0.35rem;
+}
+
 .product-card__was {
   color: var(--muted-cream);
   font-size: 0.8rem;

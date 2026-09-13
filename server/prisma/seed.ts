@@ -42,6 +42,7 @@ async function main() {
 
   await seedCatalog()
   await seedExpenseCategories()
+  await seedReviews()
 }
 
 // Default general-expense categories.
@@ -97,6 +98,47 @@ async function seedCatalog() {
     created += 1
   }
   console.log(`Seeded catalog: ${categories.length} categories, ${created} new products.`)
+}
+
+// Sample reviews so the home page shows real testimonials and product ratings
+// on a fresh install. Demo customers are created directly; in the running app a
+// review requires an order for the product, but the seed writes state directly.
+async function seedReviews() {
+  const demoCustomers: { name: string; email: string; comment: string; rating: number; product: string }[] = [
+    { name: 'সাদিয়া রহমান', email: 'sadia.demo@chayabari.local', rating: 5, product: 'বিরিয়ানি', comment: 'একদম ঘরের মতো স্বাদ! বিরিয়ানি অসাধারণ ছিল, সময়মতো পৌঁছেছে।' },
+    { name: 'তানভীর হাসান', email: 'tanvir.demo@chayabari.local', rating: 5, product: 'ডাব পুডিং', comment: 'তাজা, ঠান্ডা আর পরিমাণে ভালো। পরিবারের সবাই পছন্দ করেছে। আবার অর্ডার করব।' },
+    { name: 'নুসরাত জাহান', email: 'nusrat.demo@chayabari.local', rating: 4, product: 'পায়েস', comment: 'পায়েসটা দারুণ ছিল, খুব বেশি মিষ্টি নয়। মান নিয়ে কোনো অভিযোগ নেই।' },
+    { name: 'ইমরান কবির', email: 'imran.demo@chayabari.local', rating: 5, product: 'বিরিয়ানি', comment: 'মাংস একদম নরম, মশলা পারফেক্ট। ঢাকায় এত ভালো ঘরোয়া বিরিয়ানি কমই পাওয়া যায়।' },
+    { name: 'ফারিয়া আক্তার', email: 'faria.demo@chayabari.local', rating: 4, product: 'প্লেইন কেক', comment: 'কেকটা নরম আর তাজা ছিল। জন্মদিনের জন্য নিয়েছিলাম, সবাই প্রশংসা করেছে।' },
+  ]
+
+  let count = 0
+  for (const d of demoCustomers) {
+    const user = await prisma.user.upsert({
+      where: { email: d.email },
+      update: {},
+      create: {
+        name: d.name,
+        email: d.email,
+        role: 'CUSTOMER',
+        passwordHash: await bcrypt.hash('demo12345', 10),
+        customer: { create: {} },
+      },
+      include: { customer: true },
+    })
+    const customer = user.customer ?? (await prisma.customer.create({ data: { userId: user.id } }))
+
+    const product = await prisma.product.findFirst({ where: { name: d.product } })
+    if (!product) continue
+
+    await prisma.review.upsert({
+      where: { productId_customerId: { productId: product.id, customerId: customer.id } },
+      update: { rating: d.rating, comment: d.comment },
+      create: { productId: product.id, customerId: customer.id, rating: d.rating, comment: d.comment },
+    })
+    count += 1
+  }
+  console.log(`Seeded ${count} sample reviews.`)
 }
 
 main()

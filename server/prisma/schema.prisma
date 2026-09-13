@@ -37,6 +37,8 @@ model User {
   @@index([role])
 }
 
+// (Review model is defined in Phase 12 near the bottom of this schema.)
+
 /// Customer profile (1-1 with a User). Holds ordering-related info and, later,
 /// derived analytics.
 model Customer {
@@ -47,6 +49,7 @@ model Customer {
   updatedAt DateTime  @updatedAt
   addresses Address[]
   orders    Order[]
+  reviews   Review[]
 }
 
 // -----------------------------------------------------------------------------
@@ -89,6 +92,7 @@ model Product {
   priceHistory ProductPriceHistory[]
   orderItems   OrderItem[]
   recipe       Recipe?
+  reviews      Review[]
 
   @@index([categoryId])
   @@index([isActive, isAvailable])
@@ -539,4 +543,28 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 12 — Product reviews & ratings
+// -----------------------------------------------------------------------------
+
+/// A customer's star rating (1-5) and optional written feedback on a product.
+/// Exactly one review per customer per product — re-submitting updates it. Only
+/// customers who have ordered the product may review it (enforced in service).
+model Review {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// Whole-star rating from 1 to 5.
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([productId, customerId])
+  @@index([productId])
+  @@index([rating])
 }

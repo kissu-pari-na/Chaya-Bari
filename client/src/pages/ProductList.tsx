@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { fetchCategories, fetchProducts } from '../lib/products'
 import { formatBdt } from '../lib/format'
 import { useCart } from '../context/CartContext'
+import { RatingStars } from '../components/RatingStars'
 import type { Category, Product } from '../types/product'
 import './Products.css'
 
@@ -66,6 +67,11 @@ export function ProductList() {
             <div className="product-card__body">
               <h3>{p.name}</h3>
               {p.categoryName && <span className="product-card__cat">{p.categoryName}</span>}
+              {p.reviewCount > 0 && (
+                <div className="product-card__rating">
+                  <RatingStars rating={p.avgRating} count={p.reviewCount} size="sm" />
+                </div>
+              )}
               <div className="product-card__foot">
                 <span className="product-card__price">
                   {p.salePrice != null && p.salePrice < p.price ? (

@@ -12,6 +12,7 @@ import { adminExpenseRouter } from './modules/expenses/expense.routes.js'
 import { adminAnalyticsRouter } from './modules/analytics/analytics.routes.js'
 import { notificationRouter } from './modules/notifications/notification.routes.js'
 import { adminBusinessRouter, publicBusinessRouter } from './modules/business/business.routes.js'
+import { reviewRouter } from './modules/reviews/review.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
@@ -22,6 +23,10 @@ apiRouter.use('/auth', authRouter)
 // Products: public browsing under /api, admin management under /api/admin.
 apiRouter.use('/', publicProductRouter)
 apiRouter.use('/admin', adminProductRouter)
+
+// Product reviews & ratings. Public reads + customer submit (per-route auth),
+// so it is safe to mount alongside the public product routes.
+apiRouter.use('/', reviewRouter)
 
 // Public payment-account details. Must precede routers that mount at '/' with a
 // blanket authenticate (order/customer-payment), or their auth gate would 401

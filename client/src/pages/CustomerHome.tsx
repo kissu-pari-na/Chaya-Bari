@@ -4,8 +4,11 @@ import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { fetchProducts } from '../lib/products'
-import { formatBdt } from '../lib/format'
+import { fetchRatingSummary, fetchTopReviews } from '../lib/reviews'
+import { formatBdt, toBnDigits } from '../lib/format'
+import { RatingStars } from '../components/RatingStars'
 import type { Product } from '../types/product'
+import type { RatingSummary, Review } from '../types/review'
 import './Home.css'
 import './Products.css'
 
@@ -42,12 +45,24 @@ export function CustomerHome() {
   const { user } = useAuth()
   const { addItem } = useCart()
   const [featured, setFeatured] = useState<Product[]>([])
+  const [topReviews, setTopReviews] = useState<Review[]>([])
+  const [rating, setRating] = useState<RatingSummary | null>(null)
 
   useEffect(() => {
     fetchProducts()
       .then((p) => setFeatured(p.filter((x) => x.isAvailable).slice(0, 4)))
       .catch(() => setFeatured([]))
+    fetchTopReviews()
+      .then(setTopReviews)
+      .catch(() => setTopReviews([]))
+    fetchRatingSummary()
+      .then(setRating)
+      .catch(() => setRating(null))
   }, [])
+
+  // Real reviews when available; otherwise fall back to sample testimonials.
+  const showReviews = topReviews.length > 0
+  const hasRating = rating != null && rating.count > 0
 
   return (
     <div className="home">
@@ -81,7 +96,16 @@ export function CustomerHome() {
           <div className="hero__plate">
             🍲
             <div className="hero__rating">
-              ৪.৯ ★<span>৫০০+ রিভিউ</span>
+              {hasRating ? (
+                <>
+                  {toBnDigits(rating!.average.toFixed(1))} ★
+                  <span>{toBnDigits(rating!.count)}+ রিভিউ</span>
+                </>
+              ) : (
+                <>
+                  ৪.৯ ★<span>৫০০+ রিভিউ</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -136,6 +160,11 @@ export function CustomerHome() {
               <div className="product-card__body">
                 <h3>{p.name}</h3>
                 {p.categoryName && <span className="product-card__cat">{p.categoryName}</span>}
+                {p.reviewCount > 0 && (
+                  <div className="product-card__rating">
+                    <RatingStars rating={p.avgRating} count={p.reviewCount} size="sm" />
+                  </div>
+                )}
                 <div className="product-card__foot">
                   <span className="product-card__price">
                     {p.salePrice != null && p.salePrice < p.price ? (
@@ -187,24 +216,43 @@ export function CustomerHome() {
         </div>
       </div>
       <div className="reviews">
-        {REVIEWS.map((r) => (
-          <div key={r.name} className="review">
-            <div className="review__stars" aria-label={`${r.stars} star`}>
-              {'★'.repeat(r.stars)}
-              {'☆'.repeat(5 - r.stars)}
-            </div>
-            <p className="review__text">“{r.text}”</p>
-            <div className="review__who">
-              <span className="review__avatar" aria-hidden="true">
-                {r.name.charAt(0)}
-              </span>
-              <div>
-                <div className="review__name">{r.name}</div>
-                <div className="review__meta">{r.meta}</div>
+        {showReviews
+          ? topReviews.map((r) => (
+              <div key={r.id} className="review">
+                <div className="review__stars" aria-label={`${r.rating} star`}>
+                  {'★'.repeat(r.rating)}
+                  {'☆'.repeat(5 - r.rating)}
+                </div>
+                <p className="review__text">“{r.comment}”</p>
+                <div className="review__who">
+                  <span className="review__avatar" aria-hidden="true">
+                    {r.customerName.charAt(0)}
+                  </span>
+                  <div>
+                    <div className="review__name">{r.customerName}</div>
+                    <div className="review__meta">{r.productName ?? 'যাচাইকৃত ক্রেতা'}</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            ))
+          : REVIEWS.map((r) => (
+              <div key={r.name} className="review">
+                <div className="review__stars" aria-label={`${r.stars} star`}>
+                  {'★'.repeat(r.stars)}
+                  {'☆'.repeat(5 - r.stars)}
+                </div>
+                <p className="review__text">“{r.text}”</p>
+                <div className="review__who">
+                  <span className="review__avatar" aria-hidden="true">
+                    {r.name.charAt(0)}
+                  </span>
+                  <div>
+                    <div className="review__name">{r.name}</div>
+                    <div className="review__meta">{r.meta}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
       </div>
 
       {/* ---------- Footer ---------- */}

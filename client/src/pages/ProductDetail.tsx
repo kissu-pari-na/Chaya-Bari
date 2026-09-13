@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchProduct } from '../lib/products'
 import { formatBdt } from '../lib/format'
 import { useCart } from '../context/CartContext'
+import { RatingStars } from '../components/RatingStars'
+import { ProductReviews } from '../components/ProductReviews'
 import type { Product } from '../types/product'
 import './Products.css'
 
@@ -14,6 +16,13 @@ export function ProductDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
+
+  const loadProduct = useCallback(() => {
+    if (!id) return Promise.resolve()
+    return fetchProduct(id)
+      .then((p) => setProduct(p))
+      .catch(() => setError('পণ্যটি পাওয়া যায়নি'))
+  }, [id])
 
   useEffect(() => {
     if (!id) return
@@ -51,6 +60,11 @@ export function ProductDetail() {
         <div className="product-detail__info">
           <h1>{product.name}</h1>
           {product.categoryName && <span className="product-card__cat">{product.categoryName}</span>}
+          {product.reviewCount > 0 && (
+            <div className="product-detail__rating">
+              <RatingStars rating={product.avgRating} count={product.reviewCount} />
+            </div>
+          )}
           <p className="product-detail__price">
             {product.salePrice != null && product.salePrice < product.price ? (
               <>
@@ -85,6 +99,8 @@ export function ProductDetail() {
           )}
         </div>
       </div>
+
+      <ProductReviews productId={product.id} onRatingChanged={loadProduct} />
     </section>
   )
 }
