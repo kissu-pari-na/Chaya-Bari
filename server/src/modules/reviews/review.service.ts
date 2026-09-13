@@ -195,30 +195,28 @@ export async function submitOrderReviews(
     }
   }
 
-  // Build the set of (productId | null) targets to write.
+  // Reviews are immutable once submitted: reject any target already reviewed.
+  const reviewedKeys = new Set(order.reviews.map((r) => r.productId ?? OVERALL_KEY))
   const targets: { productId: string | null; rating: number; comment: string | null }[] = []
   for (const item of input.items ?? []) {
+    if (reviewedKeys.has(item.productId)) {
+      throw HttpError.badRequest('This product has already been reviewed for this order')
+    }
     targets.push({ productId: item.productId, rating: item.rating, comment: item.comment ?? null })
   }
   if (input.overall) {
+    if (reviewedKeys.has(OVERALL_KEY)) {
+      throw HttpError.badRequest('This order has already been reviewed overall')
+    }
     targets.push({ productId: null, rating: input.overall.rating, comment: input.overall.comment ?? null })
   }
 
-  // Upsert each target by (orderId, productId). Done as find-then-write because
-  // Prisma cannot target a null value through the compound unique.
+  // Create each target once — never update (reviews are final).
   await prisma.$transaction(async (tx) => {
     for (const t of targets) {
-      const existing = await tx.review.findFirst({
-        where: { orderId, productId: t.productId },
-        select: { id: true },
+      await tx.review.create({
+        data: { orderId, customerId, productId: t.productId, rating: t.rating, comment: t.comment },
       })
-      if (existing) {
-        await tx.review.update({ where: { id: existing.id }, data: { rating: t.rating, comment: t.comment } })
-      } else {
-        await tx.review.create({
-          data: { orderId, customerId, productId: t.productId, rating: t.rating, comment: t.comment },
-        })
-      }
     }
   })
 
@@ -228,3 +226,6 @@ export async function submitOrderReviews(
 function round1(n: number): number {
   return Math.round(n * 10) / 10
 }
+
+// Sentinel key for the order's overall (null-product) review.
+const OVERALL_KEY = '__overall__'

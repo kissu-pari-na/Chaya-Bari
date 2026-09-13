@@ -442,6 +442,15 @@ textarea {
   border-radius: var(--radius-sm);
 }
 
+/* The native <select> popup renders its own list; give the options a SOLID
+   dark background + legible text so they aren't light-on-light. Uses opaque
+   colors (a translucent background would blend with the OS white popup). */
+select option,
+select optgroup {
+  background-color: #151a12;
+  color: #f5f1e7;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: #7c7f74;

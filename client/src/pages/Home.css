@@ -112,7 +112,7 @@
 
 .hero__stage {
   position: relative;
-  width: min(360px, 100%);
+  width: min(400px, 100%);
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(circle at 38% 32%, #2a3420, #10140c 72%);
@@ -186,28 +186,30 @@
   z-index: 4;
 }
 
-/* The next three orbit around the ring; each floats on its own rhythm. */
+/* The next three orbit around the ring; each floats on its own rhythm. The top
+   orb's caption sits ABOVE its disc so it never runs into the centre orb. */
 .hero__orb--1 {
-  top: -5%;
+  top: 0;
   left: 50%;
   margin-left: -59px;
+  flex-direction: column-reverse;
   animation-delay: 0s;
 }
 .hero__orb--2 {
-  bottom: -1%;
-  left: -9%;
+  bottom: -3%;
+  left: -10%;
   animation-delay: 0.9s;
 }
 .hero__orb--3 {
-  bottom: -1%;
-  right: -9%;
+  bottom: -3%;
+  right: -10%;
   animation-delay: 1.8s;
 }
 
 .hero__orb-disc {
   position: relative;
-  width: 92px;
-  height: 92px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   overflow: visible;
   display: flex;
@@ -222,8 +224,8 @@
   width: 130px;
 }
 .hero__orb--center .hero__orb-disc {
-  width: 116px;
-  height: 116px;
+  width: 108px;
+  height: 108px;
   border-color: var(--accent-bright);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(154, 203, 69, 0.16);
 }

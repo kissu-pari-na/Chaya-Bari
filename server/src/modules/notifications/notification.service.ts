@@ -177,7 +177,8 @@ export async function notifyPaymentVerified(customerId: string, verified: boolea
 
 export async function listForUser(userId: string): Promise<{ notifications: PublicNotification[]; unread: number }> {
   const [notifications, unread] = await Promise.all([
-    prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 }),
+    // Panel shows only the latest few; the unread badge still counts them all.
+    prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 7 }),
     prisma.notification.count({ where: { userId, read: false } }),
   ])
   return { notifications: notifications.map(toPublic), unread }
