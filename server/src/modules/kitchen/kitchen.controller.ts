@@ -14,6 +14,7 @@ export async function production(req: Request, res: Response) {
   res.json({ production: await kitchenService.getProductionDay(date) })
 }
 
-export async function updateStatus(req: Request, res: Response) {
-  res.json({ item: await kitchenService.updateStatus(req.body) })
+export async function setStage(req: Request, res: Response) {
+  const order = await kitchenService.setOrderStage(req.params.id, req.body.status)
+  res.json({ order })
 }

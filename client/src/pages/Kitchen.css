@@ -1,7 +1,8 @@
 .kitchen h1 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
 }
 
+/* ---- Date tabs ---- */
 .kitchen-dates {
   display: flex;
   gap: 0.6rem;
@@ -14,156 +15,265 @@
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
-  border: 1px solid #d6cba9;
-  background: #fff;
-  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  border-radius: var(--radius-md);
   padding: 0.6rem 1rem;
   cursor: pointer;
   font-size: 0.95rem;
-  color: #4a4a4a;
+  font-weight: 600;
+  color: var(--card-text);
+  font-family: var(--font-body);
 }
 
 .kitchen-date span {
   font-size: 0.75rem;
-  color: #8a7d5c;
+  font-weight: 500;
+  color: var(--card-muted);
 }
 
 .kitchen-date--active {
-  border-color: #2f5233;
-  background: #2f5233;
-  color: #fff;
+  border-color: var(--green-deep);
+  background: var(--green-deep);
+  color: var(--cream);
 }
 
 .kitchen-date--active span {
-  color: #dbe7db;
+  color: #cfe0c2;
 }
 
-.kitchen-summary {
+/* ---- Cook summary ---- */
+.cook-summary {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-card);
+}
+
+.cook-summary__head {
   display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.kitchen-stat {
-  flex: 1;
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 12px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
+.cook-summary__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--card-heading);
 }
 
-.kitchen-stat__value {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #2f5233;
-  line-height: 1;
-}
-
-.kitchen-stat__label {
-  font-size: 0.85rem;
-  color: #6b6b6b;
-}
-
-.kitchen-list {
-  display: flex;
-  flex-direction: column;
+.cook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 0.6rem;
 }
 
-.kitchen-item {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 1rem;
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-left: 6px solid #cbb98a;
-  border-radius: 10px;
-  padding: 0.85rem 1rem;
-}
-
-.kitchen-item--preparing { border-left-color: #d99a1a; }
-.kitchen-item--prepared { border-left-color: #3b82c4; }
-.kitchen-item--packed { border-left-color: #2f5233; background: #f5faf5; }
-
-.kitchen-item__info {
+.cook-line {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--saffron-500);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.8rem;
 }
 
-.kitchen-item__name {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #262626;
+.cook-line--done {
+  border-left-color: var(--success);
+  opacity: 0.72;
 }
 
-.kitchen-item__meta {
-  font-size: 0.8rem;
-  color: #8a7d5c;
-}
-
-.kitchen-item__qty {
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: #2f5233;
-  min-width: 48px;
-  text-align: right;
-}
-
-.kitchen-item__status {
-  min-width: 108px;
-  padding: 0.7rem 0.9rem;
-  border: none;
-  border-radius: 8px;
-  background: #2f5233;
-  color: #fff;
-  font-size: 0.95rem;
+.cook-line__name {
   font-weight: 600;
-  cursor: pointer;
+  color: var(--card-text);
 }
 
-.kitchen-item__status:disabled {
-  background: #cbb98a;
-  cursor: not-allowed;
+.cook-line__nums {
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
-.kitchen-item--packed .kitchen-item__status {
-  background: #2f5233;
+.cook-line__nums strong {
+  font-size: 1.15rem;
+  color: var(--terra-600);
 }
 
-.kitchen-notes {
-  margin-top: 1.5rem;
+.cook-line__ok {
+  color: var(--success);
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
-.kitchen-notes h2 {
-  font-size: 1.1rem;
-  color: #2f5233;
+/* ---- KDS board ---- */
+.kds {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  align-items: start;
 }
 
-.kitchen-note {
-  background: #fff8e6;
-  border: 1px solid #f0e2b8;
-  border-radius: 8px;
-  padding: 0.6rem 0.85rem;
-  margin-bottom: 0.5rem;
+.kds-col {
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-height: 120px;
+}
+
+.kds-col__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.kds-col--confirmed .kds-col__head {
+  background: var(--saffron-600);
+}
+.kds-col--preparing .kds-col__head {
+  background: #c67a1e;
+}
+.kds-col--packed .kds-col__head {
+  background: var(--green-deep);
+}
+
+.kds-col__count {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-pill);
+  min-width: 24px;
+  text-align: center;
+  padding: 0 0.5rem;
   font-size: 0.9rem;
 }
 
-@media (max-width: 520px) {
-  .kitchen-item {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      'info qty'
-      'status status';
-    gap: 0.6rem;
+.kds-col__body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.kds-col__empty {
+  color: var(--card-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 0.75rem 0.25rem;
+  margin: 0;
+}
+
+/* ---- Order card ---- */
+.kds-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.kds-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.kds-card__num {
+  font-weight: 700;
+  color: var(--card-heading);
+  font-size: 0.95rem;
+}
+
+.kds-card__who {
+  font-size: 0.8rem;
+  color: var(--card-muted);
+  text-align: right;
+}
+
+.kds-card__items {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.kds-card__items li {
+  font-size: 1rem;
+  color: var(--card-text);
+}
+
+.kds-qty {
+  display: inline-block;
+  min-width: 2ch;
+  font-weight: 800;
+  color: var(--terra-600);
+}
+
+.kds-card__note {
+  background: #fff8e6;
+  border: 1px solid #f0e2b8;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: #6b5a2a;
+}
+
+.kds-card__actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.kds-btn {
+  flex: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.5rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: filter 0.12s ease, transform 0.12s ease;
+}
+
+.kds-btn:active {
+  transform: translateY(1px);
+}
+
+.kds-btn--go {
+  background: var(--green-deep);
+  color: var(--cream);
+}
+
+.kds-btn--go:hover {
+  filter: brightness(1.1);
+}
+
+.kds-btn--back {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--card-muted);
+}
+
+.kds-btn--back:hover {
+  background: var(--card-2);
+}
+
+@media (max-width: 760px) {
+  .kds {
+    grid-template-columns: 1fr;
   }
-  .kitchen-item__info { grid-area: info; }
-  .kitchen-item__qty { grid-area: qty; }
-  .kitchen-item__status { grid-area: status; width: 100%; }
 }

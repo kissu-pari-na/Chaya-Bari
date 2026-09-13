@@ -1,30 +1,43 @@
-import type { KitchenStatus, OrderStatus } from '@prisma/client'
+import type { OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
-import type { UpdateKitchenStatusInput } from './kitchen.schemas.js'
+import { HttpError } from '../../utils/httpError.js'
+import { notifyOrderStatus } from '../notifications/notification.service.js'
 
-// Orders counted toward production: confirmed by the admin and not cancelled.
-const PRODUCTION_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY']
+/// Statuses a confirmed order passes through while it is the kitchen's
+/// responsibility. Once dispatched (OUT_FOR_DELIVERY) it leaves the board.
+export const KITCHEN_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'PACKED']
 
-export interface ProductionItem {
+/// Progress order within the kitchen (for forward/backward comparisons).
+const STAGE_INDEX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1, PACKED: 2 }
+
+export interface CookLine {
   productId: string | null
   productName: string
-  quantity: number
-  orderCount: number
-  status: KitchenStatus
+  total: number
+  packed: number
+  remaining: number
 }
 
-export interface ProductionNote {
+export interface KitchenOrderItem {
+  productName: string
+  quantity: number
+}
+
+export interface KitchenOrder {
+  id: string
   orderNumber: string
   recipientName: string
-  note: string
+  status: OrderStatus
+  createdAt: string
+  note: string | null
+  items: KitchenOrderItem[]
 }
 
 export interface ProductionDay {
   date: string
-  totalOrders: number
-  totalItems: number
-  items: ProductionItem[]
-  notes: ProductionNote[]
+  totals: { orders: number; toCook: number; preparing: number; packed: number; items: number }
+  cook: CookLine[]
+  orders: KitchenOrder[]
 }
 
 function toUtcDate(dateStr: string): Date {
@@ -32,103 +45,113 @@ function toUtcDate(dateStr: string): Date {
   return new Date(Date.UTC(y, m - 1, d))
 }
 
-/// Distinct upcoming fulfillment dates (today onward) that have confirmed
-/// orders, so the kitchen can pick a production day.
-export async function listProductionDates(): Promise<{ date: string; orderCount: number }[]> {
+/// Upcoming fulfillment dates (today onward) that have orders still in the
+/// kitchen, with counts for the day tabs.
+export async function listProductionDates(): Promise<{ date: string; orderCount: number; toCook: number }[]> {
   const today = new Date()
   const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
 
-  const orders = await prisma.order.groupBy({
-    by: ['fulfillmentDate'],
-    where: { status: { in: PRODUCTION_STATUSES }, fulfillmentDate: { gte: todayUtc } },
-    _count: { _all: true },
+  const orders = await prisma.order.findMany({
+    where: { status: { in: KITCHEN_STATUSES }, fulfillmentDate: { gte: todayUtc } },
+    select: { fulfillmentDate: true, status: true },
     orderBy: { fulfillmentDate: 'asc' },
   })
 
-  return orders.map((o) => ({
-    date: o.fulfillmentDate.toISOString().slice(0, 10),
-    orderCount: o._count._all,
-  }))
+  const byDate = new Map<string, { orderCount: number; toCook: number }>()
+  for (const o of orders) {
+    const key = o.fulfillmentDate.toISOString().slice(0, 10)
+    const entry = byDate.get(key) ?? { orderCount: 0, toCook: 0 }
+    entry.orderCount += 1
+    if (o.status !== 'PACKED') entry.toCook += 1
+    byDate.set(key, entry)
+  }
+  return [...byDate.entries()].map(([date, v]) => ({ date, ...v }))
 }
 
-/// Aggregated production requirement for one fulfillment day.
+/// The production board for one fulfillment day: a per-item cook summary plus
+/// each order as its own card, tracked independently.
 export async function getProductionDay(dateStr: string): Promise<ProductionDay> {
   const date = toUtcDate(dateStr)
-
   const orders = await prisma.order.findMany({
-    where: { fulfillmentDate: date, status: { in: PRODUCTION_STATUSES } },
+    where: { fulfillmentDate: date, status: { in: KITCHEN_STATUSES } },
     include: { items: true },
+    orderBy: { createdAt: 'asc' },
   })
 
-  // Aggregate quantity + distinct order count per product.
-  const byProduct = new Map<
-    string,
-    { productId: string | null; productName: string; quantity: number; orders: Set<string> }
-  >()
+  // Per-item cook summary. `packed` counts quantities from orders already
+  // packed, so `remaining` = still to prepare — and it updates correctly when a
+  // new order adds more of the same item.
+  const cookByProduct = new Map<string, CookLine>()
   for (const order of orders) {
+    const done = order.status === 'PACKED'
     for (const item of order.items) {
       const key = item.productId ?? `name:${item.productName}`
-      const entry = byProduct.get(key) ?? {
+      const line = cookByProduct.get(key) ?? {
         productId: item.productId,
         productName: item.productName,
-        quantity: 0,
-        orders: new Set<string>(),
+        total: 0,
+        packed: 0,
+        remaining: 0,
       }
-      entry.quantity += item.quantity
-      entry.orders.add(order.id)
-      byProduct.set(key, entry)
+      line.total += item.quantity
+      if (done) line.packed += item.quantity
+      cookByProduct.set(key, line)
     }
   }
+  const cook = [...cookByProduct.values()]
+    .map((l) => ({ ...l, remaining: l.total - l.packed }))
+    .sort((a, b) => b.remaining - a.remaining || b.total - a.total)
 
-  // Existing kitchen statuses for this day.
-  const tasks = await prisma.kitchenTask.findMany({ where: { fulfillmentDate: date } })
-  const statusByProduct = new Map(tasks.map((t) => [t.productId ?? `name:${t.productName}`, t.status]))
-
-  const items: ProductionItem[] = [...byProduct.entries()]
-    .map(([key, v]) => ({
-      productId: v.productId,
-      productName: v.productName,
-      quantity: v.quantity,
-      orderCount: v.orders.size,
-      status: statusByProduct.get(key) ?? ('PENDING' as KitchenStatus),
+  const kitchenOrders: KitchenOrder[] = orders
+    .map((o) => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      recipientName: o.recipientName,
+      status: o.status,
+      createdAt: o.createdAt.toISOString(),
+      note: o.notes,
+      items: o.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
     }))
-    .sort((a, b) => b.quantity - a.quantity)
+    .sort((a, b) => STAGE_INDEX[a.status] - STAGE_INDEX[b.status] || a.createdAt.localeCompare(b.createdAt))
 
-  const notes: ProductionNote[] = orders
-    .filter((o) => o.notes && o.notes.trim())
-    .map((o) => ({ orderNumber: o.orderNumber, recipientName: o.recipientName, note: o.notes! }))
-
-  return {
-    date: dateStr,
-    totalOrders: orders.length,
-    totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
-    items,
-    notes,
+  const totals = {
+    orders: orders.length,
+    toCook: orders.filter((o) => o.status === 'CONFIRMED').length,
+    preparing: orders.filter((o) => o.status === 'PREPARING').length,
+    packed: orders.filter((o) => o.status === 'PACKED').length,
+    items: cook.reduce((s, l) => s + l.total, 0),
   }
+
+  return { date: dateStr, totals, cook, orders: kitchenOrders }
 }
 
-/// Upserts the kitchen status for one product on one day.
-export async function updateStatus(input: UpdateKitchenStatusInput): Promise<ProductionItem> {
-  const date = toUtcDate(input.date)
-  const product = await prisma.product.findUnique({ where: { id: input.productId } })
-  const productName = product?.name ?? 'Unknown'
+/// Advances (or corrects) one order's kitchen stage. Only orders currently in
+/// the kitchen can be moved, and only among the kitchen stages.
+export async function setOrderStage(orderId: string, target: OrderStatus): Promise<KitchenOrder> {
+  if (!KITCHEN_STATUSES.includes(target)) {
+    throw HttpError.badRequest('Invalid kitchen stage')
+  }
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })
+  if (!order) throw HttpError.notFound('Order not found')
+  if (!KITCHEN_STATUSES.includes(order.status)) {
+    throw HttpError.badRequest(`Order is not in the kitchen (status: ${order.status})`)
+  }
 
-  await prisma.kitchenTask.upsert({
-    where: { fulfillmentDate_productId: { fulfillmentDate: date, productId: input.productId } },
-    update: { status: input.status },
-    create: { fulfillmentDate: date, productId: input.productId, productName, status: input.status },
-  })
-
-  // Return the refreshed production line for this product.
-  const day = await getProductionDay(input.date)
-  const item = day.items.find((i) => i.productId === input.productId)
-  return (
-    item ?? {
-      productId: input.productId,
-      productName,
-      quantity: 0,
-      orderCount: 0,
-      status: input.status,
+  if (order.status !== target) {
+    await prisma.order.update({ where: { id: orderId }, data: { status: target } })
+    // Notify the customer only on forward progress (not on corrections back).
+    if (STAGE_INDEX[target] > STAGE_INDEX[order.status]) {
+      await notifyOrderStatus(order.customerId, target, order.orderNumber, order.id)
     }
-  )
+  }
+
+  return {
+    id: order.id,
+    orderNumber: order.orderNumber,
+    recipientName: order.recipientName,
+    status: target,
+    createdAt: order.createdAt.toISOString(),
+    note: order.notes,
+    items: order.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
+  }
 }
