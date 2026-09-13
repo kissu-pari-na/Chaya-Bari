@@ -7,7 +7,7 @@ import { fetchProducts } from '../lib/products'
 import { fetchRatingSummary, fetchTopReviews } from '../lib/reviews'
 import { formatBdt, toBnDigits } from '../lib/format'
 import { RatingStars } from '../components/RatingStars'
-import type { Product } from '../types/product'
+import { effectivePrice, type Product } from '../types/product'
 import type { RatingSummary, Review } from '../types/review'
 import './Home.css'
 import './Products.css'
@@ -18,6 +18,23 @@ const TRUST = [
   { icon: '🛵', title: 'দ্রুত ডেলিভারি', text: 'আপনার দুয়ারে নির্ভরযোগ্য পৌঁছানো।' },
   { icon: '🧼', title: 'স্বাস্থ্যসম্মত', text: 'পরিচ্ছন্ন রান্নাঘর, নিরাপদ প্যাকেজিং।' },
 ]
+
+// Fallback food emoji for a product with no uploaded image yet — matched to the
+// product name/category so the placeholder still looks sensible.
+function dishEmoji(p: Product, index: number): string {
+  const hay = `${p.name} ${p.categoryName ?? ''}`
+  const rules: [RegExp, string][] = [
+    [/বিরিয়ানি|ভাত|পোলাও|খিচুড়ি/, '🍛'],
+    [/কেক/, '🍰'],
+    [/পুডিং|পায়েস|মিষ্টি|মিষ্টান্ন|ফিরনি/, '🍮'],
+    [/সিঙ্গারা|সমুচা|পুরি|স্ন্যাক/, '🥟'],
+    [/বান|রুটি|পরোটা|নান/, '🥯'],
+    [/মাংস|গরু|মুরগি|কালা ভুনা|রোস্ট/, '🍖'],
+    [/চা|কফি|জুস|শরবত/, '🥤'],
+  ]
+  const hit = rules.find(([re]) => re.test(hay))
+  return hit ? hit[1] : ['🍲', '🥘', '🍽️'][index % 3]
+}
 
 const REVIEWS = [
   {
@@ -44,14 +61,14 @@ export function CustomerHome() {
   const { profile } = useBusinessProfile()
   const { user } = useAuth()
   const { addItem } = useCart()
-  const [featured, setFeatured] = useState<Product[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [topReviews, setTopReviews] = useState<Review[]>([])
   const [rating, setRating] = useState<RatingSummary | null>(null)
 
   useEffect(() => {
     fetchProducts()
-      .then((p) => setFeatured(p.filter((x) => x.isAvailable).slice(0, 4)))
-      .catch(() => setFeatured([]))
+      .then(setProducts)
+      .catch(() => setProducts([]))
     fetchTopReviews()
       .then(setTopReviews)
       .catch(() => setTopReviews([]))
@@ -59,6 +76,14 @@ export function CustomerHome() {
       .then(setRating)
       .catch(() => setRating(null))
   }, [])
+
+  const available = products.filter((p) => p.isAvailable)
+  const featured = available.slice(0, 4)
+  // Top 3 by rating (then review count) for the animated hero showcase; falls
+  // back to the first available products when nothing is rated yet.
+  const topProducts = [...available]
+    .sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount)
+    .slice(0, 3)
 
   // Real reviews when available; otherwise fall back to sample testimonials.
   const showReviews = topReviews.length > 0
@@ -92,9 +117,44 @@ export function CustomerHome() {
             </p>
           )}
         </div>
-        <div className="hero__art" aria-hidden="true">
-          <div className="hero__plate">
-            🍲
+        <div className="hero__art">
+          <div className="hero__stage">
+            <span className="hero__ring hero__ring--outer" aria-hidden="true" />
+            <span className="hero__ring hero__ring--inner" aria-hidden="true" />
+            <span className="hero__glow" aria-hidden="true" />
+            <span className="hero__core" aria-hidden="true">
+              🍲
+            </span>
+
+            {topProducts.map((p, i) => (
+              <Link
+                key={p.id}
+                to={`/products/${p.id}`}
+                className={`hero__orb hero__orb--${i + 1}`}
+                aria-label={`${p.name} — ${formatBdt(effectivePrice(p))}`}
+              >
+                <span className="hero__orb-disc">
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt="" />
+                  ) : (
+                    <span className="hero__orb-emoji" aria-hidden="true">
+                      {dishEmoji(p, i)}
+                    </span>
+                  )}
+                  {i === 0 && <span className="hero__orb-crown" aria-hidden="true">👑</span>}
+                </span>
+                <span className="hero__orb-cap">
+                  <span className="hero__orb-name">{p.name}</span>
+                  <span className="hero__orb-price">
+                    {formatBdt(effectivePrice(p))}
+                    {p.reviewCount > 0 && (
+                      <span className="hero__orb-star"> · {toBnDigits(p.avgRating.toFixed(1))}★</span>
+                    )}
+                  </span>
+                </span>
+              </Link>
+            ))}
+
             <div className="hero__rating">
               {hasRating ? (
                 <>
