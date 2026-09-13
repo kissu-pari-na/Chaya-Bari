@@ -1,10 +1,21 @@
 import { z } from 'zod'
 
-/// The stages the kitchen can move an order through.
-export const kitchenStages = ['CONFIRMED', 'PREPARING', 'PACKED'] as const
+export const kitchenStages = ['TO_COOK', 'PREPARING', 'READY'] as const
 
-export const setOrderStageSchema = z.object({
-  status: z.enum(kitchenStages),
+const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+
+/// Move a single order line to an adjacent stage.
+export const moveLineSchema = z.object({
+  stage: z.enum(kitchenStages),
 })
 
-export type SetOrderStageInput = z.infer<typeof setOrderStageSchema>
+/// Move all lines of a product on a day from one stage to an adjacent one.
+export const bulkMoveSchema = z.object({
+  date: dateString,
+  productId: z.string().cuid().nullable(),
+  from: z.enum(kitchenStages),
+  to: z.enum(kitchenStages),
+})
+
+export type MoveLineInput = z.infer<typeof moveLineSchema>
+export type BulkMoveInput = z.infer<typeof bulkMoveSchema>

@@ -1,33 +1,41 @@
-/// Stages the kitchen moves an order through (a subset of the order status).
-export type KitchenStage = 'CONFIRMED' | 'PREPARING' | 'PACKED'
+export type KitchenStage = 'TO_COOK' | 'PREPARING' | 'READY'
+export type OrderDerivedStatus = 'CONFIRMED' | 'PREPARING' | 'PACKED'
 
-export interface CookLine {
-  productId: string | null
-  productName: string
-  total: number
-  packed: number
-  remaining: number
+export interface StageLineRef {
+  lineId: string
+  orderId: string
+  orderNumber: string
+  recipientName: string
+  quantity: number
 }
 
-export interface KitchenOrderItem {
+export interface ProductControl {
+  productId: string | null
+  productName: string
+  stages: Record<KitchenStage, { qty: number; lines: StageLineRef[] }>
+}
+
+export interface OrderLine {
+  id: string
   productName: string
   quantity: number
+  stage: KitchenStage
 }
 
 export interface KitchenOrder {
   id: string
   orderNumber: string
   recipientName: string
-  status: KitchenStage
+  status: OrderDerivedStatus
   createdAt: string
   note: string | null
-  items: KitchenOrderItem[]
+  lines: OrderLine[]
 }
 
 export interface ProductionDay {
   date: string
-  totals: { orders: number; toCook: number; preparing: number; packed: number; items: number }
-  cook: CookLine[]
+  totals: { orders: number; items: number; toCook: number; preparing: number; ready: number }
+  products: ProductControl[]
   orders: KitchenOrder[]
 }
 

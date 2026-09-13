@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient'
-import type { KitchenOrder, KitchenStage, ProductionDate, ProductionDay } from '../types/kitchen'
+import type { KitchenStage, ProductionDate, ProductionDay } from '../types/kitchen'
 
 export function fetchProductionDates() {
   return apiRequest<{ dates: ProductionDate[] }>('/kitchen/dates', { auth: true }).then((r) => r.dates)
@@ -11,11 +11,20 @@ export function fetchProduction(date: string) {
   )
 }
 
-/// Move one order to a kitchen stage (CONFIRMED / PREPARING / PACKED).
-export function setOrderStage(orderId: string, status: KitchenStage) {
-  return apiRequest<{ order: KitchenOrder }>(`/kitchen/orders/${orderId}/stage`, {
+/// Move one order line (a product within one order) to an adjacent stage.
+export function moveLine(lineId: string, stage: KitchenStage) {
+  return apiRequest<{ production: ProductionDay }>(`/kitchen/lines/${lineId}/stage`, {
     method: 'PATCH',
-    body: { status },
+    body: { stage },
     auth: true,
-  }).then((r) => r.order)
+  }).then((r) => r.production)
+}
+
+/// Move all lines of a product (on a day) from one stage to an adjacent one.
+export function moveProduct(date: string, productId: string | null, from: KitchenStage, to: KitchenStage) {
+  return apiRequest<{ production: ProductionDay }>('/kitchen/products/move', {
+    method: 'POST',
+    body: { date, productId, from, to },
+    auth: true,
+  }).then((r) => r.production)
 }

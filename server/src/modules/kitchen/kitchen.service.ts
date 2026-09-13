@@ -1,26 +1,43 @@
-import type { OrderStatus } from '@prisma/client'
+import type { KitchenLineStage, OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
-/// Statuses a confirmed order passes through while it is the kitchen's
-/// responsibility. Once dispatched (OUT_FOR_DELIVERY) it leaves the board.
+/// Orders that are the kitchen's responsibility (CONFIRMED..PACKED).
 export const KITCHEN_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'PACKED']
 
-/// Progress order within the kitchen (for forward/backward comparisons).
-const STAGE_INDEX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1, PACKED: 2 }
+export const STAGES: KitchenLineStage[] = ['TO_COOK', 'PREPARING', 'READY']
+const STAGE_IDX: Record<KitchenLineStage, number> = { TO_COOK: 0, PREPARING: 1, READY: 2 }
+const ORDER_IDX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1, PACKED: 2 }
 
-export interface CookLine {
-  productId: string | null
-  productName: string
-  total: number
-  packed: number
-  remaining: number
+/// Derives an order's overall status from its line stages.
+function deriveStatus(stages: KitchenLineStage[]): OrderStatus {
+  if (stages.length > 0 && stages.every((s) => s === 'READY')) return 'PACKED'
+  if (stages.every((s) => s === 'TO_COOK')) return 'CONFIRMED'
+  return 'PREPARING'
 }
 
-export interface KitchenOrderItem {
+// ---- Payload types ----
+
+export interface StageLineRef {
+  lineId: string
+  orderId: string
+  orderNumber: string
+  recipientName: string
+  quantity: number
+}
+
+export interface ProductControl {
+  productId: string | null
+  productName: string
+  stages: Record<KitchenLineStage, { qty: number; lines: StageLineRef[] }>
+}
+
+export interface OrderLine {
+  id: string
   productName: string
   quantity: number
+  stage: KitchenLineStage
 }
 
 export interface KitchenOrder {
@@ -30,13 +47,13 @@ export interface KitchenOrder {
   status: OrderStatus
   createdAt: string
   note: string | null
-  items: KitchenOrderItem[]
+  lines: OrderLine[]
 }
 
 export interface ProductionDay {
   date: string
-  totals: { orders: number; toCook: number; preparing: number; packed: number; items: number }
-  cook: CookLine[]
+  totals: { orders: number; items: number; toCook: number; preparing: number; ready: number }
+  products: ProductControl[]
   orders: KitchenOrder[]
 }
 
@@ -45,31 +62,42 @@ function toUtcDate(dateStr: string): Date {
   return new Date(Date.UTC(y, m - 1, d))
 }
 
-/// Upcoming fulfillment dates (today onward) that have orders still in the
-/// kitchen, with counts for the day tabs.
+// ---- Order status sync ----
+
+/// Recomputes an order's status from its line stages; updates and (on forward
+/// progress only) notifies the customer.
+async function syncOrderStatus(orderId: string): Promise<void> {
+  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })
+  if (!order || !KITCHEN_STATUSES.includes(order.status)) return
+  const next = deriveStatus(order.items.map((i) => i.kitchenStage))
+  if (next === order.status) return
+  await prisma.order.update({ where: { id: orderId }, data: { status: next } })
+  if (ORDER_IDX[next] > ORDER_IDX[order.status]) {
+    await notifyOrderStatus(order.customerId, next, order.orderNumber, order.id)
+  }
+}
+
+// ---- Reads ----
+
 export async function listProductionDates(): Promise<{ date: string; orderCount: number; toCook: number }[]> {
   const today = new Date()
   const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
-
   const orders = await prisma.order.findMany({
     where: { status: { in: KITCHEN_STATUSES }, fulfillmentDate: { gte: todayUtc } },
     select: { fulfillmentDate: true, status: true },
     orderBy: { fulfillmentDate: 'asc' },
   })
-
   const byDate = new Map<string, { orderCount: number; toCook: number }>()
   for (const o of orders) {
     const key = o.fulfillmentDate.toISOString().slice(0, 10)
-    const entry = byDate.get(key) ?? { orderCount: 0, toCook: 0 }
-    entry.orderCount += 1
-    if (o.status !== 'PACKED') entry.toCook += 1
-    byDate.set(key, entry)
+    const e = byDate.get(key) ?? { orderCount: 0, toCook: 0 }
+    e.orderCount += 1
+    if (o.status !== 'PACKED') e.toCook += 1
+    byDate.set(key, e)
   }
   return [...byDate.entries()].map(([date, v]) => ({ date, ...v }))
 }
 
-/// The production board for one fulfillment day: a per-item cook summary plus
-/// each order as its own card, tracked independently.
 export async function getProductionDay(dateStr: string): Promise<ProductionDay> {
   const date = toUtcDate(dateStr)
   const orders = await prisma.order.findMany({
@@ -78,80 +106,111 @@ export async function getProductionDay(dateStr: string): Promise<ProductionDay> 
     orderBy: { createdAt: 'asc' },
   })
 
-  // Per-item cook summary. `packed` counts quantities from orders already
-  // packed, so `remaining` = still to prepare — and it updates correctly when a
-  // new order adds more of the same item.
-  const cookByProduct = new Map<string, CookLine>()
-  for (const order of orders) {
-    const done = order.status === 'PACKED'
-    for (const item of order.items) {
-      const key = item.productId ?? `name:${item.productName}`
-      const line = cookByProduct.get(key) ?? {
-        productId: item.productId,
-        productName: item.productName,
-        total: 0,
-        packed: 0,
-        remaining: 0,
-      }
-      line.total += item.quantity
-      if (done) line.packed += item.quantity
-      cookByProduct.set(key, line)
+  // Per-product control: for each stage, total qty + the individual lines
+  // (which order they belong to) so the UI can bulk-move or pick an order.
+  const productMap = new Map<string, ProductControl>()
+  const emptyStages = (): ProductControl['stages'] => ({
+    TO_COOK: { qty: 0, lines: [] },
+    PREPARING: { qty: 0, lines: [] },
+    READY: { qty: 0, lines: [] },
+  })
+
+  for (const o of orders) {
+    for (const it of o.items) {
+      const key = it.productId ?? `name:${it.productName}`
+      const pc = productMap.get(key) ?? { productId: it.productId, productName: it.productName, stages: emptyStages() }
+      pc.stages[it.kitchenStage].qty += it.quantity
+      pc.stages[it.kitchenStage].lines.push({
+        lineId: it.id,
+        orderId: o.id,
+        orderNumber: o.orderNumber,
+        recipientName: o.recipientName,
+        quantity: it.quantity,
+      })
+      productMap.set(key, pc)
     }
   }
-  const cook = [...cookByProduct.values()]
-    .map((l) => ({ ...l, remaining: l.total - l.packed }))
-    .sort((a, b) => b.remaining - a.remaining || b.total - a.total)
+  const products = [...productMap.values()].sort(
+    (a, b) => b.stages.TO_COOK.qty + b.stages.PREPARING.qty - (a.stages.TO_COOK.qty + a.stages.PREPARING.qty),
+  )
 
   const kitchenOrders: KitchenOrder[] = orders
     .map((o) => ({
       id: o.id,
       orderNumber: o.orderNumber,
       recipientName: o.recipientName,
-      status: o.status,
+      status: deriveStatus(o.items.map((i) => i.kitchenStage)),
       createdAt: o.createdAt.toISOString(),
       note: o.notes,
-      items: o.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
+      lines: o.items.map((i) => ({ id: i.id, productName: i.productName, quantity: i.quantity, stage: i.kitchenStage })),
     }))
-    .sort((a, b) => STAGE_INDEX[a.status] - STAGE_INDEX[b.status] || a.createdAt.localeCompare(b.createdAt))
+    .sort((a, b) => ORDER_IDX[a.status] - ORDER_IDX[b.status] || a.createdAt.localeCompare(b.createdAt))
 
-  const totals = {
-    orders: orders.length,
-    toCook: orders.filter((o) => o.status === 'CONFIRMED').length,
-    preparing: orders.filter((o) => o.status === 'PREPARING').length,
-    packed: orders.filter((o) => o.status === 'PACKED').length,
-    items: cook.reduce((s, l) => s + l.total, 0),
-  }
-
-  return { date: dateStr, totals, cook, orders: kitchenOrders }
-}
-
-/// Advances (or corrects) one order's kitchen stage. Only orders currently in
-/// the kitchen can be moved, and only among the kitchen stages.
-export async function setOrderStage(orderId: string, target: OrderStatus): Promise<KitchenOrder> {
-  if (!KITCHEN_STATUSES.includes(target)) {
-    throw HttpError.badRequest('Invalid kitchen stage')
-  }
-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })
-  if (!order) throw HttpError.notFound('Order not found')
-  if (!KITCHEN_STATUSES.includes(order.status)) {
-    throw HttpError.badRequest(`Order is not in the kitchen (status: ${order.status})`)
-  }
-
-  if (order.status !== target) {
-    await prisma.order.update({ where: { id: orderId }, data: { status: target } })
-    // Notify the customer only on forward progress (not on corrections back).
-    if (STAGE_INDEX[target] > STAGE_INDEX[order.status]) {
-      await notifyOrderStatus(order.customerId, target, order.orderNumber, order.id)
+  let toCook = 0
+  let preparing = 0
+  let ready = 0
+  let items = 0
+  for (const o of orders)
+    for (const it of o.items) {
+      items += it.quantity
+      if (it.kitchenStage === 'TO_COOK') toCook += 1
+      else if (it.kitchenStage === 'PREPARING') preparing += 1
+      else ready += 1
     }
-  }
 
   return {
-    id: order.id,
-    orderNumber: order.orderNumber,
-    recipientName: order.recipientName,
-    status: target,
-    createdAt: order.createdAt.toISOString(),
-    note: order.notes,
-    items: order.items.map((i) => ({ productName: i.productName, quantity: i.quantity })),
+    date: dateStr,
+    totals: { orders: orders.length, items, toCook, preparing, ready },
+    products,
+    orders: kitchenOrders,
   }
+}
+
+// ---- Writes ----
+
+function assertAdjacent(from: KitchenLineStage, to: KitchenLineStage) {
+  if (Math.abs(STAGE_IDX[to] - STAGE_IDX[from]) !== 1) {
+    throw HttpError.badRequest('Stage can only move one step at a time')
+  }
+}
+
+/// Move a single order line to an adjacent stage, then re-derive its order.
+export async function moveLine(lineId: string, target: KitchenLineStage): Promise<ProductionDay> {
+  if (!STAGES.includes(target)) throw HttpError.badRequest('Invalid stage')
+  const line = await prisma.orderItem.findUnique({ where: { id: lineId }, include: { order: true } })
+  if (!line) throw HttpError.notFound('Order line not found')
+  if (!KITCHEN_STATUSES.includes(line.order.status)) {
+    throw HttpError.badRequest(`Order is not in the kitchen (status: ${line.order.status})`)
+  }
+  assertAdjacent(line.kitchenStage, target)
+  await prisma.orderItem.update({ where: { id: lineId }, data: { kitchenStage: target } })
+  await syncOrderStatus(line.orderId)
+  return getProductionDay(line.order.fulfillmentDate.toISOString().slice(0, 10))
+}
+
+/// Move ALL lines of one product (on a day) from one stage to an adjacent one.
+export async function bulkMoveProduct(
+  dateStr: string,
+  productId: string | null,
+  from: KitchenLineStage,
+  to: KitchenLineStage,
+): Promise<ProductionDay> {
+  if (!STAGES.includes(from) || !STAGES.includes(to)) throw HttpError.badRequest('Invalid stage')
+  assertAdjacent(from, to)
+  const date = toUtcDate(dateStr)
+
+  const lines = await prisma.orderItem.findMany({
+    where: {
+      kitchenStage: from,
+      productId: productId ?? undefined,
+      order: { fulfillmentDate: date, status: { in: KITCHEN_STATUSES } },
+    },
+    select: { id: true, orderId: true },
+  })
+  if (lines.length > 0) {
+    await prisma.orderItem.updateMany({ where: { id: { in: lines.map((l) => l.id) } }, data: { kitchenStage: to } })
+    const orderIds = [...new Set(lines.map((l) => l.orderId))]
+    for (const id of orderIds) await syncOrderStatus(id)
+  }
+  return getProductionDay(dateStr)
 }

@@ -211,9 +211,20 @@ model OrderItem {
   quantity      Int
   /// Charged line total (unitPrice × quantity).
   lineTotal     Decimal @db.Decimal(10, 2)
+  /// Kitchen preparation stage of this specific line (per-order, per-product).
+  /// The order's overall status is derived from its lines.
+  kitchenStage  KitchenLineStage @default(TO_COOK)
 
   @@index([orderId])
   @@index([productId])
+}
+
+/// A single order line's kitchen stage. The three stages mirror the kitchen
+/// board columns; the order's status is derived from all its lines.
+enum KitchenLineStage {
+  TO_COOK
+  PREPARING
+  READY
 }
 
 enum CouponScope {

@@ -1,64 +1,46 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
-import { fetchProduction, fetchProductionDates, setOrderStage } from '../lib/kitchen'
-import type { CookLine, KitchenOrder, KitchenStage, ProductionDate } from '../types/kitchen'
+import { fetchProduction, fetchProductionDates, moveLine, moveProduct } from '../lib/kitchen'
+import type {
+  KitchenStage,
+  OrderDerivedStatus,
+  ProductControl,
+  ProductionDate,
+  ProductionDay,
+  StageLineRef,
+} from '../types/kitchen'
 import './Kitchen.css'
 
 const bn = (n: number) => n.toLocaleString('bn-BD')
 
-const COLUMNS: { stage: KitchenStage; title: string; hint: string }[] = [
-  { stage: 'CONFIRMED', title: 'রান্নার জন্য', hint: 'নতুন অর্ডার — রান্না শুরু করুন' },
-  { stage: 'PREPARING', title: 'তৈরি হচ্ছে', hint: 'রান্না চলছে' },
-  { stage: 'PACKED', title: 'প্রস্তুত', hint: 'প্যাক ও ডেলিভারির জন্য তৈরি' },
-]
-
-interface Board {
-  cook: CookLine[]
-  totals: { orders: number; toCook: number; preparing: number; packed: number; items: number }
-  columns: Record<KitchenStage, KitchenOrder[]>
+const stageLabel: Record<KitchenStage, string> = {
+  TO_COOK: 'রান্নার জন্য',
+  PREPARING: 'তৈরি হচ্ছে',
+  READY: 'প্রস্তুত',
 }
+const orderStatusLabel: Record<OrderDerivedStatus, string> = {
+  CONFIRMED: 'রান্নার জন্য',
+  PREPARING: 'তৈরি হচ্ছে',
+  PACKED: 'প্রস্তুত',
+}
+const NEXT: Record<KitchenStage, KitchenStage | null> = { TO_COOK: 'PREPARING', PREPARING: 'READY', READY: null }
+const PREV: Record<KitchenStage, KitchenStage | null> = { TO_COOK: null, PREPARING: 'TO_COOK', READY: 'PREPARING' }
 
-/// Derives the board (per-item cook summary + orders grouped by stage) from the
-/// order list, so an optimistic status change updates everything instantly.
-function deriveBoard(orders: KitchenOrder[]): Board {
-  const cookByKey = new Map<string, CookLine>()
-  const columns: Record<KitchenStage, KitchenOrder[]> = { CONFIRMED: [], PREPARING: [], PACKED: [] }
-
-  for (const o of orders) {
-    columns[o.status].push(o)
-    const done = o.status === 'PACKED'
-    for (const it of o.items) {
-      const key = it.productName
-      const line = cookByKey.get(key) ?? { productId: null, productName: it.productName, total: 0, packed: 0, remaining: 0 }
-      line.total += it.quantity
-      if (done) line.packed += it.quantity
-      cookByKey.set(key, line)
-    }
-  }
-  const cook = [...cookByKey.values()]
-    .map((l) => ({ ...l, remaining: l.total - l.packed }))
-    .sort((a, b) => b.remaining - a.remaining || b.total - a.total)
-
-  return {
-    cook,
-    totals: {
-      orders: orders.length,
-      toCook: columns.CONFIRMED.length,
-      preparing: columns.PREPARING.length,
-      packed: columns.PACKED.length,
-      items: cook.reduce((s, l) => s + l.total, 0),
-    },
-    columns,
-  }
+interface Picker {
+  productName: string
+  target: KitchenStage
+  lines: StageLineRef[]
 }
 
 export function KitchenHome() {
   const { profile } = useBusinessProfile()
   const [dates, setDates] = useState<ProductionDate[]>([])
   const [activeDate, setActiveDate] = useState<string | null>(null)
-  const [orders, setOrders] = useState<KitchenOrder[]>([])
+  const [day, setDay] = useState<ProductionDay | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [picker, setPicker] = useState<Picker | null>(null)
 
   useEffect(() => {
     fetchProductionDates()
@@ -76,7 +58,7 @@ export function KitchenHome() {
   const loadDay = useCallback((date: string) => {
     setLoading(true)
     fetchProduction(date)
-      .then((day) => setOrders(day.orders))
+      .then(setDay)
       .catch(() => setError('প্রোডাকশন লোড করা যায়নি'))
       .finally(() => setLoading(false))
   }, [])
@@ -85,17 +67,32 @@ export function KitchenHome() {
     if (activeDate) loadDay(activeDate)
   }, [activeDate, loadDay])
 
-  const board = useMemo(() => deriveBoard(orders), [orders])
-
-  async function move(order: KitchenOrder, target: KitchenStage) {
-    const prev = orders
-    setOrders((os) => os.map((o) => (o.id === order.id ? { ...o, status: target } : o)))
+  async function run(fn: () => Promise<ProductionDay>) {
+    setBusy(true)
+    setError(null)
     try {
-      await setOrderStage(order.id, target)
+      setDay(await fn())
     } catch {
-      setOrders(prev) // revert on failure
-      setError('স্ট্যাটাস পরিবর্তন করা যায়নি')
+      setError('পরিবর্তন করা যায়নি')
+    } finally {
+      setBusy(false)
     }
+  }
+
+  const line = (lineId: string, stage: KitchenStage) => run(() => moveLine(lineId, stage))
+  const bulk = (p: ProductControl, from: KitchenStage, to: KitchenStage) =>
+    run(() => moveProduct(activeDate!, p.productId, from, to))
+
+  function openPicker(p: ProductControl, stage: KitchenStage) {
+    const target = PREV[stage]
+    if (!target) return
+    setPicker({ productName: p.productName, target, lines: p.stages[stage].lines })
+  }
+
+  async function pickBack(lineId: string) {
+    if (!picker) return
+    await line(lineId, picker.target)
+    setPicker(null)
   }
 
   return (
@@ -119,7 +116,7 @@ export function KitchenHome() {
         </div>
       )}
 
-      {error && <p className="muted">{error}</p>}
+      {error && <p className="kitchen-error">{error}</p>}
       {loading && <p className="muted">লোড হচ্ছে…</p>}
 
       {!loading && dates.length === 0 && (
@@ -128,87 +125,107 @@ export function KitchenHome() {
         </div>
       )}
 
-      {!loading && orders.length > 0 && (
-        <>
-          {/* Cook summary — total to make per item today (updates live). */}
-          <div className="cook-summary">
-            <div className="cook-summary__head">
-              <h2>আজ যা রান্না হবে</h2>
+      {!loading && day && day.orders.length > 0 && (
+        <div className={busy ? 'kitchen-body kitchen-body--busy' : 'kitchen-body'}>
+          {/* ---- Product-wise control ---- */}
+          <div className="prod-panel">
+            <div className="prod-panel__head">
+              <h2>পণ্যভিত্তিক নিয়ন্ত্রণ</h2>
               <span className="muted">
-                {bn(board.totals.orders)} অর্ডার · {bn(board.totals.items)} আইটেম
+                {bn(day.totals.orders)} অর্ডার · {bn(day.totals.items)} আইটেম
               </span>
             </div>
-            <div className="cook-grid">
-              {board.cook.map((c) => (
-                <div key={c.productName} className={c.remaining === 0 ? 'cook-line cook-line--done' : 'cook-line'}>
-                  <span className="cook-line__name">{c.productName}</span>
-                  <span className="cook-line__nums">
-                    {c.remaining > 0 ? (
-                      <>
-                        <strong>{bn(c.remaining)}</strong> বাকি <span className="muted">/ মোট {bn(c.total)}</span>
-                      </>
-                    ) : (
-                      <span className="cook-line__ok">✓ সব প্রস্তুত ({bn(c.total)})</span>
-                    )}
-                  </span>
+            <div className="prod-list">
+              {day.products.map((p) => (
+                <div key={p.productId ?? p.productName} className="prod-row">
+                  <span className="prod-row__name">{p.productName}</span>
+                  <div className="prod-row__stages">
+                    {(['TO_COOK', 'PREPARING', 'READY'] as KitchenStage[]).map((s) => (
+                      <div key={s} className={`prod-stage prod-stage--${s.toLowerCase()}`}>
+                        <span className="prod-stage__label">{stageLabel[s]}</span>
+                        <span className="prod-stage__qty">{bn(p.stages[s].qty)}</span>
+                        <div className="prod-stage__acts">
+                          {PREV[s] && p.stages[s].qty > 0 && (
+                            <button className="mini mini--back" title="একটি অর্ডার ফেরান" onClick={() => openPicker(p, s)}>
+                              ↩
+                            </button>
+                          )}
+                          {NEXT[s] && p.stages[s].qty > 0 && (
+                            <button className="mini mini--go" onClick={() => bulk(p, s, NEXT[s]!)}>
+                              সব →
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Per-order board (KDS): each order tracked independently. */}
-          <div className="kds">
-            {COLUMNS.map((col) => (
-              <div key={col.stage} className={`kds-col kds-col--${col.stage.toLowerCase()}`}>
-                <div className="kds-col__head">
-                  <span className="kds-col__title">{col.title}</span>
-                  <span className="kds-col__count">{bn(board.columns[col.stage].length)}</span>
+          {/* ---- Per-order cards with per-line controls ---- */}
+          <div className="ord-list">
+            {day.orders.map((o) => (
+              <div key={o.id} className={`ord-card ord-card--${o.status.toLowerCase()}`}>
+                <div className="ord-card__head">
+                  <span className="ord-card__num">{o.orderNumber}</span>
+                  <span className={`ord-chip ord-chip--${o.status.toLowerCase()}`}>{orderStatusLabel[o.status]}</span>
                 </div>
-                <div className="kds-col__body">
-                  {board.columns[col.stage].length === 0 && <p className="kds-col__empty">{col.hint}</p>}
-                  {board.columns[col.stage].map((o) => (
-                    <div key={o.id} className="kds-card">
-                      <div className="kds-card__top">
-                        <span className="kds-card__num">{o.orderNumber}</span>
-                        <span className="kds-card__who">{o.recipientName}</span>
-                      </div>
-                      <ul className="kds-card__items">
-                        {o.items.map((it, i) => (
-                          <li key={i}>
-                            <span className="kds-qty">{bn(it.quantity)}×</span> {it.productName}
-                          </li>
-                        ))}
-                      </ul>
-                      {o.note && <p className="kds-card__note">📝 {o.note}</p>}
-                      <div className="kds-card__actions">
-                        {o.status === 'CONFIRMED' && (
-                          <button className="kds-btn kds-btn--go" onClick={() => move(o, 'PREPARING')}>
-                            রান্না শুরু →
+                <div className="ord-card__who">{o.recipientName}</div>
+                {o.note && <p className="ord-card__note">📝 {o.note}</p>}
+                <ul className="ord-lines">
+                  {o.lines.map((l) => (
+                    <li key={l.id} className={`ord-line ord-line--${l.stage.toLowerCase()}`}>
+                      <span className="ord-line__item">
+                        <span className="ord-line__qty">{bn(l.quantity)}×</span> {l.productName}
+                      </span>
+                      <span className="ord-line__stage">{stageLabel[l.stage]}</span>
+                      <span className="ord-line__acts">
+                        {PREV[l.stage] && (
+                          <button className="mini mini--back" title="পেছনে" onClick={() => line(l.id, PREV[l.stage]!)}>
+                            ↩
                           </button>
                         )}
-                        {o.status === 'PREPARING' && (
-                          <>
-                            <button className="kds-btn kds-btn--back" onClick={() => move(o, 'CONFIRMED')} title="ফেরান">
-                              ↩
-                            </button>
-                            <button className="kds-btn kds-btn--go" onClick={() => move(o, 'PACKED')}>
-                              প্যাক সম্পন্ন ✓
-                            </button>
-                          </>
-                        )}
-                        {o.status === 'PACKED' && (
-                          <button className="kds-btn kds-btn--back" onClick={() => move(o, 'PREPARING')} title="ফেরান">
-                            ↩ ফেরান
+                        {NEXT[l.stage] && (
+                          <button className="mini mini--go" title="এগিয়ে" onClick={() => line(l.id, NEXT[l.stage]!)}>
+                            →
                           </button>
                         )}
-                      </div>
-                    </div>
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             ))}
           </div>
-        </>
+        </div>
+      )}
+
+      {/* ---- Backward order picker ---- */}
+      {picker && (
+        <div className="picker-overlay" onClick={() => setPicker(null)}>
+          <div className="picker" onClick={(e) => e.stopPropagation()}>
+            <div className="picker__head">
+              <strong>{picker.productName}</strong> — কোন অর্ডার “{stageLabel[picker.target]}”-এ ফেরাবেন?
+            </div>
+            <ul className="picker__list">
+              {picker.lines.map((l) => (
+                <li key={l.lineId}>
+                  <span>
+                    <strong>{l.orderNumber}</strong> · {l.recipientName} · {bn(l.quantity)}×
+                  </span>
+                  <button className="mini mini--back" onClick={() => pickBack(l.lineId)}>
+                    ফেরান
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button className="picker__close" onClick={() => setPicker(null)}>
+              বন্ধ
+            </button>
+          </div>
+        </div>
       )}
     </section>
   )
