@@ -28,14 +28,14 @@ export function OrderDetail() {
   if (loading) return <p className="muted">লোড হচ্ছে…</p>
   if (error || !order)
     return (
-      <div className="card">
+      <div className="paper">
         <p className="muted">{error ?? 'অর্ডারটি পাওয়া যায়নি'}</p>
         <Link to="/orders">← আমার অর্ডার</Link>
       </div>
     )
 
   return (
-    <section className="card order-detail">
+    <section className="paper order-detail">
       {justPlaced && <div className="order-placed">✓ আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে!</div>}
       <DocumentHeader />
 

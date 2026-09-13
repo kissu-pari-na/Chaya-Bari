@@ -1,13 +1,14 @@
 .profile-form fieldset {
-  border: 1px solid #e8ddc4;
-  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
   padding: 1rem 1.25rem 1.25rem;
   margin: 0 0 1.25rem;
 }
 
 .profile-form legend {
+  font-family: var(--font-display);
   font-weight: 700;
-  color: #2f5233;
+  color: var(--card-heading);
   padding: 0 0.4rem;
 }
 
@@ -18,28 +19,31 @@
   font-size: 0.9rem;
   margin-bottom: 0.85rem;
   max-width: 420px;
+  color: var(--muted-cream);
 }
 
 .profile-form input,
 .profile-form select {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cream);
 }
 
 .hint {
   font-size: 0.8rem;
-  color: #6b6b6b;
+  color: var(--card-muted);
   margin: 0.25rem 0 0.75rem;
 }
 
 .hint--warning {
-  color: #b3541e;
+  color: var(--saffron-500);
 }
 
 .hint--success {
-  color: #2f5233;
+  color: var(--accent-bright);
   font-weight: 600;
 }
 
@@ -52,7 +56,7 @@
 .partner-table th {
   text-align: left;
   font-size: 0.8rem;
-  color: #6b6b6b;
+  color: var(--muted-cream);
   padding: 0.4rem;
 }
 
@@ -72,15 +76,20 @@
 }
 
 .profile-form__actions button {
-  background: #2f5233;
-  color: #fff;
+  background: var(--accent);
+  color: #0b0d0a;
   border: none;
-  padding: 0.65rem 1.5rem;
-  border-radius: 6px;
+  padding: 0.7rem 1.6rem;
+  border-radius: var(--radius-md);
   font-size: 0.95rem;
+  font-family: var(--font-body);
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: var(--glow-accent);
+  transition: background 0.14s ease, transform 0.14s ease;
 }
 
 .profile-form__actions button:hover {
-  background: #24401f;
+  background: var(--accent-bright);
+  transform: translateY(-1px);
 }

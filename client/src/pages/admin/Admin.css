@@ -9,41 +9,64 @@
 .admin-head button,
 .inline-form button,
 .admin-form__actions button[type='submit'] {
-  background: #2f5233;
-  color: #fff;
+  background: var(--accent);
+  color: #0b0d0a;
   border: none;
-  padding: 0.55rem 1.1rem;
-  border-radius: 6px;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-md);
   font-size: 0.9rem;
+  font-family: var(--font-body);
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: var(--glow-accent);
+  transition: background 0.14s ease, transform 0.14s ease;
+}
+
+.admin-head button:hover,
+.inline-form button:hover,
+.admin-form__actions button[type='submit']:hover {
+  background: var(--accent-bright);
+  transform: translateY(-1px);
 }
 
 .table-wrap {
   overflow-x: auto;
   margin-top: 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  backdrop-filter: blur(10px);
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
 }
 
 .admin-table th,
 .admin-table td {
   text-align: left;
-  padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid #f0e8d2;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--card-border);
   font-size: 0.9rem;
+  color: var(--cream);
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .admin-table th {
-  font-size: 0.78rem;
-  color: #8a7d5c;
+  font-size: 0.75rem;
+  color: var(--muted-cream);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .admin-table__actions {
@@ -52,73 +75,101 @@
 }
 
 .toggle {
-  border: 1px solid #d6cba9;
-  background: #fdf9ef;
-  color: #8a7d5c;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted-cream);
   padding: 0.25rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.8rem;
+  font-family: var(--font-body);
   cursor: pointer;
 }
 
 .toggle--on {
-  background: #e6f0e6;
-  border-color: #2f5233;
-  color: #2f5233;
+  background: rgba(127, 175, 53, 0.16);
+  border-color: var(--accent);
+  color: var(--accent-bright);
 }
 
 .btn-ghost {
   background: transparent;
-  border: 1px solid #d6cba9;
-  color: #2f5233;
-  padding: 0.35rem 0.8rem;
-  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  color: var(--cream);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
+  font-family: var(--font-body);
   cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--accent);
+  background: rgba(127, 175, 53, 0.1);
 }
 
 .btn-danger {
   background: transparent;
-  border: 1px solid #e6b8b3;
-  color: #b3261e;
-  padding: 0.35rem 0.8rem;
-  border-radius: 6px;
+  border: 1px solid rgba(192, 69, 58, 0.5);
+  color: #e8837a;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
+  font-family: var(--font-body);
   cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: rgba(192, 69, 58, 0.12);
 }
 
 /* Forms */
 .admin-form {
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   max-width: 560px;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--glass-shadow);
 }
 
 .admin-form h2 {
   margin: 0;
-  color: #2f5233;
+  color: var(--card-heading);
 }
 
-.admin-form label {
+.admin-form label,
+.pay-form label,
+.delivery-panel label {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   font-size: 0.88rem;
+  color: var(--muted-cream);
 }
 
 .admin-form input,
 .admin-form select,
-.admin-form textarea {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
+.admin-form textarea,
+.inline-form input,
+.order-filters input,
+.order-filters select,
+.admin-order-controls select,
+.delivery-panel input,
+.delivery-panel select,
+.pay-form input,
+.pay-form select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cream);
 }
 
 .admin-form__row {
@@ -154,9 +205,6 @@
 .inline-form input {
   flex: 1;
   min-width: 200px;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
 }
 
 .order-filters {
@@ -167,20 +215,12 @@
   align-items: end;
 }
 
-.order-filters input,
-.order-filters select {
-  padding: 0.45rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
 .date-filter {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   font-size: 0.78rem;
-  color: #8a7d5c;
+  color: var(--muted-cream);
 }
 
 .admin-order-controls {
@@ -190,8 +230,8 @@
   align-items: center;
   padding: 0.85rem 0;
   margin: 0.5rem 0 1rem;
-  border-top: 1px solid #f0e8d2;
-  border-bottom: 1px solid #f0e8d2;
+  border-top: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--card-border);
 }
 
 .admin-order-controls > div {
@@ -203,98 +243,33 @@
 
 .control-label {
   font-size: 0.85rem;
-  color: #6b5f3c;
+  color: var(--muted-cream);
   font-weight: 600;
 }
 
-.admin-order-controls select {
-  padding: 0.35rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
-}
-
-/* Delivery panel */
-.delivery-panel {
-  border: 1px solid #eee1c3;
-  border-radius: 10px;
-  padding: 1rem 1.15rem 1.15rem;
+/* Delivery + payments panels */
+.delivery-panel,
+.payments-panel {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem 1.3rem;
   margin: 1.25rem 0;
-  background: #fffdf7;
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--glass-shadow);
 }
 
-.delivery-panel h3 {
+.delivery-panel h3,
+.payments-panel h3 {
   margin: 0 0 0.75rem;
-  color: #2f5233;
+  color: var(--card-heading);
 }
 
 .delivery-panel label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.85rem;
   margin-bottom: 0.6rem;
 }
 
-.delivery-panel input,
-.delivery-panel select {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-
-.delivery-costs {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-}
-
-.delivery-costs > div {
-  flex: 1;
-  min-width: 130px;
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.delivery-costs__label {
-  font-size: 0.75rem;
-  color: #8a7d5c;
-}
-
-.delivery-costs__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #2f5233;
-}
-
-.delivery-gain {
-  color: #1a7a45;
-}
-
-.delivery-loss {
-  color: #b3261e;
-}
-
-/* Payments panel */
-.payments-panel {
-  border: 1px solid #eee1c3;
-  border-radius: 10px;
-  padding: 1rem 1.15rem 1.15rem;
-  margin: 1.25rem 0;
-  background: #fffdf7;
-}
-
-.payments-panel h3 {
-  margin: 0 0 0.75rem;
-  color: #2f5233;
-}
-
+.delivery-costs,
 .pay-summary {
   display: flex;
   gap: 1rem;
@@ -302,16 +277,37 @@
   margin-bottom: 1rem;
 }
 
+.delivery-costs > div,
 .pay-summary > div {
   flex: 1;
-  min-width: 120px;
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
+  min-width: 130px;
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.8rem;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+.delivery-costs__label {
+  font-size: 0.75rem;
+  color: var(--muted-cream);
+}
+
+.delivery-costs__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-bright);
+  font-family: var(--font-display);
+}
+
+.delivery-gain {
+  color: #5fce8a;
+}
+
+.delivery-loss {
+  color: #e8837a;
 }
 
 .pay-table {
@@ -319,19 +315,7 @@
 }
 
 .pay-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.85rem;
   margin-bottom: 0.6rem;
-}
-
-.pay-form input,
-.pay-form select {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d6cba9;
-  border-radius: 6px;
-  font-size: 0.95rem;
 }
 
 /* Reports / profit */
@@ -345,15 +329,16 @@
 .profit-line {
   display: flex;
   justify-content: space-between;
-  padding: 0.45rem 0.1rem;
-  border-bottom: 1px solid #f0e8d2;
+  padding: 0.5rem 0.1rem;
+  border-bottom: 1px solid var(--card-border);
   font-size: 0.95rem;
+  color: var(--cream);
 }
 
 .profit-line--strong {
   font-weight: 700;
-  color: #2f5233;
-  border-bottom: 2px solid #2f5233;
+  color: var(--accent-bright);
+  border-bottom: 2px solid var(--accent);
 }
 
 .reports-columns {
@@ -365,7 +350,7 @@
 
 .reports-columns h3 {
   margin: 0 0 0.5rem;
-  color: #2f5233;
+  color: var(--cream);
   font-size: 1rem;
 }
 
@@ -373,17 +358,19 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
 }
 
 .mini-list li {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0.7rem;
-  border-bottom: 1px solid #f0e8d2;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--card-border);
   font-size: 0.88rem;
+  color: var(--cream);
 }
 
 .mini-list li:last-child {
@@ -398,16 +385,18 @@
 }
 
 .quadrant {
-  background: #fff;
-  border: 1px solid #eee1c3;
-  border-top: 4px solid #cbb98a;
-  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-top: 4px solid var(--accent);
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem 1rem;
+  backdrop-filter: blur(10px);
 }
 
 .quadrant h3 {
   margin: 0 0 0.15rem;
   font-size: 0.98rem;
+  color: var(--cream);
 }
 
 .quadrant .small {
@@ -417,6 +406,7 @@
 .quadrant .mini-list {
   border: none;
   background: transparent;
+  backdrop-filter: none;
 }
 
 .quadrant .mini-list li {
@@ -427,8 +417,8 @@
 .pay-pending-badge {
   display: inline-block;
   margin-left: 0.6rem;
-  background: #fff4d6;
-  color: #8a6d1a;
+  background: rgba(224, 161, 46, 0.2);
+  color: var(--saffron-500);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 0.12rem 0.6rem;
@@ -436,17 +426,26 @@
   vertical-align: middle;
 }
 
-.pay-row--pending { background: #fffaf0; }
+.pay-row--pending {
+  background: rgba(224, 161, 46, 0.08);
+}
 
 .btn-mini {
   border: none;
   border-radius: 6px;
-  padding: 0.28rem 0.6rem;
+  padding: 0.3rem 0.65rem;
   font-family: var(--font-body);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   margin-right: 0.3rem;
 }
-.btn-mini--ok { background: var(--success, #2f7d4f); color: #fff; }
-.btn-mini--no { background: transparent; color: var(--danger); border: 1px solid #e6b8b3; }
+.btn-mini--ok {
+  background: var(--accent);
+  color: #0b0d0a;
+}
+.btn-mini--no {
+  background: transparent;
+  color: #e8837a;
+  border: 1px solid rgba(192, 69, 58, 0.5);
+}

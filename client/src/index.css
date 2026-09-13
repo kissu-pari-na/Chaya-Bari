@@ -15,13 +15,14 @@
   --muted-cream: #b8b9b2; /* muted text on dark */
   --border-dark: #30352a; /* border on dark */
 
-  /* --- Light surfaces (cards / menus / admin) --- */
-  --card: #ffffff;
-  --card-2: #faf7ee;
-  --card-text: #23261d;
-  --card-muted: #6a6d5f;
-  --card-border: #e6e0d0;
-  --card-heading: #1f3516;
+  /* --- Surfaces: dark glass everywhere; printable documents opt into .paper,
+     which resets these tokens back to a light sheet. --- */
+  --card: rgba(255, 255, 255, 0.045);
+  --card-2: rgba(255, 255, 255, 0.07);
+  --card-text: #f5f1e7;
+  --card-muted: #b8b9b2;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-heading: #f5f1e7;
 
   /* Feedback */
   --success: #4b8a3a;
@@ -64,7 +65,7 @@
   --color-muted: var(--on-page-muted);
 
   font-family: var(--font-body);
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 /* --- DARK theme (customer storefront + auth) --- */
@@ -175,13 +176,14 @@ a:hover {
   margin: 0 auto;
 }
 
-/* ---------- Cards (light surfaces on any theme) ---------- */
+/* ---------- Cards: premium glass panels ---------- */
 .card {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
   color: var(--card-text);
 }
 
@@ -198,6 +200,39 @@ a:hover {
 
 .card--pad-lg {
   padding: 2rem 2.25rem;
+}
+
+/* ---------- Paper: light document sheet (invoices, receipts, order view).
+   Resets the surface tokens to light so descendants render on white. ---------- */
+.paper {
+  --card: #ffffff;
+  --card-2: #faf7ee;
+  --card-text: #23261d;
+  --card-muted: #6a6d5f;
+  --card-border: #e6e0d0;
+  --card-heading: #1f3516;
+  background: #fff;
+  color: var(--card-text);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow-lg);
+  color-scheme: light;
+}
+
+.paper h1,
+.paper h2,
+.paper h3,
+.paper h4 {
+  color: var(--card-heading);
+}
+
+.paper .muted {
+  color: var(--card-muted);
+}
+
+.paper a {
+  color: var(--link);
 }
 
 /* ---------- Buttons ---------- */
@@ -381,14 +416,32 @@ button.btn {
   font-size: 1.5rem;
   font-weight: 700;
   font-family: var(--font-display);
-  color: var(--green-deep);
+  color: var(--accent-bright);
 }
 
-/* ---------- Global inputs ---------- */
+/* ---------- Global inputs (dark by default) ---------- */
 input,
 select,
 textarea {
   font-family: var(--font-body);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cream);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #7c7f74;
+}
+
+/* Inside a light paper sheet, inputs stay light. */
+.paper input,
+.paper select,
+.paper textarea {
+  background: #fff;
+  color: var(--card-text);
+  border-color: var(--card-border);
 }
 
 input:focus-visible,

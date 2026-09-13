@@ -39,7 +39,7 @@
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.05);
   color: var(--card-text);
 }
 
@@ -87,7 +87,7 @@
 
 .address-opt--on {
   border-color: var(--accent);
-  background: #f2f7ea;
+  background: rgba(127, 175, 53, 0.12);
 }
 
 .address-form {
@@ -138,12 +138,12 @@
 }
 
 .checkout__line--total {
-  border-top: 2px solid var(--green-deep);
+  border-top: 2px solid var(--card-border);
   margin-top: 0.35rem;
   padding-top: 0.6rem;
   font-weight: 700;
   font-size: 1.15rem;
-  color: var(--green-deep);
+  color: var(--accent-bright);
 }
 
 .coupon-box {
