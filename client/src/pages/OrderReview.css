@@ -145,6 +145,13 @@
   transition: background 0.14s ease, transform 0.14s ease;
 }
 
+.rev-submit--row {
+  margin-top: 0.6rem;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.88rem;
+  box-shadow: none;
+}
+
 .rev-submit:hover:not(:disabled) {
   background: var(--accent-bright);
   transform: translateY(-1px);
