@@ -79,15 +79,50 @@ export function CustomerHome() {
 
   const available = products.filter((p) => p.isAvailable)
   const featured = available.slice(0, 4)
-  // Top 3 by rating (then review count) for the animated hero showcase; falls
-  // back to the first available products when nothing is rated yet.
-  const topProducts = [...available]
-    .sort((a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount)
-    .slice(0, 3)
+  // Top 4 by rating (then review count) for the animated hero showcase; the #1
+  // product sits in the centre, the next three orbit around it.
+  const ranked = [...available].sort(
+    (a, b) => b.avgRating - a.avgRating || b.reviewCount - a.reviewCount,
+  )
+  const centerProduct = ranked[0]
+  const satelliteProducts = ranked.slice(1, 4)
 
   // Real reviews when available; otherwise fall back to sample testimonials.
   const showReviews = topReviews.length > 0
   const hasRating = rating != null && rating.count > 0
+
+  const renderOrb = (p: Product, className: string, emojiIndex: number, crown: boolean) => (
+    <Link
+      key={p.id}
+      to={`/products/${p.id}`}
+      className={className}
+      aria-label={`${p.name} — ${formatBdt(effectivePrice(p))}`}
+    >
+      <span className="hero__orb-disc">
+        {p.imageUrl ? (
+          <img src={p.imageUrl} alt="" />
+        ) : (
+          <span className="hero__orb-emoji" aria-hidden="true">
+            {dishEmoji(p, emojiIndex)}
+          </span>
+        )}
+        {crown && (
+          <span className="hero__orb-crown" aria-hidden="true">
+            👑
+          </span>
+        )}
+      </span>
+      <span className="hero__orb-cap">
+        <span className="hero__orb-name">{p.name}</span>
+        <span className="hero__orb-price">
+          {formatBdt(effectivePrice(p))}
+          {p.reviewCount > 0 && (
+            <span className="hero__orb-star"> · {toBnDigits(p.avgRating.toFixed(1))}★</span>
+          )}
+        </span>
+      </span>
+    </Link>
+  )
 
   return (
     <div className="home">
@@ -122,38 +157,19 @@ export function CustomerHome() {
             <span className="hero__ring hero__ring--outer" aria-hidden="true" />
             <span className="hero__ring hero__ring--inner" aria-hidden="true" />
             <span className="hero__glow" aria-hidden="true" />
-            <span className="hero__core" aria-hidden="true">
-              🍲
-            </span>
 
-            {topProducts.map((p, i) => (
-              <Link
-                key={p.id}
-                to={`/products/${p.id}`}
-                className={`hero__orb hero__orb--${i + 1}`}
-                aria-label={`${p.name} — ${formatBdt(effectivePrice(p))}`}
-              >
-                <span className="hero__orb-disc">
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt="" />
-                  ) : (
-                    <span className="hero__orb-emoji" aria-hidden="true">
-                      {dishEmoji(p, i)}
-                    </span>
-                  )}
-                  {i === 0 && <span className="hero__orb-crown" aria-hidden="true">👑</span>}
+            {/* #1 top-rated product sits in the centre; the next three orbit it. */}
+            {centerProduct
+              ? renderOrb(centerProduct, 'hero__orb hero__orb--center', 0, true)
+              : (
+                <span className="hero__core" aria-hidden="true">
+                  🍲
                 </span>
-                <span className="hero__orb-cap">
-                  <span className="hero__orb-name">{p.name}</span>
-                  <span className="hero__orb-price">
-                    {formatBdt(effectivePrice(p))}
-                    {p.reviewCount > 0 && (
-                      <span className="hero__orb-star"> · {toBnDigits(p.avgRating.toFixed(1))}★</span>
-                    )}
-                  </span>
-                </span>
-              </Link>
-            ))}
+              )}
+
+            {satelliteProducts.map((p, i) =>
+              renderOrb(p, `hero__orb hero__orb--${i + 1}`, i + 1, false),
+            )}
 
             <div className="hero__rating">
               {hasRating ? (

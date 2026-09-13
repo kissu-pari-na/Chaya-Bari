@@ -49,6 +49,7 @@ export function MyOrders() {
                   <span>📅 {o.fulfillmentDate}</span>
                   <span>· {count.toLocaleString('bn-BD')} আইটেম</span>
                   {preview && <span className="order-row__preview">· {preview}{o.items.length > 2 ? '…' : ''}</span>}
+                  {o.status === 'DELIVERED' && <span className="order-row__review">⭐ রিভিউ দিন</span>}
                 </div>
               </div>
               <div className="order-row__meta">

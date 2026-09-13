@@ -1,10 +1,10 @@
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
-import type { CreateReviewInput } from './review.schemas.js'
+import type { SubmitOrderReviewsInput } from './review.schemas.js'
 
 export interface PublicReview {
   id: string
-  productId: string
+  productId: string | null
   productName: string | null
   rating: number
   comment: string | null
@@ -19,7 +19,7 @@ export interface RatingSummary {
 
 interface ReviewRow {
   id: string
-  productId: string
+  productId: string | null
   rating: number
   comment: string | null
   createdAt: Date
@@ -39,7 +39,7 @@ function toPublicReview(r: ReviewRow): PublicReview {
   }
 }
 
-// ---- Rating aggregates (used by the products module too) ----
+// ---- Rating aggregates (product-scoped; overall/order reviews are excluded) ----
 
 /// Average rating (rounded to 1 decimal) and review count for one product.
 export async function getProductRatingSummary(productId: string): Promise<RatingSummary> {
@@ -51,8 +51,7 @@ export async function getProductRatingSummary(productId: string): Promise<Rating
   return { average: round1(agg._avg.rating ?? 0), count: agg._count }
 }
 
-/// Rating summaries for many products at once, keyed by product id. Products
-/// with no reviews are absent from the map (caller defaults to 0/0).
+/// Rating summaries for many products at once, keyed by product id.
 export async function getRatingSummariesByProduct(
   productIds: string[],
 ): Promise<Map<string, RatingSummary>> {
@@ -65,19 +64,24 @@ export async function getRatingSummariesByProduct(
   })
   const map = new Map<string, RatingSummary>()
   for (const row of rows) {
-    map.set(row.productId, { average: round1(row._avg.rating ?? 0), count: row._count._all })
+    if (row.productId) {
+      map.set(row.productId, { average: round1(row._avg.rating ?? 0), count: row._count._all })
+    }
   }
   return map
 }
 
-/// Site-wide rating (average across all reviews) and total review count.
-/// Powers the home-page hero rating badge.
+/// Site-wide product rating (average across all product reviews) + total count.
 export async function getSiteRatingSummary(): Promise<RatingSummary> {
-  const agg = await prisma.review.aggregate({ _avg: { rating: true }, _count: true })
+  const agg = await prisma.review.aggregate({
+    where: { productId: { not: null } },
+    _avg: { rating: true },
+    _count: true,
+  })
   return { average: round1(agg._avg.rating ?? 0), count: agg._count }
 }
 
-// ---- Product review listing ----
+// ---- Public product review listing ----
 
 export async function listProductReviews(productId: string): Promise<PublicReview[]> {
   const reviews = await prisma.review.findMany({
@@ -88,11 +92,11 @@ export async function listProductReviews(productId: string): Promise<PublicRevie
   return reviews.map(toPublicReview)
 }
 
-/// Top reviews for the home page: only ones with written feedback, highest
-/// rated first, then most recent.
-export async function listTopReviews(limit = 6): Promise<PublicReview[]> {
+/// Top product reviews for the home page: written feedback, highest rated
+/// first, then most recent. Overall (order) reviews are excluded.
+export async function listTopReviews(limit = 4): Promise<PublicReview[]> {
   const reviews = await prisma.review.findMany({
-    where: { comment: { not: null }, rating: { gte: 4 } },
+    where: { productId: { not: null }, comment: { not: null }, rating: { gte: 4 } },
     orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
     take: limit,
     include: {
@@ -103,55 +107,122 @@ export async function listTopReviews(limit = 6): Promise<PublicReview[]> {
   return reviews.map(toPublicReview)
 }
 
-// ---- Customer's own review + eligibility ----
+// ---- Order-based review page ----
 
-/// True when the customer has at least one order line for this product, i.e.
-/// they actually bought it and may review it.
-export async function hasOrderedProduct(customerId: string, productId: string): Promise<boolean> {
-  const line = await prisma.orderItem.findFirst({
-    where: { productId, order: { customerId } },
-    select: { id: true },
-  })
-  return line !== null
+export interface OrderReviewProduct {
+  productId: string
+  productName: string
+  quantity: number
+  rating: number | null
+  comment: string | null
 }
 
-export interface MyReviewResult {
-  review: PublicReview | null
+export interface OrderReviewData {
+  orderId: string
+  orderNumber: string
+  status: string
+  /// Reviews may only be submitted once the order is delivered.
   canReview: boolean
+  products: OrderReviewProduct[]
+  overall: { rating: number; comment: string | null } | null
 }
 
-export async function getMyReview(customerId: string, productId: string): Promise<MyReviewResult> {
-  const [review, canReview] = await Promise.all([
-    prisma.review.findUnique({
-      where: { productId_customerId: { productId, customerId } },
-      include: { customer: { include: { user: { select: { name: true } } } } },
-    }),
-    hasOrderedProduct(customerId, productId),
-  ])
-  return { review: review ? toPublicReview(review) : null, canReview }
+async function getOwnedOrder(customerId: string, orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, reviews: true },
+  })
+  if (!order || order.customerId !== customerId) throw HttpError.notFound('Order not found')
+  return order
 }
 
-/// Create or update the customer's review for a product. Requires that the
-/// product exists and that the customer has ordered it.
-export async function upsertReview(
-  customerId: string,
-  productId: string,
-  input: CreateReviewInput,
-): Promise<PublicReview> {
-  const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true } })
-  if (!product) throw HttpError.notFound('Product not found')
-
-  if (!(await hasOrderedProduct(customerId, productId))) {
-    throw HttpError.forbidden('You can only review products you have ordered')
+export async function getOrderReview(customerId: string, orderId: string): Promise<OrderReviewData> {
+  const order = await getOwnedOrder(customerId, orderId)
+  const reviewByProduct = new Map<string, { rating: number; comment: string | null }>()
+  let overall: { rating: number; comment: string | null } | null = null
+  for (const r of order.reviews) {
+    if (r.productId) reviewByProduct.set(r.productId, { rating: r.rating, comment: r.comment })
+    else overall = { rating: r.rating, comment: r.comment }
   }
 
-  const review = await prisma.review.upsert({
-    where: { productId_customerId: { productId, customerId } },
-    create: { productId, customerId, rating: input.rating, comment: input.comment ?? null },
-    update: { rating: input.rating, comment: input.comment ?? null },
-    include: { customer: { include: { user: { select: { name: true } } } } },
+  // One reviewable entry per distinct product (skip lines whose product was
+  // deleted). Quantities are summed in case a product appears on two lines.
+  const byProduct = new Map<string, OrderReviewProduct>()
+  for (const item of order.items) {
+    if (!item.productId) continue
+    const existing = byProduct.get(item.productId)
+    if (existing) {
+      existing.quantity += item.quantity
+    } else {
+      const r = reviewByProduct.get(item.productId)
+      byProduct.set(item.productId, {
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        rating: r?.rating ?? null,
+        comment: r?.comment ?? null,
+      })
+    }
+  }
+
+  return {
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    status: order.status,
+    canReview: order.status === 'DELIVERED',
+    products: [...byProduct.values()],
+    overall,
+  }
+}
+
+/// Upsert the order's product reviews (and optional overall review). Requires
+/// the order to belong to the customer and to be delivered; each productId must
+/// be one the order actually contains.
+export async function submitOrderReviews(
+  customerId: string,
+  orderId: string,
+  input: SubmitOrderReviewsInput,
+): Promise<OrderReviewData> {
+  const order = await getOwnedOrder(customerId, orderId)
+  if (order.status !== 'DELIVERED') {
+    throw HttpError.badRequest('You can review an order only after it is delivered')
+  }
+
+  const orderProductIds = new Set(order.items.map((i) => i.productId).filter(Boolean) as string[])
+  for (const item of input.items ?? []) {
+    if (!orderProductIds.has(item.productId)) {
+      throw HttpError.badRequest('You can only review products from this order')
+    }
+  }
+
+  // Build the set of (productId | null) targets to write.
+  const targets: { productId: string | null; rating: number; comment: string | null }[] = []
+  for (const item of input.items ?? []) {
+    targets.push({ productId: item.productId, rating: item.rating, comment: item.comment ?? null })
+  }
+  if (input.overall) {
+    targets.push({ productId: null, rating: input.overall.rating, comment: input.overall.comment ?? null })
+  }
+
+  // Upsert each target by (orderId, productId). Done as find-then-write because
+  // Prisma cannot target a null value through the compound unique.
+  await prisma.$transaction(async (tx) => {
+    for (const t of targets) {
+      const existing = await tx.review.findFirst({
+        where: { orderId, productId: t.productId },
+        select: { id: true },
+      })
+      if (existing) {
+        await tx.review.update({ where: { id: existing.id }, data: { rating: t.rating, comment: t.comment } })
+      } else {
+        await tx.review.create({
+          data: { orderId, customerId, productId: t.productId, rating: t.rating, comment: t.comment },
+        })
+      }
+    }
   })
-  return toPublicReview(review)
+
+  return getOrderReview(customerId, orderId)
 }
 
 function round1(n: number): number {

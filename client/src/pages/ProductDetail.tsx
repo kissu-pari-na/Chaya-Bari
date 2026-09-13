@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchProduct } from '../lib/products'
 import { formatBdt } from '../lib/format'
@@ -16,13 +16,6 @@ export function ProductDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
-
-  const loadProduct = useCallback(() => {
-    if (!id) return Promise.resolve()
-    return fetchProduct(id)
-      .then((p) => setProduct(p))
-      .catch(() => setError('পণ্যটি পাওয়া যায়নি'))
-  }, [id])
 
   useEffect(() => {
     if (!id) return
@@ -100,7 +93,7 @@ export function ProductDetail() {
         </div>
       </div>
 
-      <ProductReviews productId={product.id} onRatingChanged={loadProduct} />
+      <ProductReviews productId={product.id} />
     </section>
   )
 }

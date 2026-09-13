@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   fetchNotifications,
   markAllNotificationsRead,
@@ -12,6 +13,7 @@ export function NotificationBell() {
   const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
 
   const load = useCallback(async () => {
     try {
@@ -46,6 +48,12 @@ export function NotificationBell() {
     if (!n.read) {
       await markNotificationRead(n.id)
       await load()
+    }
+    // Navigate to the notification's destination, if it has one.
+    const target = n.link ?? (n.orderId ? `/orders/${n.orderId}` : null)
+    if (target) {
+      setOpen(false)
+      navigate(target)
     }
   }
 

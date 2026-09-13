@@ -129,7 +129,13 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   if (order.status !== status && !transitions[order.status].includes(status)) {
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
-  await prisma.order.update({ where: { id }, data: { status } })
+  // Stamp the delivery time on first transition to DELIVERED; it drives the
+  // day-after review invite.
+  const markDelivered = status === 'DELIVERED' && !order.deliveredAt
+  await prisma.order.update({
+    where: { id },
+    data: { status, ...(markDelivered ? { deliveredAt: new Date() } : {}) },
+  })
   if (order.status !== status) {
     await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
   }

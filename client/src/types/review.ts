@@ -1,6 +1,6 @@
 export interface Review {
   id: string
-  productId: string
+  productId: string | null
   productName: string | null
   rating: number
   comment: string | null
@@ -13,12 +13,26 @@ export interface RatingSummary {
   count: number
 }
 
-export interface MyReview {
-  review: Review | null
-  canReview: boolean
+// ---- Order-based review page ----
+
+export interface OrderReviewProduct {
+  productId: string
+  productName: string
+  quantity: number
+  rating: number | null
+  comment: string | null
 }
 
-export interface ReviewInput {
-  rating: number
-  comment?: string
+export interface OrderReviewData {
+  orderId: string
+  orderNumber: string
+  status: string
+  canReview: boolean
+  products: OrderReviewProduct[]
+  overall: { rating: number; comment: string | null } | null
+}
+
+export interface OrderReviewSubmit {
+  items?: { productId: string; rating: number; comment?: string }[]
+  overall?: { rating: number; comment?: string }
 }

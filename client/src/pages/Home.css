@@ -177,21 +177,30 @@
   scale: 1.08;
   z-index: 5;
 }
-/* Position the three orbs around the ring; each floats on its own rhythm. */
+/* #1 product sits in the centre (translate keeps it centred while the float
+   animation drives transform and hover drives scale). */
+.hero__orb--center {
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 4;
+}
+
+/* The next three orbit around the ring; each floats on its own rhythm. */
 .hero__orb--1 {
-  top: -6%;
+  top: -5%;
   left: 50%;
   margin-left: -59px;
   animation-delay: 0s;
 }
 .hero__orb--2 {
-  bottom: 2%;
-  left: -8%;
+  bottom: -1%;
+  left: -9%;
   animation-delay: 0.9s;
 }
 .hero__orb--3 {
-  bottom: 2%;
-  right: -8%;
+  bottom: -1%;
+  right: -9%;
   animation-delay: 1.8s;
 }
 
@@ -209,11 +218,17 @@
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(127, 175, 53, 0.08);
   backdrop-filter: blur(6px);
 }
-.hero__orb--1 .hero__orb-disc {
-  width: 104px;
-  height: 104px;
+.hero__orb--center {
+  width: 130px;
+}
+.hero__orb--center .hero__orb-disc {
+  width: 116px;
+  height: 116px;
   border-color: var(--accent-bright);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5), 0 0 0 7px rgba(154, 203, 69, 0.14);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(154, 203, 69, 0.16);
+}
+.hero__orb--center .hero__orb-name {
+  max-width: 118px;
 }
 .hero__orb-disc img {
   width: 100%;
@@ -226,8 +241,8 @@
   line-height: 1;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
-.hero__orb--1 .hero__orb-emoji {
-  font-size: 3rem;
+.hero__orb--center .hero__orb-emoji {
+  font-size: 3.3rem;
 }
 .hero__orb-crown {
   position: absolute;
@@ -348,12 +363,15 @@
     width: 96px;
   }
   .hero__orb-disc {
-    width: 74px;
-    height: 74px;
+    width: 70px;
+    height: 70px;
   }
-  .hero__orb--1 .hero__orb-disc {
-    width: 84px;
-    height: 84px;
+  .hero__orb--center {
+    width: 104px;
+  }
+  .hero__orb--center .hero__orb-disc {
+    width: 92px;
+    height: 92px;
   }
   .hero__orb--1 {
     margin-left: -48px;

@@ -8,6 +8,7 @@ export interface PublicNotification {
   title: string
   body: string
   orderId: string | null
+  link: string | null
   read: boolean
   createdAt: string
 }
@@ -19,6 +20,7 @@ function toPublic(n: Notification): PublicNotification {
     title: n.title,
     body: n.body,
     orderId: n.orderId,
+    link: n.link,
     read: n.read,
     createdAt: n.createdAt.toISOString(),
   }
@@ -30,6 +32,8 @@ interface NotifyInput {
   title: string
   body: string
   orderId?: string
+  /// In-app path to open when the notification is clicked.
+  link?: string
 }
 
 /// Creates a notification. Never throws into the calling flow — a failed
@@ -37,12 +41,24 @@ interface NotifyInput {
 export async function notify(input: NotifyInput): Promise<void> {
   try {
     await prisma.notification.create({
-      data: { userId: input.userId, type: input.type, title: input.title, body: input.body, orderId: input.orderId },
+      data: {
+        userId: input.userId,
+        type: input.type,
+        title: input.title,
+        body: input.body,
+        orderId: input.orderId,
+        link: input.link,
+      },
     })
   } catch (err) {
     logger.error('Failed to create notification', { message: err instanceof Error ? err.message : String(err) })
   }
 }
+
+/// Standard click-through paths.
+const customerOrderLink = (orderId: string) => `/orders/${orderId}`
+const adminOrderLink = (orderId: string) => `/admin/orders/${orderId}`
+const orderReviewLink = (orderId: string) => `/orders/${orderId}/review`
 
 /// Notify the user who owns a customer profile.
 export async function notifyCustomer(customerId: string, input: Omit<NotifyInput, 'userId'>): Promise<void> {
@@ -74,14 +90,38 @@ export async function notifyOrderPlaced(customerId: string, orderNumber: string,
     title: 'অর্ডার গৃহীত হয়েছে',
     body: `আপনার অর্ডার ${orderNumber} গ্রহণ করা হয়েছে।`,
     orderId,
+    link: customerOrderLink(orderId),
   })
-  await notifyAdmins({ type: 'NEW_ORDER', title: 'নতুন অর্ডার', body: `নতুন অর্ডার ${orderNumber} এসেছে।`, orderId })
+  await notifyAdmins({
+    type: 'NEW_ORDER',
+    title: 'নতুন অর্ডার',
+    body: `নতুন অর্ডার ${orderNumber} এসেছে।`,
+    orderId,
+    link: adminOrderLink(orderId),
+  })
 }
 
 export async function notifyOrderStatus(customerId: string, status: OrderStatus, orderNumber: string, orderId: string): Promise<void> {
   const msg = statusMessage[status]
   if (!msg) return
-  await notifyCustomer(customerId, { type: msg.type, title: msg.title, body: `${msg.body} (${orderNumber})`, orderId })
+  await notifyCustomer(customerId, {
+    type: msg.type,
+    title: msg.title,
+    body: `${msg.body} (${orderNumber})`,
+    orderId,
+    link: customerOrderLink(orderId),
+  })
+}
+
+/// Day-after-delivery invitation to review the order's products.
+export async function notifyReviewInvite(customerId: string, orderNumber: string, orderId: string): Promise<void> {
+  await notifyCustomer(customerId, {
+    type: 'REVIEW_INVITE',
+    title: 'আপনার মতামত জানান',
+    body: `${orderNumber} অর্ডারের পণ্যগুলোর রিভিউ ও রেটিং দিন — আপনার মতামত আমাদের কাছে গুরুত্বপূর্ণ।`,
+    orderId,
+    link: orderReviewLink(orderId),
+  })
 }
 
 export async function notifyPaymentReceived(customerId: string, amount: number, orderNumber: string, orderId: string): Promise<void> {
@@ -90,8 +130,15 @@ export async function notifyPaymentReceived(customerId: string, amount: number, 
     title: 'পেমেন্ট গৃহীত',
     body: `${orderNumber} অর্ডারের জন্য ৳${amount} পেমেন্ট গ্রহণ করা হয়েছে।`,
     orderId,
+    link: customerOrderLink(orderId),
   })
-  await notifyAdmins({ type: 'PAYMENT_RECEIVED', title: 'পেমেন্ট গৃহীত', body: `${orderNumber}: ৳${amount} পেমেন্ট।`, orderId })
+  await notifyAdmins({
+    type: 'PAYMENT_RECEIVED',
+    title: 'পেমেন্ট গৃহীত',
+    body: `${orderNumber}: ৳${amount} পেমেন্ট।`,
+    orderId,
+    link: adminOrderLink(orderId),
+  })
 }
 
 /// A customer submitted a manual payment claim that admins must verify.
@@ -101,6 +148,7 @@ export async function notifyPaymentSubmitted(amount: number, method: string, ord
     title: 'পেমেন্ট যাচাইয়ের অপেক্ষায়',
     body: `${orderNumber}: গ্রাহক ৳${amount} (${method}) পরিশোধের দাবি করেছেন — যাচাই করুন।`,
     orderId,
+    link: adminOrderLink(orderId),
   })
 }
 
@@ -112,6 +160,7 @@ export async function notifyPaymentVerified(customerId: string, verified: boolea
       title: 'পেমেন্ট নিশ্চিত হয়েছে',
       body: `${orderNumber} অর্ডারের ৳${amount} পেমেন্ট যাচাই করে নিশ্চিত করা হয়েছে। ধন্যবাদ!`,
       orderId,
+      link: customerOrderLink(orderId),
     })
   } else {
     await notifyCustomer(customerId, {
@@ -119,6 +168,7 @@ export async function notifyPaymentVerified(customerId: string, verified: boolea
       title: 'পেমেন্ট যাচাই করা যায়নি',
       body: `${orderNumber} অর্ডারের ৳${amount} পেমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে সঠিক তথ্য দিয়ে আবার জানান।`,
       orderId,
+      link: customerOrderLink(orderId),
     })
   }
 }

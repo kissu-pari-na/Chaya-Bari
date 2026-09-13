@@ -50,6 +50,12 @@ export function OrderDetail() {
         </div>
       </div>
 
+      {order.status === 'DELIVERED' && (
+        <Link to={`/orders/${order.id}/review`} className="order-detail__review-cta">
+          ⭐ এই অর্ডারের রিভিউ দিন
+        </Link>
+      )}
+
       <table className="document-table">
         <thead>
           <tr>

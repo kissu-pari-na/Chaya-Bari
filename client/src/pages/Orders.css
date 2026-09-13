@@ -166,6 +166,29 @@
   color: var(--card-heading);
 }
 
+.order-row__review {
+  color: var(--accent-bright);
+  font-weight: 700;
+}
+
+.order-detail__review-cta {
+  display: block;
+  margin: 1rem 0 0.5rem;
+  text-align: center;
+  background: rgba(127, 175, 53, 0.14);
+  border: 1px solid var(--accent);
+  color: var(--accent-bright);
+  font-weight: 700;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background 0.14s ease;
+}
+
+.order-detail__review-cta:hover {
+  background: rgba(127, 175, 53, 0.22);
+}
+
 /* ---- Customer payment panel (order detail) ---- */
 .pay-panel {
   margin-top: 1.5rem;

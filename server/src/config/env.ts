@@ -21,6 +21,19 @@ export const env = {
   jwtSecret: required('JWT_SECRET'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
 
+  // Public base URL of the customer web app, used to build absolute links in
+  // outgoing emails (the in-app path is appended to this).
+  appUrl: process.env.APP_URL ?? 'http://localhost:5173',
+
+  // SMTP for outgoing email. Leave unset to run the mailer in log-only mode.
+  smtp: {
+    host: process.env.SMTP_HOST ?? '',
+    port: Number(process.env.SMTP_PORT ?? 587),
+    user: process.env.SMTP_USER ?? '',
+    pass: process.env.SMTP_PASS ?? '',
+    from: process.env.MAIL_FROM ?? 'ছায়া বাড়ি <no-reply@chayabari.example>',
+  },
+
   // bKash Tokenized Checkout (PGW). Leave unset to run in sandbox/mock mode.
   bkash: {
     baseUrl: process.env.BKASH_BASE_URL ?? '',

@@ -1,33 +1,36 @@
 import { apiRequest } from './apiClient'
-import type { MyReview, RatingSummary, Review, ReviewInput } from '../types/review'
+import type { OrderReviewData, OrderReviewSubmit, RatingSummary, Review } from '../types/review'
 
-/// Reviews + rating summary for one product (public).
+/// Reviews + rating summary for one product (public, read-only).
 export function fetchProductReviews(productId: string) {
   return apiRequest<{ reviews: Review[]; summary: RatingSummary }>(
     `/products/${productId}/reviews`,
   )
 }
 
-/// Top reviews for the home page (public).
+/// Top product reviews for the home page (public).
 export function fetchTopReviews() {
   return apiRequest<{ reviews: Review[] }>('/reviews/top').then((r) => r.reviews)
 }
 
-/// Site-wide rating summary for the home hero badge (public).
+/// Site-wide product rating summary for the home hero badge (public).
 export function fetchRatingSummary() {
   return apiRequest<{ summary: RatingSummary }>('/reviews/summary').then((r) => r.summary)
 }
 
-/// The signed-in customer's own review for a product + whether they may review.
-export function fetchMyReview(productId: string) {
-  return apiRequest<MyReview>(`/products/${productId}/reviews/me`, { auth: true })
+// ---- Order-based review page ----
+
+/// The reviewable products for one of the customer's orders + any existing
+/// reviews and whether reviewing is allowed yet (order delivered).
+export function fetchOrderReview(orderId: string) {
+  return apiRequest<OrderReviewData>(`/orders/${orderId}/review`, { auth: true })
 }
 
-/// Create or update the customer's review for a product.
-export function submitReview(productId: string, input: ReviewInput) {
-  return apiRequest<{ review: Review }>(`/products/${productId}/reviews`, {
+/// Submit (create/update) the order's product reviews and/or overall review.
+export function submitOrderReviews(orderId: string, body: OrderReviewSubmit) {
+  return apiRequest<OrderReviewData>(`/orders/${orderId}/reviews`, {
     method: 'POST',
-    body: input,
+    body,
     auth: true,
-  }).then((r) => r.review)
+  })
 }

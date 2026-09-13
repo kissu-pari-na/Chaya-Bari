@@ -189,11 +189,18 @@ model Order {
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
 
+  /// When the order reached DELIVERED (drives the day-after review invite).
+  deliveredAt        DateTime?
+  /// When the "leave a review" invite (notification + email) was sent, so it
+  /// is only sent once per order.
+  reviewInviteSentAt DateTime?
+
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   items     OrderItem[]
   delivery  Delivery?
   payments  Payment[]
+  reviews   Review[]
 
   @@index([customerId])
   @@index([status])
@@ -527,6 +534,7 @@ enum NotificationType {
   PAYMENT_VERIFIED
   PAYMENT_REJECTED
   NEW_ORDER
+  REVIEW_INVITE
 }
 
 /// An in-app notification for a user. Generated from order/payment events.
@@ -539,6 +547,9 @@ model Notification {
   title     String
   body      String
   orderId   String?
+  /// In-app path to open when the notification is clicked (e.g. an order or the
+  /// order's review page). Null for notifications with no destination.
+  link      String?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 
@@ -549,13 +560,18 @@ model Notification {
 // Phase 12 — Product reviews & ratings
 // -----------------------------------------------------------------------------
 
-/// A customer's star rating (1-5) and optional written feedback on a product.
-/// Exactly one review per customer per product — re-submitting updates it. Only
-/// customers who have ordered the product may review it (enforced in service).
+/// A customer's star rating (1-5) and optional written feedback, tied to a
+/// specific delivered order. Reviews can only be created from that order's
+/// review page. `productId` set = a review of one product in the order;
+/// `productId` null = the overall order/experience review. At most one product
+/// review per (order, product) and one overall review per order (the latter
+/// enforced by a partial unique index added in the migration).
 model Review {
   id         String   @id @default(cuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   /// Whole-star rating from 1 to 5.
@@ -564,7 +580,8 @@ model Review {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([productId, customerId])
+  @@unique([orderId, productId])
   @@index([productId])
   @@index([rating])
+  @@index([orderId])
 }

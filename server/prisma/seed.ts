@@ -100,9 +100,9 @@ async function seedCatalog() {
   console.log(`Seeded catalog: ${categories.length} categories, ${created} new products.`)
 }
 
-// Sample reviews so the home page shows real testimonials and product ratings
-// on a fresh install. Demo customers are created directly; in the running app a
-// review requires an order for the product, but the seed writes state directly.
+// Sample delivered orders + order-based reviews so the home page shows real
+// testimonials and product ratings on a fresh install. Reviews are always tied
+// to a delivered order (the only place a review can be created in the app).
 async function seedReviews() {
   const demoCustomers: { name: string; email: string; comment: string; rating: number; product: string }[] = [
     { name: 'সাদিয়া রহমান', email: 'sadia.demo@chayabari.local', rating: 5, product: 'বিরিয়ানি', comment: 'একদম ঘরের মতো স্বাদ! বিরিয়ানি অসাধারণ ছিল, সময়মতো পৌঁছেছে।' },
@@ -112,8 +112,10 @@ async function seedReviews() {
     { name: 'ফারিয়া আক্তার', email: 'faria.demo@chayabari.local', rating: 4, product: 'প্লেইন কেক', comment: 'কেকটা নরম আর তাজা ছিল। জন্মদিনের জন্য নিয়েছিলাম, সবাই প্রশংসা করেছে।' },
   ]
 
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
   let count = 0
-  for (const d of demoCustomers) {
+  for (let i = 0; i < demoCustomers.length; i++) {
+    const d = demoCustomers[i]
     const user = await prisma.user.upsert({
       where: { email: d.email },
       update: {},
@@ -131,14 +133,46 @@ async function seedReviews() {
     const product = await prisma.product.findFirst({ where: { name: d.product } })
     if (!product) continue
 
-    await prisma.review.upsert({
-      where: { productId_customerId: { productId: product.id, customerId: customer.id } },
-      update: { rating: d.rating, comment: d.comment },
-      create: { productId: product.id, customerId: customer.id, rating: d.rating, comment: d.comment },
+    const orderNumber = `CB-SEED-${String(i + 1).padStart(3, '0')}`
+    const price = Number(product.price)
+    // Idempotent: recreate the demo order fresh each seed run.
+    await prisma.order.deleteMany({ where: { orderNumber } })
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        customerId: customer.id,
+        recipientName: d.name,
+        recipientPhone: '01700000000',
+        addressLine: 'ঢাকা',
+        city: 'Dhaka',
+        fulfillmentDate: twoDaysAgo,
+        subtotal: price,
+        customerDeliveryCost: 60,
+        total: price + 60,
+        status: 'DELIVERED',
+        deliveredAt: twoDaysAgo,
+        // Already invited so the boot dispatcher does not re-notify demo users.
+        reviewInviteSentAt: twoDaysAgo,
+        items: {
+          create: {
+            productId: product.id,
+            productName: product.name,
+            listUnitPrice: price,
+            unitPrice: price,
+            quantity: 1,
+            lineTotal: price,
+            kitchenStage: 'READY',
+          },
+        },
+      },
+    })
+
+    await prisma.review.create({
+      data: { orderId: order.id, productId: product.id, customerId: customer.id, rating: d.rating, comment: d.comment },
     })
     count += 1
   }
-  console.log(`Seeded ${count} sample reviews.`)
+  console.log(`Seeded ${count} delivered demo orders with reviews.`)
 }
 
 main()

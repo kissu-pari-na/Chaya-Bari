@@ -6,6 +6,7 @@ export interface AppNotification {
   title: string
   body: string
   orderId: string | null
+  link: string | null
   read: boolean
   createdAt: string
 }
