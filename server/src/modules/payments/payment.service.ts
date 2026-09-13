@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { ClaimPaymentInput, RecordPaymentInput } from './payment.schemas.js'
 import {
+  notifyOrderStatus,
   notifyPaymentReceived,
   notifyPaymentSubmitted,
   notifyPaymentVerified,
@@ -61,8 +62,21 @@ export function derivePaymentStatus(payments: Payment[], total: Prisma.Decimal):
 async function recomputeOrderPaymentStatus(orderId: string): Promise<void> {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payments: true } })
   if (!order) return
-  const status = derivePaymentStatus(order.payments, order.total)
-  await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: status } })
+  const paymentStatus = derivePaymentStatus(order.payments, order.total)
+
+  // Auto-confirm a pending order once it is fully paid, so paid orders reach the
+  // kitchen without a manual admin step. Never touch cancelled or already
+  // progressed orders.
+  const autoConfirm = paymentStatus === 'PAID' && order.status === 'PENDING'
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { paymentStatus, ...(autoConfirm ? { status: 'CONFIRMED' } : {}) },
+  })
+
+  if (autoConfirm) {
+    await notifyOrderStatus(order.customerId, 'CONFIRMED', order.orderNumber, order.id)
+  }
 }
 
 /// Loads an order and asserts it belongs to the given customer.
