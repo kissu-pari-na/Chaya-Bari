@@ -48,11 +48,11 @@
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 
-  /* Fonts. Bengali-capable fallbacks ('Noto Sans Bengali', and Windows'
-     'Nirmala UI') come before the Latin fallback so Bengali always renders with
-     a real Bengali font even if the web fonts fail to load. */
-  --font-display: 'Anek Bangla', 'Noto Sans Bengali', 'Nirmala UI', 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* Fonts are self-hosted (see fonts.css). Bengali-capable fallbacks
+     ('Noto Sans Bengali', Windows' 'Nirmala UI') follow, so Bengali always
+     renders with a real Bengali font even in the unlikely event a face fails. */
+  --font-display: 'Anek Bangla', 'Noto Sans Bengali', 'Nirmala UI', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', system-ui, sans-serif;
 
   /* --- Semantic tokens (LIGHT theme defaults: admin / kitchen) --- */
   --page-bg: #f3efe4;
