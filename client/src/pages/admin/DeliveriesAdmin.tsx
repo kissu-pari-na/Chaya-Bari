@@ -46,7 +46,7 @@ export function DeliveriesAdmin() {
             </div>
             <div className="stat">
               <span className="stat__label">ডেলিভারি লাভ/ক্ষতি</span>
-              <span className="stat__value" style={{ color: totals.difference >= 0 ? '#1a7a45' : '#b3261e' }}>
+              <span className="stat__value" style={{ color: totals.difference >= 0 ? '#b07d10' : '#b3261e' }}>
                 {totals.difference >= 0 ? '+' : '−'}
                 {formatBdt(Math.abs(totals.difference))}
               </span>
@@ -80,7 +80,7 @@ export function DeliveriesAdmin() {
                       {r.difference == null ? (
                         <span className="muted">অসম্পূর্ণ</span>
                       ) : (
-                        <span style={{ color: r.difference >= 0 ? '#1a7a45' : '#b3261e' }}>
+                        <span style={{ color: r.difference >= 0 ? '#b07d10' : '#b3261e' }}>
                           {r.difference >= 0 ? '+' : '−'}
                           {formatBdt(Math.abs(r.difference))}
                         </span>

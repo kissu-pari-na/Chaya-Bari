@@ -29,11 +29,11 @@
   --card-2: rgba(255, 255, 255, 0.07);
   --card-text: #f5f1e7;
   --card-muted: #b8b9b2;
-  --card-border: rgba(255, 255, 255, 0.1);
+  --card-border: rgba(245, 224, 184, 0.12); /* warm gold hairline */
   --card-heading: #f5f1e7;
 
-  /* Feedback */
-  --success: #4b8a3a;
+  /* Feedback (success reads as warm gold, not green — on-palette) */
+  --success: #b07d10;
   --danger: #c0453a;
   --danger-bg: #f7e4e2;
 
@@ -49,11 +49,19 @@
   --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.42);
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28);
   --glow-accent: 0 8px 22px rgba(228, 50, 43, 0.32);
+  --glow-gold: 0 8px 24px rgba(245, 179, 0, 0.28);
+  /* Reusable glossy sheens (top highlight + inner shadow) for glass + buttons */
+  --sheen-glass: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --sheen-red: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -3px 8px rgba(120, 8, 4, 0.4);
+  --sheen-gold: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(140, 95, 0, 0.35);
 
-  /* Glass surfaces (premium translucent panels on the dark storefront) */
-  --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018));
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  /* Glass surfaces (premium translucent panels on the dark storefront).
+     A warm gold top-light + faint amber wash gives the frosted glass a
+     glossy, gilded read. */
+  --glass-bg: radial-gradient(130% 90% at 50% -12%, rgba(245, 179, 0, 0.07), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.014));
+  --glass-border: rgba(245, 224, 184, 0.14);
+  --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
   /* Fonts are self-hosted (see fonts.css). Bengali-capable fallbacks
      ('Noto Sans Bengali', Windows' 'Nirmala UI') follow, so Bengali always
@@ -188,13 +196,26 @@ a:hover {
 
 /* ---------- Cards: premium glass panels ---------- */
 .card {
-  background: var(--card);
+  position: relative;
+  background: var(--glass-bg), var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(12px);
   color: var(--card-text);
+}
+
+/* thin gilded top edge — the signature glossy highlight on glass panels */
+.card::after,
+.paper::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
+  pointer-events: none;
 }
 
 .card h1,
@@ -216,6 +237,7 @@ a:hover {
    On screen it uses the same dark glass surface as the rest of the app;
    when printed it flips to a clean white sheet (see @media print below). ---------- */
 .paper {
+  position: relative;
   background: var(--glass-bg);
   color: var(--card-text);
   border: 1px solid var(--glass-border);
@@ -255,6 +277,9 @@ a:hover {
     backdrop-filter: none;
     color-scheme: light;
   }
+  .paper::after {
+    display: none;
+  }
 }
 
 /* ---------- Buttons ---------- */
@@ -285,27 +310,31 @@ button.btn {
   transform: translateY(1px);
 }
 
-/* Primary: accent green, dark readable text */
+/* Primary: glossy ember-red with white text */
 .btn--primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, #f5473f 0%, var(--accent) 48%, #c81e18 100%);
   color: #fff;
-  box-shadow: var(--glow-accent);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: var(--glow-accent), var(--sheen-red);
 }
 
 .btn--primary:hover {
-  background: var(--red-bright);
+  background: linear-gradient(180deg, #ff5a4e 0%, var(--red-bright) 50%, #e12c22 100%);
+  box-shadow: 0 12px 30px rgba(228, 50, 43, 0.45), var(--sheen-red);
   transform: translateY(-1px);
 }
 
-/* Brand: deep green with cream text */
+/* Brand: glossy deep-red with cream text */
 .btn--brand {
-  background: var(--green-deep);
+  background: linear-gradient(180deg, #9a2c22 0%, var(--green-deep) 55%, #5e130f 100%);
   color: var(--cream);
-  border-color: rgba(228, 50, 43, 0.35);
+  border-color: rgba(245, 179, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 8px 22px rgba(0, 0, 0, 0.4);
 }
 
 .btn--brand:hover {
-  background: #8f231d;
+  background: linear-gradient(180deg, #ad3529 0%, #8f231d 55%, #6c150f 100%);
+  border-color: rgba(245, 179, 0, 0.5);
   transform: translateY(-1px);
 }
 
@@ -359,13 +388,15 @@ button.btn {
 }
 
 .badge--sale {
-  background: var(--accent);
+  background: linear-gradient(180deg, #f5473f, var(--accent));
   color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 3px 10px rgba(228, 50, 43, 0.32);
 }
 
 .badge--new {
-  background: var(--green-deep);
-  color: var(--accent-bright);
+  background: linear-gradient(180deg, #9a2c22, var(--green-deep));
+  color: var(--gold-bright);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .badge--muted {
@@ -439,6 +470,7 @@ button.btn {
   font-weight: 700;
   font-family: var(--font-display);
   color: var(--accent-bright);
+  text-shadow: 0 0 18px rgba(245, 179, 0, 0.2);
 }
 
 /* ---------- Global inputs (dark by default) ---------- */
@@ -457,13 +489,13 @@ textarea {
    colors (a translucent background would blend with the OS white popup). */
 select option,
 select optgroup {
-  background-color: #151a12;
+  background-color: #17131a;
   color: #f5f1e7;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #7c7f74;
+  color: #89857e;
 }
 
 /* When a paper sheet is printed, its inputs render light too. */

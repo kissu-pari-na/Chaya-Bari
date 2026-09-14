@@ -421,14 +421,17 @@
   color: var(--muted-cream);
 }
 
-/* ---------- Promo / combo band (deep green) ---------- */
+/* ---------- Promo / combo band (deep ember red, gilded) ---------- */
 .promo {
+  position: relative;
   margin-top: 1rem;
   border-radius: var(--radius-lg);
+  overflow: hidden;
   background:
-    radial-gradient(circle at 12% 20%, rgba(228, 50, 43, 0.18), transparent 42%),
-    linear-gradient(120deg, var(--green-deep), #16260f);
-  border: 1px solid rgba(228, 50, 43, 0.28);
+    radial-gradient(circle at 88% -20%, rgba(245, 179, 0, 0.16), transparent 46%),
+    radial-gradient(circle at 12% 20%, rgba(255, 74, 61, 0.22), transparent 46%),
+    linear-gradient(120deg, #8f231d, var(--green-deep) 45%, #3a1210);
+  border: 1px solid rgba(245, 179, 0, 0.28);
   color: var(--cream);
   padding: clamp(1.75rem, 4vw, 2.75rem);
   display: flex;
@@ -436,7 +439,17 @@
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* gilded top hairline for the promo band */
+.promo::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.55), transparent);
+  pointer-events: none;
 }
 
 .promo__title {
@@ -465,10 +478,30 @@
 }
 
 .review {
-  background: var(--bg-800);
-  border: 1px solid var(--border-dark);
+  position: relative;
+  overflow: hidden;
+  background: var(--glass-bg), var(--bg-800);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 1.3rem 1.4rem;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.review::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
+  pointer-events: none;
+}
+
+.review:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 179, 0, 0.35);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245, 179, 0, 0.12);
 }
 
 .review__stars {

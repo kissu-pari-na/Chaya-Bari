@@ -303,7 +303,7 @@
 }
 
 .delivery-gain {
-  color: #5fce8a;
+  color: var(--gold-bright, #ffc633);
 }
 
 .delivery-loss {

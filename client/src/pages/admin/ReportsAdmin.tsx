@@ -191,7 +191,7 @@ function ProfitLine({
   strong?: boolean
   tone?: 'gain' | 'loss'
 }) {
-  const color = tone === 'gain' ? '#1a7a45' : tone === 'loss' ? '#b3261e' : undefined
+  const color = tone === 'gain' ? '#b07d10' : tone === 'loss' ? '#b3261e' : undefined
   return (
     <div className={strong ? 'profit-line profit-line--strong' : 'profit-line'}>
       <span>{label}</span>
