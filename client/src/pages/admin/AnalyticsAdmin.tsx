@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { fetchCustomerAnalytics, fetchDemandProfit, fetchSalesByDay } from '../../lib/reports'
 import { formatBdt } from '../../lib/format'
+import { useI18n } from '../../context/LanguageContext'
+import { pick } from '../../lib/i18n'
 import type { CustomerAnalyticsRow, DemandProfitRow, ProductQuadrant, SalesByDayRow } from '../../types/reports'
 import './Admin.css'
 
@@ -13,13 +15,46 @@ function today(): string {
 }
 
 const quadrantMeta: Record<ProductQuadrant, { title: string; hint: string; color: string }> = {
-  BEST: { title: 'বেস্ট (চাহিদা↑ লাভ↑)', hint: 'এগুলো প্রমোট করুন', color: '#c8901a' },
-  OPTIMIZE: { title: 'অপ্টিমাইজ (চাহিদা↑ লাভ↓)', hint: 'দাম/খরচ পর্যালোচনা করুন', color: '#b5651d' },
-  MARKETING: { title: 'মার্কেটিং সুযোগ (চাহিদা↓ লাভ↑)', hint: 'প্রচার বাড়ান', color: '#1a5b8a' },
-  REVIEW: { title: 'পর্যালোচনা (চাহিদা↓ লাভ↓)', hint: 'পরিবর্তন/বাদ দেওয়ার কথা ভাবুন', color: '#b3261e' },
+  BEST: {
+    get title() {
+      return pick('বেস্ট (চাহিদা↑ লাভ↑)', 'Best (demand↑ profit↑)')
+    },
+    get hint() {
+      return pick('এগুলো প্রমোট করুন', 'Promote these')
+    },
+    color: '#c8901a',
+  },
+  OPTIMIZE: {
+    get title() {
+      return pick('অপ্টিমাইজ (চাহিদা↑ লাভ↓)', 'Optimize (demand↑ profit↓)')
+    },
+    get hint() {
+      return pick('দাম/খরচ পর্যালোচনা করুন', 'Review price/cost')
+    },
+    color: '#b5651d',
+  },
+  MARKETING: {
+    get title() {
+      return pick('মার্কেটিং সুযোগ (চাহিদা↓ লাভ↑)', 'Marketing opportunity (demand↓ profit↑)')
+    },
+    get hint() {
+      return pick('প্রচার বাড়ান', 'Increase promotion')
+    },
+    color: '#1a5b8a',
+  },
+  REVIEW: {
+    get title() {
+      return pick('পর্যালোচনা (চাহিদা↓ লাভ↓)', 'Review (demand↓ profit↓)')
+    },
+    get hint() {
+      return pick('পরিবর্তন/বাদ দেওয়ার কথা ভাবুন', 'Consider changing/dropping')
+    },
+    color: '#b3261e',
+  },
 }
 
 export function AnalyticsAdmin() {
+  const { t } = useI18n()
   const [from, setFrom] = useState(monthStart())
   const [to, setTo] = useState(today())
   const [days, setDays] = useState<SalesByDayRow[]>([])
@@ -51,28 +86,28 @@ export function AnalyticsAdmin() {
 
   return (
     <section>
-      <h1>অ্যানালিটিক্স</h1>
+      <h1>{t('অ্যানালিটিক্স', 'Analytics')}</h1>
 
       <div className="order-filters">
-        <label className="date-filter">থেকে <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label className="date-filter">পর্যন্ত <input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+        <label className="date-filter">{t('থেকে', 'From')} <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="date-filter">{t('পর্যন্ত', 'To')} <input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
 
       {loading ? (
-        <p className="muted">লোড হচ্ছে…</p>
+        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
       ) : (
         <>
-          <h2>দৈনিক বিক্রি</h2>
+          <h2>{t('দৈনিক বিক্রি', 'Daily sales')}</h2>
           <div className="table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>অর্ডার</th>
-                  <th>ফুড সেলস</th>
-                  <th>ডিসকাউন্ট</th>
-                  <th>নেট</th>
-                  <th>ডেলিভারি</th>
+                  <th>{t('তারিখ', 'Date')}</th>
+                  <th>{t('অর্ডার', 'Orders')}</th>
+                  <th>{t('ফুড সেলস', 'Food sales')}</th>
+                  <th>{t('ডিসকাউন্ট', 'Discount')}</th>
+                  <th>{t('নেট', 'Net')}</th>
+                  <th>{t('ডেলিভারি', 'Delivery')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,14 +123,14 @@ export function AnalyticsAdmin() {
                 ))}
                 {days.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="muted">এই সময়ে কোনো বিক্রি নেই।</td>
+                    <td colSpan={6} className="muted">{t('এই সময়ে কোনো বিক্রি নেই।', 'No sales in this period.')}</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          <h2>চাহিদা × লাভ বিশ্লেষণ</h2>
+          <h2>{t('চাহিদা × লাভ বিশ্লেষণ', 'Demand × profit analysis')}</h2>
           <div className="quadrant-grid">
             {quadrants.map((q) => {
               const items = demand.filter((d) => d.quadrant === q)
@@ -118,20 +153,20 @@ export function AnalyticsAdmin() {
             })}
           </div>
 
-          <h2>কাস্টমার অ্যানালিটিক্স</h2>
+          <h2>{t('কাস্টমার অ্যানালিটিক্স', 'Customer analytics')}</h2>
           <div className="table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>কাস্টমার</th>
-                  <th>অর্ডার</th>
-                  <th>মোট খরচ</th>
-                  <th>গড় অর্ডার</th>
-                  <th>পরিমাণ</th>
-                  <th>ছাড়</th>
-                  <th>শেষ অর্ডার</th>
-                  <th>প্রিয় পণ্য</th>
-                  <th>আনু. লাভ</th>
+                  <th>{t('কাস্টমার', 'Customer')}</th>
+                  <th>{t('অর্ডার', 'Orders')}</th>
+                  <th>{t('মোট খরচ', 'Total spent')}</th>
+                  <th>{t('গড় অর্ডার', 'Avg order')}</th>
+                  <th>{t('পরিমাণ', 'Quantity')}</th>
+                  <th>{t('ছাড়', 'Discount')}</th>
+                  <th>{t('শেষ অর্ডার', 'Last order')}</th>
+                  <th>{t('প্রিয় পণ্য', 'Favorite products')}</th>
+                  <th>{t('আনু. লাভ', 'Approx. profit')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,7 +185,7 @@ export function AnalyticsAdmin() {
                 ))}
                 {customers.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="muted">এই সময়ে কোনো কাস্টমার নেই।</td>
+                    <td colSpan={9} className="muted">{t('এই সময়ে কোনো কাস্টমার নেই।', 'No customers in this period.')}</td>
                   </tr>
                 )}
               </tbody>

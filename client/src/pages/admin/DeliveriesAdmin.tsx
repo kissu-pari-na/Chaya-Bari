@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom'
 import { fetchDeliveries } from '../../lib/delivery'
 import { deliveryStatusLabel } from '../../lib/deliveryStatus'
 import { formatBdt } from '../../lib/format'
+import { useI18n } from '../../context/LanguageContext'
 import type { DeliveryListRow } from '../../types/delivery'
 import '../Orders.css'
 import './Admin.css'
 
 export function DeliveriesAdmin() {
+  const { t } = useI18n()
   const [rows, setRows] = useState<DeliveryListRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -29,23 +31,23 @@ export function DeliveriesAdmin() {
 
   return (
     <section>
-      <h1>ডেলিভারি ব্যবস্থাপনা</h1>
+      <h1>{t('ডেলিভারি ব্যবস্থাপনা', 'Delivery management')}</h1>
 
       {loading ? (
-        <p className="muted">লোড হচ্ছে…</p>
+        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
       ) : (
         <>
           <div className="stat-row">
             <div className="stat">
-              <span className="stat__label">কাস্টমার খরচ (মোট)</span>
+              <span className="stat__label">{t('কাস্টমার খরচ (মোট)', 'Customer cost (total)')}</span>
               <span className="stat__value">{formatBdt(totals.customer)}</span>
             </div>
             <div className="stat">
-              <span className="stat__label">প্রকৃত খরচ (মোট)</span>
+              <span className="stat__label">{t('প্রকৃত খরচ (মোট)', 'Actual cost (total)')}</span>
               <span className="stat__value">{formatBdt(totals.actual)}</span>
             </div>
             <div className="stat">
-              <span className="stat__label">ডেলিভারি লাভ/ক্ষতি</span>
+              <span className="stat__label">{t('ডেলিভারি লাভ/ক্ষতি', 'Delivery gain/loss')}</span>
               <span className="stat__value" style={{ color: totals.difference >= 0 ? '#b07d10' : '#b3261e' }}>
                 {totals.difference >= 0 ? '+' : '−'}
                 {formatBdt(Math.abs(totals.difference))}
@@ -57,13 +59,13 @@ export function DeliveriesAdmin() {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>অর্ডার</th>
-                  <th>তারিখ</th>
-                  <th>প্রোভাইডার</th>
-                  <th>কাস্টমার</th>
-                  <th>প্রকৃত</th>
-                  <th>পার্থক্য</th>
-                  <th>স্ট্যাটাস</th>
+                  <th>{t('অর্ডার', 'Order')}</th>
+                  <th>{t('তারিখ', 'Date')}</th>
+                  <th>{t('প্রোভাইডার', 'Provider')}</th>
+                  <th>{t('কাস্টমার', 'Customer')}</th>
+                  <th>{t('প্রকৃত', 'Actual')}</th>
+                  <th>{t('পার্থক্য', 'Difference')}</th>
+                  <th>{t('স্ট্যাটাস', 'Status')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,7 +80,7 @@ export function DeliveriesAdmin() {
                     <td>{r.actualDeliveryCost != null ? formatBdt(r.actualDeliveryCost) : '—'}</td>
                     <td>
                       {r.difference == null ? (
-                        <span className="muted">অসম্পূর্ণ</span>
+                        <span className="muted">{t('অসম্পূর্ণ', 'Incomplete')}</span>
                       ) : (
                         <span style={{ color: r.difference >= 0 ? '#b07d10' : '#b3261e' }}>
                           {r.difference >= 0 ? '+' : '−'}
@@ -94,7 +96,7 @@ export function DeliveriesAdmin() {
                 {rows.length === 0 && (
                   <tr>
                     <td colSpan={7} className="muted">
-                      কোনো ডেলিভারি নেই।
+                      {t('কোনো ডেলিভারি নেই।', 'No deliveries.')}
                     </td>
                   </tr>
                 )}

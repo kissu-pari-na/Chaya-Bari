@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { fetchBusinessSummary, fetchProductProfitability } from '../../lib/reports'
 import { formatBdt } from '../../lib/format'
+import { useI18n } from '../../context/LanguageContext'
 import type { BusinessSummary, ProductProfitRow } from '../../types/reports'
 import './Admin.css'
 
@@ -13,6 +14,7 @@ function today(): string {
 }
 
 export function ReportsAdmin() {
+  const { t } = useI18n()
   const [from, setFrom] = useState(monthStart())
   const [to, setTo] = useState(today())
   const [summary, setSummary] = useState<BusinessSummary | null>(null)
@@ -36,34 +38,34 @@ export function ReportsAdmin() {
 
   return (
     <section>
-      <h1>ব্যবসায়িক রিপোর্ট ও লাভ</h1>
+      <h1>{t('ব্যবসায়িক রিপোর্ট ও লাভ', 'Business report & profit')}</h1>
 
       <div className="order-filters">
-        <label className="date-filter">থেকে <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label className="date-filter">পর্যন্ত <input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
+        <label className="date-filter">{t('থেকে', 'From')} <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="date-filter">{t('পর্যন্ত', 'To')} <input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
 
       {loading || !summary ? (
-        <p className="muted">লোড হচ্ছে…</p>
+        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
       ) : (
         <>
           <div className="profit-grid">
-            <ProfitLine label="মোট অর্ডার" value={String(summary.totalOrders)} />
-            <ProfitLine label="ফুড সেলস" value={formatBdt(summary.foodSales)} />
-            <ProfitLine label="ফুড ডিসকাউন্ট" value={`−${formatBdt(summary.foodDiscounts)}`} />
-            <ProfitLine label="নেট ফুড সেলস" value={formatBdt(summary.netFoodSales)} />
-            <ProfitLine label="প্রোডাক্ট খরচ" value={`−${formatBdt(summary.productCost)}`} />
-            <ProfitLine label="গ্রস প্রফিট" value={formatBdt(summary.grossProfit)} strong />
-            <ProfitLine label="ডেলিভারি কালেক্টেড" value={formatBdt(summary.deliveryCollected)} />
-            <ProfitLine label="প্রকৃত ডেলিভারি খরচ" value={`−${formatBdt(summary.actualDeliveryCost)}`} />
+            <ProfitLine label={t('মোট অর্ডার', 'Total orders')} value={String(summary.totalOrders)} />
+            <ProfitLine label={t('ফুড সেলস', 'Food sales')} value={formatBdt(summary.foodSales)} />
+            <ProfitLine label={t('ফুড ডিসকাউন্ট', 'Food discounts')} value={`−${formatBdt(summary.foodDiscounts)}`} />
+            <ProfitLine label={t('নেট ফুড সেলস', 'Net food sales')} value={formatBdt(summary.netFoodSales)} />
+            <ProfitLine label={t('প্রোডাক্ট খরচ', 'Product cost')} value={`−${formatBdt(summary.productCost)}`} />
+            <ProfitLine label={t('গ্রস প্রফিট', 'Gross profit')} value={formatBdt(summary.grossProfit)} strong />
+            <ProfitLine label={t('ডেলিভারি কালেক্টেড', 'Delivery collected')} value={formatBdt(summary.deliveryCollected)} />
+            <ProfitLine label={t('প্রকৃত ডেলিভারি খরচ', 'Actual delivery cost')} value={`−${formatBdt(summary.actualDeliveryCost)}`} />
             <ProfitLine
-              label="ডেলিভারি লাভ/ক্ষতি"
+              label={t('ডেলিভারি লাভ/ক্ষতি', 'Delivery gain/loss')}
               value={`${summary.deliveryGainLoss >= 0 ? '+' : '−'}${formatBdt(Math.abs(summary.deliveryGainLoss))}`}
               tone={summary.deliveryGainLoss >= 0 ? 'gain' : 'loss'}
             />
-            <ProfitLine label="অন্যান্য খরচ" value={`−${formatBdt(summary.otherExpenses)}`} />
+            <ProfitLine label={t('অন্যান্য খরচ', 'Other expenses')} value={`−${formatBdt(summary.otherExpenses)}`} />
             <ProfitLine
-              label="নেট প্রফিট"
+              label={t('নেট প্রফিট', 'Net profit')}
               value={formatBdt(summary.netProfit)}
               strong
               tone={summary.netProfit >= 0 ? 'gain' : 'loss'}
@@ -72,37 +74,40 @@ export function ReportsAdmin() {
 
           {summary.ordersMissingActualDelivery > 0 && (
             <p className="hint hint--warning" style={{ color: '#b3541e' }}>
-              {summary.ordersMissingActualDelivery} টি অর্ডারে প্রকৃত ডেলিভারি খরচ এখনো যোগ হয়নি — ডেলিভারি লাভ/ক্ষতি অসম্পূর্ণ।
+              {t(
+                `${summary.ordersMissingActualDelivery} টি অর্ডারে প্রকৃত ডেলিভারি খরচ এখনো যোগ হয়নি — ডেলিভারি লাভ/ক্ষতি অসম্পূর্ণ।`,
+                `${summary.ordersMissingActualDelivery} order(s) still missing actual delivery cost — delivery gain/loss is incomplete.`,
+              )}
             </p>
           )}
 
           <div className="reports-columns">
             <div>
-              <h3>টপ সেলিং</h3>
+              <h3>{t('টপ সেলিং', 'Top selling')}</h3>
               <ul className="mini-list">
-                {summary.topSelling.map((t) => (
-                  <li key={t.productName}>
-                    <span>{t.productName}</span>
-                    <strong>{t.unitsSold}</strong>
+                {summary.topSelling.map((row) => (
+                  <li key={row.productName}>
+                    <span>{row.productName}</span>
+                    <strong>{row.unitsSold}</strong>
                   </li>
                 ))}
-                {summary.topSelling.length === 0 && <li className="muted">তথ্য নেই</li>}
+                {summary.topSelling.length === 0 && <li className="muted">{t('তথ্য নেই', 'No data')}</li>}
               </ul>
             </div>
             <div>
-              <h3>সর্বোচ্চ লাভজনক</h3>
+              <h3>{t('সর্বোচ্চ লাভজনক', 'Most profitable')}</h3>
               <ul className="mini-list">
-                {summary.mostProfitable.map((t) => (
-                  <li key={t.productName}>
-                    <span>{t.productName}</span>
-                    <strong>{formatBdt(t.grossProfit)}</strong>
+                {summary.mostProfitable.map((row) => (
+                  <li key={row.productName}>
+                    <span>{row.productName}</span>
+                    <strong>{formatBdt(row.grossProfit)}</strong>
                   </li>
                 ))}
-                {summary.mostProfitable.length === 0 && <li className="muted">তথ্য নেই</li>}
+                {summary.mostProfitable.length === 0 && <li className="muted">{t('তথ্য নেই', 'No data')}</li>}
               </ul>
             </div>
             <div>
-              <h3>টপ কাস্টমার</h3>
+              <h3>{t('টপ কাস্টমার', 'Top customers')}</h3>
               <ul className="mini-list">
                 {summary.topCustomers.map((c) => (
                   <li key={c.name}>
@@ -110,11 +115,11 @@ export function ReportsAdmin() {
                     <strong>{formatBdt(c.spent)}</strong>
                   </li>
                 ))}
-                {summary.topCustomers.length === 0 && <li className="muted">তথ্য নেই</li>}
+                {summary.topCustomers.length === 0 && <li className="muted">{t('তথ্য নেই', 'No data')}</li>}
               </ul>
             </div>
             <div>
-              <h3>লো-স্টক উপকরণ</h3>
+              <h3>{t('লো-স্টক উপকরণ', 'Low-stock materials')}</h3>
               <ul className="mini-list">
                 {summary.lowStockMaterials.map((m) => (
                   <li key={m.name}>
@@ -122,35 +127,35 @@ export function ReportsAdmin() {
                     <strong>{m.stockQty} {m.unit}</strong>
                   </li>
                 ))}
-                {summary.lowStockMaterials.length === 0 && <li className="muted">তথ্য নেই</li>}
+                {summary.lowStockMaterials.length === 0 && <li className="muted">{t('তথ্য নেই', 'No data')}</li>}
               </ul>
             </div>
           </div>
 
           <div className="stat-row" style={{ marginTop: '1rem' }}>
             <div className="stat">
-              <span className="stat__label">পেন্ডিং অর্ডার</span>
+              <span className="stat__label">{t('পেন্ডিং অর্ডার', 'Pending orders')}</span>
               <span className="stat__value">{summary.pendingOrders}</span>
             </div>
             <div className="stat">
-              <span className="stat__label">ডেলিভারির অপেক্ষায়</span>
+              <span className="stat__label">{t('ডেলিভারির অপেক্ষায়', 'Awaiting delivery')}</span>
               <span className="stat__value">{summary.ordersAwaitingDelivery}</span>
             </div>
           </div>
 
-          <h2>প্রোডাক্ট প্রফিটেবিলিটি</h2>
+          <h2>{t('প্রোডাক্ট প্রফিটেবিলিটি', 'Product profitability')}</h2>
           <div className="table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>পণ্য</th>
-                  <th>বিক্রি</th>
-                  <th>রেভিনিউ</th>
-                  <th>ডিসকাউন্ট</th>
-                  <th>নেট</th>
-                  <th>খরচ</th>
-                  <th>গ্রস প্রফিট</th>
-                  <th>মার্জিন</th>
+                  <th>{t('পণ্য', 'Product')}</th>
+                  <th>{t('বিক্রি', 'Sold')}</th>
+                  <th>{t('রেভিনিউ', 'Revenue')}</th>
+                  <th>{t('ডিসকাউন্ট', 'Discount')}</th>
+                  <th>{t('নেট', 'Net')}</th>
+                  <th>{t('খরচ', 'Cost')}</th>
+                  <th>{t('গ্রস প্রফিট', 'Gross profit')}</th>
+                  <th>{t('মার্জিন', 'Margin')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +173,7 @@ export function ReportsAdmin() {
                 ))}
                 {products.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="muted">এই সময়ে কোনো বিক্রি নেই।</td>
+                    <td colSpan={8} className="muted">{t('এই সময়ে কোনো বিক্রি নেই।', 'No sales in this period.')}</td>
                   </tr>
                 )}
               </tbody>
