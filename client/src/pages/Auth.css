@@ -82,9 +82,9 @@
 
 .auth-card button {
   margin-top: 0.5rem;
-  background: linear-gradient(180deg, #f5473f 0%, var(--accent) 48%, #c81e18 100%);
+  background: linear-gradient(180deg, #ea342c, #d0241d);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0.85rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
@@ -96,8 +96,8 @@
 }
 
 .auth-card button:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ff5a4e 0%, var(--red-bright) 50%, #e12c22 100%);
-  box-shadow: 0 12px 30px rgba(228, 50, 43, 0.45), var(--sheen-red);
+  background: linear-gradient(180deg, #f5443b, #de2c24);
+  box-shadow: 0 6px 16px rgba(228, 50, 43, 0.3), var(--sheen-red);
   transform: translateY(-1px);
 }
 

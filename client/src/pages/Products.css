@@ -25,15 +25,15 @@
 }
 
 .chip--active {
-  background: linear-gradient(180deg, #f5473f, var(--accent));
+  background: linear-gradient(180deg, #ea342c, #d0241d);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(0, 0, 0, 0.08);
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(228, 50, 43, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: var(--sheen-red);
 }
 
 .chip--active:hover {
-  background: linear-gradient(180deg, #ff5a4e, var(--red-bright));
+  background: linear-gradient(180deg, #f5443b, #de2c24);
   color: #fff;
 }
 
@@ -175,9 +175,9 @@
 }
 
 .product-card__add {
-  background: linear-gradient(180deg, #f5473f 0%, var(--accent) 48%, #c81e18 100%);
+  background: linear-gradient(180deg, #ea342c, #d0241d);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0.5rem 0.9rem;
   border-radius: var(--radius-pill);
   font-size: 0.8rem;
@@ -190,8 +190,8 @@
 }
 
 .product-card__add:hover {
-  background: linear-gradient(180deg, #ff5a4e 0%, var(--red-bright) 50%, #e12c22 100%);
-  box-shadow: 0 12px 26px rgba(228, 50, 43, 0.45), var(--sheen-red);
+  background: linear-gradient(180deg, #f5443b, #de2c24);
+  box-shadow: 0 6px 16px rgba(228, 50, 43, 0.3), var(--sheen-red);
   transform: translateY(-1px);
 }
 
@@ -207,14 +207,14 @@
 .product-detail__order--active {
   cursor: pointer;
   opacity: 1;
-  background: linear-gradient(180deg, #f5473f 0%, var(--accent) 48%, #c81e18 100%);
+  background: linear-gradient(180deg, #ea342c, #d0241d);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(0, 0, 0, 0.08);
   box-shadow: var(--glow-accent), var(--sheen-red);
 }
 
 .product-detail__order--active:hover {
-  background: linear-gradient(180deg, #ff5a4e 0%, var(--red-bright) 50%, #e12c22 100%);
+  background: linear-gradient(180deg, #f5443b, #de2c24);
   transform: translateY(-1px);
 }
 
