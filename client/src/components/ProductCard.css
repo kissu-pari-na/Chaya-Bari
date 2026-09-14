@@ -15,8 +15,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 440px;
-  margin-top: 18px; /* room for the shape + product to jut above the card */
+  min-height: 384px;
+  margin-top: 16px; /* room for the shape + product to jut above the card */
   overflow: visible;
   text-decoration: none;
   color: var(--cream);
@@ -26,15 +26,15 @@
 .pcard__shape {
   position: absolute;
   z-index: 0;
-  top: -18px;
-  right: -14px;
-  width: 66%;
-  height: 74%;
-  border-radius: 22px 22px 18px 70px;
+  top: -16px;
+  right: -12px;
+  width: 62%;
+  height: 46%;
+  border-radius: 20px 20px 18px 64px;
   background:
-    radial-gradient(circle at 74% 24%, rgba(255, 74, 61, 0.65), transparent 60%),
-    linear-gradient(150deg, #e4322b 0%, #a2201a 62%, #7a1c17 100%);
-  box-shadow: 0 22px 40px rgba(158, 26, 20, 0.42);
+    radial-gradient(circle at 72% 28%, rgba(255, 74, 61, 0.65), transparent 60%),
+    linear-gradient(150deg, #e4322b 0%, #a2201a 66%, #7a1c17 100%);
+  box-shadow: 0 20px 36px rgba(158, 26, 20, 0.4);
 }
 
 /* Dark card body. */
@@ -61,14 +61,15 @@
   background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
 }
 
-/* Diagonal accent wedge inside the card body (clipped to its rounded corners). */
+/* Diagonal accent region: one clean slant, running the full right edge down
+   to the bottom-right — clipped to the card's rounded corners by the surface. */
 .pcard__wedge {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 78% 26%, rgba(255, 74, 61, 0.55), transparent 58%),
-    linear-gradient(150deg, #e4322b 0%, #a2201a 64%, #7a1c17 100%);
-  clip-path: polygon(38% 0, 100% 0, 100% 66%, 38% 0);
+    radial-gradient(circle at 74% 24%, rgba(255, 74, 61, 0.5), transparent 56%),
+    linear-gradient(152deg, #e4322b 0%, #a2201a 66%, #7a1c17 100%);
+  clip-path: polygon(34% 0, 100% 0, 100% 100%, 86% 100%);
 }
 
 .pcard:hover .pcard__surface {
@@ -83,36 +84,36 @@
 .pcard__media {
   position: absolute;
   z-index: 2;
-  top: -18px;
+  top: -14px;
   left: 4%;
-  right: 4%;
-  height: 300px;
+  right: 2%;
+  height: 224px;
   display: grid;
   place-items: center;
   transition: transform 0.3s ease;
   pointer-events: none;
 }
 .pcard__media img {
-  max-height: 300px;
+  max-height: 224px;
   max-width: 100%;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
 }
 .pcard__glyph {
-  font-size: 6rem;
-  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.55));
+  font-size: 5rem;
+  filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.55));
 }
 
 /* Price on the accent panel, upper-right. */
 .pcard__price {
   position: absolute;
   z-index: 3;
-  top: 1rem;
-  right: 1.25rem;
+  top: 0.9rem;
+  right: 1.15rem;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 2rem;
+  font-size: 1.85rem;
   line-height: 1;
   color: #fff;
   text-align: right;
@@ -121,7 +122,7 @@
 .pcard__was {
   display: block;
   margin-top: 0.15rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.78);
   text-decoration: line-through;
@@ -131,8 +132,8 @@
 .pcard__flag {
   position: absolute;
   z-index: 3;
-  top: 1rem;
-  left: 1.1rem;
+  top: 0.9rem;
+  left: 1rem;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -153,7 +154,7 @@
 
 /* Reserve the upper zone for the product visual. */
 .pcard__visual {
-  height: 262px;
+  height: 182px;
   flex-shrink: 0;
 }
 
@@ -162,10 +163,10 @@
   position: relative;
   z-index: 2;
   margin-top: auto;
-  padding: 0 1.35rem 1.4rem;
+  padding: 0 1.3rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .pcard__title {
@@ -175,12 +176,12 @@
 .pcard__title-outline {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 2.3rem;
-  line-height: 1.15;
+  font-size: 2.05rem;
+  line-height: 1.14;
   letter-spacing: -0.01em;
   color: transparent;
-  -webkit-text-stroke: 1.5px var(--gold);
-  text-stroke: 1.5px var(--gold);
+  -webkit-text-stroke: 1.4px var(--gold);
+  text-stroke: 1.4px var(--gold);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -188,18 +189,18 @@
 .pcard__title-solid {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.35rem;
+  font-size: 1.28rem;
   line-height: 1.2;
   color: var(--cream);
-  margin-top: 0.15rem;
+  margin-top: 0.12rem;
   letter-spacing: -0.01em;
 }
 
 .pcard__desc {
-  margin: 0.4rem 0 0;
+  margin: 0.35rem 0 0;
   color: var(--muted-cream);
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: 0.85rem;
+  line-height: 1.48;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -207,14 +208,14 @@
 }
 
 .pcard__rating {
-  margin-top: 0.45rem;
+  margin-top: 0.4rem;
 }
 
 /* Pill CTA, centred near the bottom. */
 .pcard__cta-row {
   display: flex;
   justify-content: center;
-  margin-top: 1.1rem;
+  margin-top: 0.95rem;
 }
 .pcard__cta {
   display: inline-flex;
@@ -225,9 +226,9 @@
   color: var(--gold-bright);
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   letter-spacing: 0.02em;
-  padding: 0.65rem 1.6rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 999px;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
@@ -256,10 +257,10 @@
 .pcard__dot {
   position: absolute;
   z-index: 2;
-  left: -16px;
-  bottom: -16px;
-  width: 54px;
-  height: 54px;
+  left: -14px;
+  bottom: -14px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: linear-gradient(180deg, var(--gold-bright), var(--gold));
   box-shadow: 0 6px 18px rgba(245, 179, 0, 0.32);
@@ -267,21 +268,9 @@
 
 @media (max-width: 420px) {
   .pcard {
-    min-height: 420px;
-  }
-  .pcard__title-outline {
-    font-size: 2rem;
+    min-height: 372px;
   }
   .pcard__price {
-    font-size: 1.75rem;
-  }
-  .pcard__media {
-    height: 260px;
-  }
-  .pcard__media img {
-    max-height: 260px;
-  }
-  .pcard__visual {
-    height: 232px;
+    font-size: 1.7rem;
   }
 }
