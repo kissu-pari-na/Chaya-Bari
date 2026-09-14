@@ -41,6 +41,17 @@ async function main() {
   console.log(`  KITCHEN -> ${kitchenEmail} / ${kitchenPassword}`)
 
   await seedCatalog()
+  await seedExpenseCategories()
+  await seedReviews()
+}
+
+// Default general-expense categories.
+async function seedExpenseCategories() {
+  const names = ['গ্যাস', 'বিদ্যুৎ', 'মার্কেটিং', 'যন্ত্রপাতি', 'বিবিধ', 'অন্যান্য']
+  for (const name of names) {
+    await prisma.expenseCategory.upsert({ where: { name }, update: {}, create: { name } })
+  }
+  console.log(`Seeded ${names.length} expense categories.`)
 }
 
 // Sample categories + products so the catalog isn't empty in a fresh install.
@@ -87,6 +98,81 @@ async function seedCatalog() {
     created += 1
   }
   console.log(`Seeded catalog: ${categories.length} categories, ${created} new products.`)
+}
+
+// Sample delivered orders + order-based reviews so the home page shows real
+// testimonials and product ratings on a fresh install. Reviews are always tied
+// to a delivered order (the only place a review can be created in the app).
+async function seedReviews() {
+  const demoCustomers: { name: string; email: string; comment: string; rating: number; product: string }[] = [
+    { name: 'সাদিয়া রহমান', email: 'sadia.demo@chayabari.local', rating: 5, product: 'বিরিয়ানি', comment: 'একদম ঘরের মতো স্বাদ! বিরিয়ানি অসাধারণ ছিল, সময়মতো পৌঁছেছে।' },
+    { name: 'তানভীর হাসান', email: 'tanvir.demo@chayabari.local', rating: 5, product: 'ডাব পুডিং', comment: 'তাজা, ঠান্ডা আর পরিমাণে ভালো। পরিবারের সবাই পছন্দ করেছে। আবার অর্ডার করব।' },
+    { name: 'নুসরাত জাহান', email: 'nusrat.demo@chayabari.local', rating: 4, product: 'পায়েস', comment: 'পায়েসটা দারুণ ছিল, খুব বেশি মিষ্টি নয়। মান নিয়ে কোনো অভিযোগ নেই।' },
+    { name: 'ইমরান কবির', email: 'imran.demo@chayabari.local', rating: 5, product: 'বিরিয়ানি', comment: 'মাংস একদম নরম, মশলা পারফেক্ট। ঢাকায় এত ভালো ঘরোয়া বিরিয়ানি কমই পাওয়া যায়।' },
+    { name: 'ফারিয়া আক্তার', email: 'faria.demo@chayabari.local', rating: 4, product: 'প্লেইন কেক', comment: 'কেকটা নরম আর তাজা ছিল। জন্মদিনের জন্য নিয়েছিলাম, সবাই প্রশংসা করেছে।' },
+  ]
+
+  const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+  let count = 0
+  for (let i = 0; i < demoCustomers.length; i++) {
+    const d = demoCustomers[i]
+    const user = await prisma.user.upsert({
+      where: { email: d.email },
+      update: {},
+      create: {
+        name: d.name,
+        email: d.email,
+        role: 'CUSTOMER',
+        passwordHash: await bcrypt.hash('demo12345', 10),
+        customer: { create: {} },
+      },
+      include: { customer: true },
+    })
+    const customer = user.customer ?? (await prisma.customer.create({ data: { userId: user.id } }))
+
+    const product = await prisma.product.findFirst({ where: { name: d.product } })
+    if (!product) continue
+
+    const orderNumber = `CB-SEED-${String(i + 1).padStart(3, '0')}`
+    const price = Number(product.price)
+    // Idempotent: recreate the demo order fresh each seed run.
+    await prisma.order.deleteMany({ where: { orderNumber } })
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        customerId: customer.id,
+        recipientName: d.name,
+        recipientPhone: '01700000000',
+        addressLine: 'ঢাকা',
+        city: 'Dhaka',
+        fulfillmentDate: twoDaysAgo,
+        subtotal: price,
+        customerDeliveryCost: 60,
+        total: price + 60,
+        status: 'DELIVERED',
+        deliveredAt: twoDaysAgo,
+        // Already invited so the boot dispatcher does not re-notify demo users.
+        reviewInviteSentAt: twoDaysAgo,
+        items: {
+          create: {
+            productId: product.id,
+            productName: product.name,
+            listUnitPrice: price,
+            unitPrice: price,
+            quantity: 1,
+            lineTotal: price,
+            kitchenStage: 'READY',
+          },
+        },
+      },
+    })
+
+    await prisma.review.create({
+      data: { orderId: order.id, productId: product.id, customerId: customer.id, rating: d.rating, comment: d.comment },
+    })
+    count += 1
+  }
+  console.log(`Seeded ${count} delivered demo orders with reviews.`)
 }
 
 main()

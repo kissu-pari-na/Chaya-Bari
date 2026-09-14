@@ -1,0 +1,37 @@
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.stars__mark {
+  position: relative;
+  color: #f2b01e;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* The hollow remainder is drawn as muted stars right after the filled ones. */
+.stars__empty {
+  color: color-mix(in srgb, var(--card-muted, #b8b9b2) 55%, transparent);
+}
+
+.stars__value {
+  font-weight: 700;
+  color: var(--card-text, #f5f1e7);
+  font-size: 0.85em;
+}
+
+.stars__count {
+  color: var(--card-muted, #b8b9b2);
+  font-size: 0.8em;
+}
+
+.stars--sm {
+  font-size: 0.85rem;
+}
+
+.stars--md {
+  font-size: 1rem;
+}

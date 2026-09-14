@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { fetchCategories, fetchProducts } from '../lib/products'
-import { formatBdt } from '../lib/format'
+import { ProductCard } from '../components/ProductCard'
 import type { Category, Product } from '../types/product'
 import './Products.css'
 
@@ -56,17 +55,7 @@ export function ProductList() {
 
       <div className="product-grid">
         {products.map((p) => (
-          <Link key={p.id} to={`/products/${p.id}`} className="product-card">
-            <div className="product-card__image">
-              {p.imageUrl ? <img src={p.imageUrl} alt={p.name} /> : <span className="product-card__placeholder">🍽️</span>}
-              {!p.isAvailable && <span className="product-card__badge">সোল্ড আউট</span>}
-            </div>
-            <div className="product-card__body">
-              <h3>{p.name}</h3>
-              {p.categoryName && <span className="product-card__cat">{p.categoryName}</span>}
-              <strong className="product-card__price">{formatBdt(p.price)}</strong>
-            </div>
-          </Link>
+          <ProductCard key={p.id} product={p} />
         ))}
       </div>
     </section>

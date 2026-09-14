@@ -1,0 +1,571 @@
+/* ============================================================
+   Customer landing — Dark Luxury Food (see /design.md)
+   ============================================================ */
+
+.home {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 78% 30%, rgba(228, 50, 43, 0.16), transparent 45%),
+    linear-gradient(155deg, #0c0b0b 0%, var(--bg-800) 55%, var(--green-deep) 140%);
+  border: 1px solid var(--border-dark);
+  color: var(--cream);
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  grid-template-columns: 1.15fr 0.95fr;
+  gap: 2rem;
+  align-items: center;
+  padding: clamp(1.75rem, 4vw, 3.5rem);
+  isolation: isolate;
+}
+
+.hero__content {
+  animation: hero-rise 0.6s ease-out both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero__trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(228, 50, 43, 0.14);
+  border: 1px solid rgba(228, 50, 43, 0.4);
+  color: var(--accent-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-pill);
+  margin-bottom: 1.1rem;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 5.4vw, 3.6rem);
+  line-height: 1.06;
+  color: var(--cream);
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+.hero__title span {
+  color: var(--accent-bright);
+}
+
+.hero__sub {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  color: var(--muted-cream);
+  margin: 0 0 1rem;
+  font-style: italic;
+}
+
+.hero__lede {
+  font-size: 1.05rem;
+  color: var(--muted-cream);
+  max-width: 46ch;
+  margin: 0 0 1.75rem;
+}
+
+.hero__cta {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.hero__welcome {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: var(--muted-cream);
+}
+
+.hero__welcome strong {
+  color: var(--cream);
+}
+
+/* Hero showcase: top-3 products floating around a central pot. */
+.hero__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero__stage {
+  position: relative;
+  width: min(400px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #2a1717, #0d0b0c 72%);
+  border: 1px solid rgba(228, 50, 43, 0.25);
+  box-shadow: 0 0 0 14px rgba(228, 50, 43, 0.06), var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Orb discs are sized in cqw (see below) so the whole composition scales with
+     the stage and the orbs never overlap regardless of how wide the stage is. */
+  container-type: inline-size;
+}
+
+/* Slowly spinning decorative rings. */
+.hero__ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero__ring--outer {
+  inset: 8%;
+  border: 1.5px dashed rgba(245, 179, 0, 0.28);
+  animation: hero-spin 26s linear infinite;
+}
+.hero__ring--inner {
+  inset: 24%;
+  border: 1px solid rgba(245, 179, 0, 0.16);
+  animation: hero-spin 18s linear infinite reverse;
+}
+
+.hero__glow {
+  position: absolute;
+  inset: 30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(228, 50, 43, 0.35), transparent 70%);
+  filter: blur(14px);
+  animation: hero-pulse 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero__core {
+  position: relative;
+  z-index: 2;
+  font-size: clamp(3rem, 8vw, 4.75rem);
+  line-height: 1;
+  animation: hero-float 6s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+}
+
+/* ---- Product orbs ---- */
+.hero__orb {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  width: 118px;
+  animation: hero-float 5.5s ease-in-out infinite;
+  transition: scale 0.18s ease;
+}
+/* `scale` (not `transform`) so the hover pop composes with the float animation. */
+.hero__orb:hover {
+  scale: 1.08;
+  z-index: 5;
+}
+/* #1 product sits in the centre (translate keeps it centred while the float
+   animation drives transform and hover drives scale). */
+.hero__orb--center {
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 4;
+}
+
+/* The other three sit in three corners (top-left, top-right, bottom-right), all
+   off the centre's vertical axis, so their names never stack onto the centre
+   image and nothing is clipped by the hero. Disc sizes are cqw, so these
+   percentage offsets hold at every width. */
+.hero__orb--1 {
+  top: 4%;
+  left: -5%;
+  animation-delay: 0s;
+}
+.hero__orb--2 {
+  top: 4%;
+  right: -5%;
+  animation-delay: 0.9s;
+}
+.hero__orb--3 {
+  bottom: 2%;
+  right: -5%;
+  animation-delay: 1.8s;
+}
+
+.hero__orb-disc {
+  position: relative;
+  /* Sized relative to the stage (21% of its width) so it scales with the stage. */
+  width: 21cqw;
+  height: 21cqw;
+  border-radius: 50%;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  border: 2px solid rgba(245, 179, 0, 0.5);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(228, 50, 43, 0.08);
+  backdrop-filter: blur(6px);
+}
+.hero__orb--center {
+  width: 130px;
+}
+.hero__orb--center .hero__orb-disc {
+  width: 27cqw;
+  height: 27cqw;
+  border-color: var(--accent-bright);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(245, 179, 0, 0.16);
+}
+.hero__orb--center .hero__orb-name {
+  max-width: 118px;
+}
+.hero__orb-disc img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.hero__orb-emoji {
+  font-size: 2.6rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+.hero__orb--center .hero__orb-emoji {
+  font-size: 3.3rem;
+}
+.hero__orb-crown {
+  position: absolute;
+  top: -16px;
+  right: -8px;
+  font-size: 1.5rem;
+  transform: rotate(18deg);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.hero__orb-cap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  background: color-mix(in srgb, var(--bg-800) 82%, transparent);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.7rem;
+  backdrop-filter: blur(8px);
+  max-width: 118px;
+}
+.hero__orb-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cream);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 104px;
+}
+.hero__orb-price {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-bright);
+}
+.hero__orb-star {
+  color: #f2b01e;
+}
+
+.hero__rating {
+  position: absolute;
+  z-index: 4;
+  bottom: 12%;
+  left: -3%;
+  background: var(--cream);
+  color: #1a1512;
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.85rem;
+  box-shadow: var(--shadow-md);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+.hero__rating span {
+  color: var(--card-muted);
+  font-weight: 600;
+  font-size: 0.68rem;
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes hero-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__core,
+  .hero__orb,
+  .hero__ring,
+  .hero__glow {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .hero__trust,
+  .hero__lede {
+    margin-inline: auto;
+  }
+  .hero__cta {
+    justify-content: center;
+  }
+  .hero__art {
+    order: -1;
+  }
+  /* Disc sizes scale with the stage via cqw, so only the stage width and the
+     top-orb centring need adjusting at phone widths. */
+  .hero__stage {
+    width: min(420px, 94%);
+  }
+  .hero__orb {
+    width: 30cqw;
+  }
+  .hero__orb--center {
+    width: 34cqw;
+  }
+  .hero__orb--1 {
+    margin-left: -15cqw;
+  }
+}
+
+/* ---------- Trust strip (dark) ---------- */
+.trust {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.trust__tile {
+  background: var(--bg-800);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 1.2rem 1.25rem;
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.trust__icon {
+  font-size: 1.7rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.trust__title {
+  margin: 0 0 0.2rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--cream);
+  font-family: var(--font-display);
+}
+
+.trust__text {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted-cream);
+}
+
+/* ---------- Featured (cream cards on dark) ---------- */
+.home__featured-empty {
+  color: var(--muted-cream);
+}
+
+/* ---------- Promo / combo band (deep ember red, gilded) ---------- */
+.promo {
+  position: relative;
+  margin-top: 1rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% -20%, rgba(245, 179, 0, 0.16), transparent 46%),
+    radial-gradient(circle at 12% 20%, rgba(255, 74, 61, 0.22), transparent 46%),
+    linear-gradient(120deg, #8f231d, var(--green-deep) 45%, #3a1210);
+  border: 1px solid rgba(245, 179, 0, 0.28);
+  color: var(--cream);
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* gilded top hairline for the promo band */
+.promo::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.55), transparent);
+  pointer-events: none;
+}
+
+.promo__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  color: var(--cream);
+  margin: 0 0 0.4rem;
+}
+
+.promo__title span {
+  color: var(--accent-bright);
+}
+
+.promo__text {
+  margin: 0;
+  color: var(--muted-cream);
+  max-width: 46ch;
+}
+
+/* ---------- Reviews (dark cards) ---------- */
+.reviews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.review {
+  position: relative;
+  overflow: hidden;
+  background: var(--glass-bg), var(--bg-800);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 1.3rem 1.4rem;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.review::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
+  pointer-events: none;
+}
+
+.review:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 179, 0, 0.35);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245, 179, 0, 0.12);
+}
+
+.review__stars {
+  color: var(--accent-bright);
+  letter-spacing: 0.1em;
+  font-size: 0.95rem;
+  margin-bottom: 0.6rem;
+}
+
+.review__text {
+  margin: 0 0 1rem;
+  color: var(--cream);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.review__who {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.review__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--green-deep);
+  color: var(--accent-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: var(--font-display);
+  flex-shrink: 0;
+}
+
+.review__name {
+  font-weight: 600;
+  color: var(--cream);
+  font-size: 0.9rem;
+}
+
+.review__meta {
+  color: var(--muted-cream);
+  font-size: 0.78rem;
+}
+
+/* ---------- Footer ---------- */
+.home-footer {
+  margin-top: 3rem;
+  border-top: 1px solid var(--border-dark);
+  padding-top: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--muted-cream);
+  font-size: 0.88rem;
+}
+
+.home-footer__brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--cream);
+  font-size: 1.05rem;
+}

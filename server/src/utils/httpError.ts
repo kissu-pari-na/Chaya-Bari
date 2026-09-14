@@ -26,4 +26,7 @@ export class HttpError extends Error {
   static conflict(message = 'Conflict') {
     return new HttpError(409, message)
   }
+  static badGateway(message = 'Bad gateway') {
+    return new HttpError(502, message)
+  }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import {
   createProduct,
   deleteProduct,
@@ -124,6 +125,9 @@ export function ProductsAdmin() {
                     <button className="btn-ghost" onClick={() => setMode({ kind: 'edit', product: p })}>
                       সম্পাদনা
                     </button>
+                    <Link className="btn-ghost" to={`/admin/products/${p.id}/recipe`}>
+                      রেসিপি
+                    </Link>
                     <button className="btn-danger" onClick={() => handleDelete(p)}>
                       মুছুন
                     </button>

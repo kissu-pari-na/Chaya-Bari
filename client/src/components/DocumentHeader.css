@@ -5,22 +5,35 @@
   gap: 1rem;
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid #2f5233;
+  border-bottom: 2px solid var(--card-heading);
   flex-wrap: wrap;
 }
 
 .doc-header__details {
   text-align: right;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--card-muted);
 }
 
 .doc-header__tagline {
   font-style: italic;
-  color: #2f5233;
+  color: var(--card-heading);
   margin: 0 0 0.25rem;
 }
 
 .doc-header__details p {
   margin: 0.15rem 0;
+}
+
+.doc-header__logo--print {
+  display: none;
+}
+
+@media print {
+  .doc-header__logo--screen {
+    display: none;
+  }
+  .doc-header__logo--print {
+    display: inline-flex;
+  }
 }

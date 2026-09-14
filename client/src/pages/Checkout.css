@@ -1,0 +1,230 @@
+.checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  color: var(--card-text);
+}
+
+.checkout fieldset {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.25rem 1.3rem;
+  margin: 0 0 1.1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.checkout legend {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--card-heading);
+  padding: 0 0.4rem;
+}
+
+.checkout label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  margin-bottom: 0.6rem;
+  color: var(--card-text);
+}
+
+.checkout input,
+.checkout textarea,
+.checkout select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--card-text);
+}
+
+.checkout .admin-form__row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.checkout .admin-form__row > label {
+  flex: 1;
+  min-width: 150px;
+}
+
+.checkout .admin-form__check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--card-muted);
+  margin: 0.25rem 0 0;
+}
+
+.address-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.address-opt {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  flex-direction: row;
+}
+
+.address-opt--on {
+  border-color: var(--accent);
+  background: rgba(228, 50, 43, 0.12);
+}
+
+.address-form {
+  border-top: 1px dashed var(--card-border);
+  padding-top: 0.85rem;
+}
+
+/* Summary panel */
+.checkout__summary {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.4rem;
+  box-shadow: var(--shadow-card);
+  color: var(--card-text);
+}
+
+.checkout__summary h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: var(--card-heading);
+}
+
+.checkout__summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.checkout__summary li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.checkout__line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  font-size: 0.95rem;
+}
+
+.checkout__line--discount {
+  color: var(--success);
+}
+
+.checkout__line--total {
+  border-top: 2px solid var(--card-border);
+  margin-top: 0.35rem;
+  padding-top: 0.6rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--accent-bright);
+}
+
+.coupon-box {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.6rem 0;
+  border-top: 1px dashed var(--card-border);
+}
+
+.coupon-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.coupon-input input {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+.coupon-input button,
+.coupon-applied button {
+  background: var(--green-deep);
+  color: var(--cream);
+  border: none;
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.coupon-applied {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--success);
+}
+
+.coupon-applied button {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid #e6b8b3;
+  padding: 0.3rem 0.65rem;
+}
+
+.hint--err {
+  color: var(--danger);
+}
+
+.checkout__place {
+  width: 100%;
+  margin-top: 0.85rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--glow-accent);
+  transition: background 0.14s ease, transform 0.14s ease;
+}
+
+.checkout__place:hover:not(:disabled) {
+  background: var(--red-bright);
+  transform: translateY(-1px);
+}
+
+.checkout__place:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@media (max-width: 780px) {
+  .checkout {
+    grid-template-columns: 1fr;
+  }
+}

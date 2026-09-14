@@ -8,7 +8,13 @@ export function DocumentHeader() {
 
   return (
     <div className="doc-header">
-      <Logo size={56} />
+      {/* Accent mark on the dark glass sheet; deep-green mark when printed on white. */}
+      <span className="doc-header__logo doc-header__logo--screen">
+        <Logo size={56} />
+      </span>
+      <span className="doc-header__logo doc-header__logo--print">
+        <Logo size={56} onLight />
+      </span>
       <div className="doc-header__details">
         {profile.tagline && <p className="doc-header__tagline">{profile.tagline}</p>}
         <p>{profile.address.line1 ? `${profile.address.line1}, ` : ''}{profile.address.city}, {profile.address.country}</p>

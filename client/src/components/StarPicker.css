@@ -1,0 +1,23 @@
+.starpick {
+  display: inline-flex;
+  gap: 0.1rem;
+}
+
+.starpick__star {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.7rem;
+  line-height: 1;
+  padding: 0 0.05rem;
+  color: color-mix(in srgb, var(--card-muted, #b8b9b2) 45%, transparent);
+  transition: color 0.1s ease, transform 0.1s ease;
+}
+
+.starpick__star:hover {
+  transform: scale(1.15);
+}
+
+.starpick__star.is-on {
+  color: #f2b01e;
+}

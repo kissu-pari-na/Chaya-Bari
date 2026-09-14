@@ -1,0 +1,138 @@
+.notif {
+  position: relative;
+}
+
+.notif__btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem;
+}
+
+.notif__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--terra-600, #c65a2e);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.notif__panel {
+  position: absolute;
+  top: 140%;
+  right: 0;
+  width: 340px;
+  max-width: 88vw;
+  background: color-mix(in srgb, var(--bg-800) 78%, transparent);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(16px) saturate(140%);
+  z-index: 60;
+  overflow: hidden;
+}
+
+.notif__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--glass-border);
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.notif__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notif__markall,
+.notif__clear {
+  background: transparent;
+  border: none;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  padding: 0;
+}
+
+.notif__markall {
+  color: var(--accent-bright);
+}
+
+.notif__clear {
+  color: #e8837a;
+}
+
+.notif__markall:hover,
+.notif__clear:hover {
+  text-decoration: underline;
+}
+
+.notif__list {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.notif__empty {
+  padding: 1.5rem 1rem;
+  color: var(--muted-cream);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.notif__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.notif__item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.notif__item--unread {
+  background: rgba(228, 50, 43, 0.1);
+}
+
+.notif__item--unread:hover {
+  background: rgba(228, 50, 43, 0.16);
+}
+
+.notif__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--cream);
+}
+
+.notif__body {
+  font-size: 0.82rem;
+  color: var(--muted-cream);
+}
+
+.notif__time {
+  font-size: 0.72rem;
+  color: #8a8c82;
+}

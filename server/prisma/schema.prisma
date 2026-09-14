@@ -31,19 +31,25 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // A user with the CUSTOMER role has a linked customer profile.
-  customer Customer?
+  customer      Customer?
+  notifications Notification[]
 
   @@index([role])
 }
 
+// (Review model is defined in Phase 12 near the bottom of this schema.)
+
 /// Customer profile (1-1 with a User). Holds ordering-related info and, later,
-/// derived analytics. Addresses are added in the ordering phase.
+/// derived analytics.
 model Customer {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
 }
 
 // -----------------------------------------------------------------------------
@@ -72,6 +78,9 @@ model Product {
   imageUrl    String?
   /// Current selling price. Historical orders keep their own captured price.
   price       Decimal          @db.Decimal(10, 2)
+  /// Optional promotional price. When set below `price`, the item sells at this
+  /// price and the difference is recorded as a product discount on the order.
+  salePrice   Decimal?         @db.Decimal(10, 2)
   isActive    Boolean          @default(true)
   isAvailable Boolean          @default(true)
   prepInfo    String?
@@ -81,6 +90,9 @@ model Product {
   updatedAt   DateTime         @updatedAt
 
   priceHistory ProductPriceHistory[]
+  orderItems   OrderItem[]
+  recipe       Recipe?
+  reviews      Review[]
 
   @@index([categoryId])
   @@index([isActive, isAvailable])
@@ -96,4 +108,480 @@ model ProductPriceHistory {
   effectiveFrom DateTime @default(now())
 
   @@index([productId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 3 — Customer ordering
+// -----------------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  PACKED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  REFUNDED
+  FAILED
+}
+
+/// A customer's saved delivery address. Orders snapshot the address fields so
+/// editing or deleting an address never changes past orders.
+model Address {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label          String?
+  recipientName  String
+  recipientPhone String
+  addressLine    String
+  area           String?
+  city           String
+  note           String?
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+/// A customer order. Financial fields are captured at checkout and never
+/// recomputed from current product prices (historical immutability). Delivery
+/// discounts, payments, and actual delivery cost arrive in later phases.
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Delivery address snapshot.
+  recipientName  String
+  recipientPhone String
+  addressLine    String
+  area           String?
+  city           String
+  addressNote    String?
+
+  /// The day the food is to be prepared/delivered (advance order).
+  fulfillmentDate DateTime @db.Date
+  notes           String?
+
+  /// Gross food total (sum of list prices × quantity).
+  subtotal             Decimal @db.Decimal(10, 2)
+  /// Food discount total (per-item sale reductions + any food coupon).
+  productDiscount      Decimal @db.Decimal(10, 2) @default(0)
+  customerDeliveryCost Decimal @db.Decimal(10, 2)
+  /// Delivery discount (from a delivery coupon), kept separate from food.
+  deliveryDiscount     Decimal @db.Decimal(10, 2) @default(0)
+  /// Customer payable: (subtotal - productDiscount) + delivery - deliveryDiscount.
+  total                Decimal @db.Decimal(10, 2)
+  couponCode           String?
+
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  /// When the order reached DELIVERED (drives the day-after review invite).
+  deliveredAt        DateTime?
+  /// When the "leave a review" invite (notification + email) was sent, so it
+  /// is only sent once per order.
+  reviewInviteSentAt DateTime?
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+  delivery  Delivery?
+  payments  Payment[]
+  reviews   Review[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([fulfillmentDate])
+}
+
+/// A line in an order. Captures the product name and unit price at order time
+/// so historical orders stay correct even if the product changes later.
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  /// Original list price at order time (before any sale price).
+  listUnitPrice Decimal @db.Decimal(10, 2)
+  /// Charged unit price (sale price when the item was on sale).
+  unitPrice     Decimal @db.Decimal(10, 2)
+  quantity      Int
+  /// Charged line total (unitPrice × quantity).
+  lineTotal     Decimal @db.Decimal(10, 2)
+  /// Kitchen preparation stage of this specific line (per-order, per-product).
+  /// The order's overall status is derived from its lines.
+  kitchenStage  KitchenLineStage @default(TO_COOK)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+/// A single order line's kitchen stage. The three stages mirror the kitchen
+/// board columns; the order's status is derived from all its lines.
+enum KitchenLineStage {
+  TO_COOK
+  PREPARING
+  READY
+}
+
+enum CouponScope {
+  FOOD
+  DELIVERY
+}
+
+enum CouponKind {
+  PERCENT
+  FIXED
+  FREE_DELIVERY
+}
+
+/// A promotion code. FOOD coupons reduce the food total; DELIVERY coupons
+/// reduce the delivery charge. Keeps food and delivery discounts separate.
+model Coupon {
+  id               String      @id @default(cuid())
+  code             String      @unique
+  description      String?
+  scope            CouponScope
+  kind             CouponKind
+  /// Percent (0-100) for PERCENT, fixed amount for FIXED, ignored for FREE_DELIVERY.
+  value            Decimal     @db.Decimal(10, 2) @default(0)
+  /// Minimum net food amount required to use the coupon.
+  minOrderSubtotal Decimal     @db.Decimal(10, 2) @default(0)
+  isActive         Boolean     @default(true)
+  expiresAt        DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+/// Single-row configuration for the advance-order rules. Admin-editable so the
+/// cutoff and delivery charge are never hard-coded.
+model OrderingSetting {
+  id                  String   @id @default("singleton")
+  /// Local cutoff time in HH:mm. After this, next-day ordering closes.
+  cutoffTime          String   @default("22:00")
+  /// Minimum days ahead an order must be placed (1 = order for tomorrow).
+  minAdvanceDays      Int      @default(1)
+  /// Default customer delivery charge applied at checkout.
+  defaultDeliveryCost Decimal  @db.Decimal(10, 2) @default(60)
+  timezone            String   @default("Asia/Dhaka")
+  updatedAt           DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Phase 5 — Kitchen production
+// -----------------------------------------------------------------------------
+//
+// The kitchen tracks preparation per ORDER (via Order.status: CONFIRMED →
+// PREPARING → PACKED), like a Kitchen Display System — not per aggregated
+// product. So a new order for the same item never inherits another order's
+// prep/pack state. No dedicated table is needed.
+
+// -----------------------------------------------------------------------------
+// Phase 6 — Delivery
+// -----------------------------------------------------------------------------
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+/// A delivery record for one order. There are exactly two cost values:
+/// `customerDeliveryCost` (what the customer was charged, net of any delivery
+/// discount) and `actualDeliveryCost` (what the business pays the third-party
+/// provider, entered later). The difference is derived, never stored, and there
+/// is deliberately NO estimated delivery cost.
+model Delivery {
+  id                   String         @id @default(cuid())
+  orderId              String         @unique
+  order                Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider             String?
+  trackingRef          String?
+  customerDeliveryCost Decimal        @db.Decimal(10, 2)
+  actualDeliveryCost   Decimal?       @db.Decimal(10, 2)
+  status               DeliveryStatus @default(PENDING)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@index([status])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 7 — Payments
+// -----------------------------------------------------------------------------
+
+enum PaymentMethod {
+  CASH
+  BKASH
+  NAGAD
+  ROCKET
+  CARD
+  BANK
+  ONLINE
+}
+
+enum PaymentTxnStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+/// Who created the payment record. CUSTOMER rows start as PENDING claims that an
+/// admin must verify before they count toward the order's paid total.
+enum PaymentSource {
+  ADMIN
+  CUSTOMER
+}
+
+/// Public payment-account details shown to customers for manual payments.
+/// Singleton row (id = "singleton"); editable by admins in Business Profile.
+model PaymentSetting {
+  id        String   @id @default("singleton")
+  bkash     String?
+  nagad     String?
+  rocket    String?
+  bankInfo  String?
+  updatedAt DateTime @updatedAt
+}
+
+/// Business identity/profile (name, logo, contact, address, partners, defaults).
+/// Stored as a JSON blob in a singleton row so the whole profile persists and is
+/// shared across all clients; editable by admins in Business Profile settings.
+model BusinessProfileSetting {
+  id        String   @id @default("singleton")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+/// A single payment transaction against an order. Kept separate from the order
+/// (not a full ledger) so gateway integration can be added later. The order's
+/// paymentStatus is recomputed from these rows. Refunds are recorded as a row
+/// with status REFUNDED and a positive amount.
+model Payment {
+  id        String           @id @default(cuid())
+  orderId   String
+  order     Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method    PaymentMethod
+  amount    Decimal          @db.Decimal(10, 2)
+  status    PaymentTxnStatus @default(SUCCESS)
+  source    PaymentSource    @default(ADMIN)
+  reference String?
+  note      String?
+  createdAt DateTime         @default(now())
+
+  @@index([orderId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 8 — Inventory & costing
+// -----------------------------------------------------------------------------
+
+enum MaterialKind {
+  INGREDIENT
+  PACKAGING
+}
+
+/// A raw ingredient or packaging item. Stock quantity and a weighted-average
+/// unit cost are maintained from purchases (no FIFO/LIFO). `unit` is free text
+/// (kg, L, g, pcs); purchase and recipe quantities are in this unit.
+model Material {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  kind        MaterialKind
+  unit        String
+  stockQty    Decimal      @db.Decimal(12, 3) @default(0)
+  avgUnitCost Decimal      @db.Decimal(12, 4) @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  purchaseItems PurchaseItem[]
+  recipeItems   RecipeItem[]
+  inventoryTxns InventoryTransaction[]
+}
+
+/// A purchase (bulk buy). Its items update inventory and average cost.
+model Purchase {
+  id          String         @id @default(cuid())
+  purchasedAt DateTime       @default(now())
+  supplier    String?
+  note        String?
+  totalCost   Decimal        @db.Decimal(12, 2)
+  createdAt   DateTime       @default(now())
+  items       PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  quantity   Decimal  @db.Decimal(12, 3)
+  totalCost  Decimal  @db.Decimal(12, 2)
+
+  @@index([purchaseId])
+  @@index([materialId])
+}
+
+enum InventoryTxnType {
+  PURCHASE
+  ADJUSTMENT
+}
+
+/// Append-only log of stock movements for auditing.
+model InventoryTransaction {
+  id            String           @id @default(cuid())
+  materialId    String
+  material      Material         @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  type          InventoryTxnType
+  quantityDelta Decimal          @db.Decimal(12, 3)
+  unitCost      Decimal          @db.Decimal(12, 4)
+  note          String?
+  createdAt     DateTime         @default(now())
+
+  @@index([materialId])
+}
+
+/// A product's recipe / bill of materials. `yieldQty` is how many sellable
+/// units one batch produces; cost per unit is derived from the items'
+/// materials' average costs divided by the yield.
+model Recipe {
+  id        String       @id @default(cuid())
+  productId String       @unique
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  yieldQty  Int
+  note      String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  items     RecipeItem[]
+}
+
+model RecipeItem {
+  id         String   @id @default(cuid())
+  recipeId   String
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  quantity   Decimal  @db.Decimal(12, 3)
+
+  @@index([recipeId])
+  @@index([materialId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 9 — Expenses & profit
+// -----------------------------------------------------------------------------
+
+/// A general business expense category (e.g. Gas, Marketing). Dynamic so the
+/// owner can add categories without code changes.
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  expenses  Expense[]
+}
+
+/// A general business expense. Ingredient/packaging purchases are NOT recorded
+/// here — those update inventory (Phase 8). Kept simple: no accounting ledger.
+model Expense {
+  id          String          @id @default(cuid())
+  categoryId  String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  amount      Decimal         @db.Decimal(12, 2)
+  spentAt     DateTime        @db.Date
+  description String
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  @@index([spentAt])
+  @@index([categoryId])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 11 — Automation (notifications)
+// -----------------------------------------------------------------------------
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_CONFIRMED
+  ORDER_PREPARING
+  ORDER_READY
+  ORDER_PACKED
+  ORDER_OUT_FOR_DELIVERY
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_RECEIVED
+  PAYMENT_SUBMITTED
+  PAYMENT_VERIFIED
+  PAYMENT_REJECTED
+  NEW_ORDER
+  REVIEW_INVITE
+}
+
+/// An in-app notification for a user. Generated from order/payment events.
+/// Email/SMS/push channels can be layered on top later.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  orderId   String?
+  /// In-app path to open when the notification is clicked (e.g. an order or the
+  /// order's review page). Null for notifications with no destination.
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 12 — Product reviews & ratings
+// -----------------------------------------------------------------------------
+
+/// A customer's star rating (1-5) and optional written feedback, tied to a
+/// specific delivered order. Reviews can only be created from that order's
+/// review page. `productId` set = a review of one product in the order;
+/// `productId` null = the overall order/experience review. At most one product
+/// review per (order, product) and one overall review per order (the latter
+/// enforced by a partial unique index added in the migration).
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// Whole-star rating from 1 to 5.
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([orderId, productId])
+  @@index([productId])
+  @@index([rating])
+  @@index([orderId])
 }
