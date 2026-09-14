@@ -164,7 +164,7 @@ export function DeliverySection({ orderId }: { orderId: string }) {
         <button type="button" className="btn-ghost" onClick={handleDispatch}>
           প্রোভাইডারে পাঠান (মক)
         </button>
-        {saved && <span className="hint" style={{ color: '#2f5233', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
+        {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
       </div>
       <p className="hint">প্রোভাইডারে পাঠালে মক ট্র্যাকিং আইডি তৈরি হবে ও স্ট্যাটাস "অ্যাসাইনড" হবে (Pathao/pandago ইন্টিগ্রেশন পয়েন্ট)।</p>
     </form>

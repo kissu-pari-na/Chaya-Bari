@@ -6,6 +6,7 @@ export interface AppNotification {
   title: string
   body: string
   orderId: string | null
+  link: string | null
   read: boolean
   createdAt: string
 }
@@ -20,4 +21,8 @@ export function markNotificationRead(id: string) {
 
 export function markAllNotificationsRead() {
   return apiRequest<void>('/notifications/read-all', { method: 'POST', auth: true })
+}
+
+export function clearAllNotifications() {
+  return apiRequest<void>('/notifications', { method: 'DELETE', auth: true })
 }

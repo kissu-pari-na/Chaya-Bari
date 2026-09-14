@@ -5,7 +5,7 @@ import type { AddressInput, CheckoutInput } from './order.schemas.js'
 import { getOrderingSetting, computeWindow } from './ordering.service.js'
 import { priceOrder } from './pricing.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
-import { paymentTotals } from '../payments/payment.service.js'
+import { paymentTotals, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
 import { notifyOrderPlaced } from '../notifications/notification.service.js'
 
 interface AddressSnapshot {
@@ -52,6 +52,8 @@ export interface PublicOrder {
   items: PublicOrderItem[]
   /// Read-only delivery summary for the customer (no cost details).
   delivery: { status: Delivery['status']; provider: string | null; trackingRef: string | null } | null
+  /// The customer's payment records for this order (claims + settled payments).
+  payments: PublicPayment[]
 }
 
 type OrderWithItems = Order & { items: OrderItem[]; delivery?: Delivery | null; payments?: Payment[] }
@@ -92,6 +94,10 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
     delivery: order.delivery
       ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
       : null,
+    payments: (order.payments ?? [])
+      .slice()
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(toPublicPayment),
   }
 }
 

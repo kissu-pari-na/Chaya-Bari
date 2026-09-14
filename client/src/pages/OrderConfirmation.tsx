@@ -17,7 +17,7 @@ export function OrderConfirmation() {
   const total = sampleOrder.items.reduce((sum, item) => sum + item.qty * item.price, 0)
 
   return (
-    <section className="card document">
+    <section className="paper document">
       <DocumentHeader />
       <h1>অর্ডার কনফার্মেশন</h1>
       <p>

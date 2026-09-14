@@ -1,6 +1,11 @@
 import { Prisma, type Product, type ProductCategory } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
+import {
+  getProductRatingSummary,
+  getRatingSummariesByProduct,
+  type RatingSummary,
+} from '../reviews/review.service.js'
 import type {
   CreateCategoryInput,
   CreateProductInput,
@@ -20,11 +25,16 @@ export interface PublicProduct {
   prepInfo: string | null
   categoryId: string | null
   categoryName: string | null
+  /// Average star rating (0 when no reviews) and how many reviews it has.
+  avgRating: number
+  reviewCount: number
 }
 
 type ProductWithCategory = Product & { category: ProductCategory | null }
 
-function toPublicProduct(p: ProductWithCategory): PublicProduct {
+const NO_RATING: RatingSummary = { average: 0, count: 0 }
+
+function toPublicProduct(p: ProductWithCategory, rating: RatingSummary = NO_RATING): PublicProduct {
   return {
     id: p.id,
     name: p.name,
@@ -37,6 +47,8 @@ function toPublicProduct(p: ProductWithCategory): PublicProduct {
     prepInfo: p.prepInfo,
     categoryId: p.categoryId,
     categoryName: p.category?.name ?? null,
+    avgRating: rating.average,
+    reviewCount: rating.count,
   }
 }
 
@@ -93,14 +105,16 @@ export async function listProducts(options: ListProductOptions): Promise<PublicP
     include: { category: true },
     orderBy: [{ createdAt: 'desc' }],
   })
-  return products.map(toPublicProduct)
+  const ratings = await getRatingSummariesByProduct(products.map((p) => p.id))
+  return products.map((p) => toPublicProduct(p, ratings.get(p.id) ?? NO_RATING))
 }
 
 export async function getProduct(id: string, includeHidden: boolean): Promise<PublicProduct> {
   const product = await prisma.product.findUnique({ where: { id }, include: { category: true } })
   if (!product) throw HttpError.notFound('Product not found')
   if (!includeHidden && !product.isActive) throw HttpError.notFound('Product not found')
-  return toPublicProduct(product)
+  const rating = await getProductRatingSummary(product.id)
+  return toPublicProduct(product, rating)
 }
 
 /// Ensures a sale price, when present, is below the (effective) list price.

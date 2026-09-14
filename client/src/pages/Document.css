@@ -13,11 +13,11 @@
 .document-table td {
   text-align: left;
   padding: 0.5rem 0.4rem;
-  border-bottom: 1px solid #eee1c3;
+  border-bottom: 1px solid var(--card-border);
 }
 
 .document-table tfoot td {
-  border-top: 2px solid #2f5233;
+  border-top: 2px solid var(--card-heading);
   border-bottom: none;
   font-weight: 600;
 }

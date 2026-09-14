@@ -30,7 +30,7 @@ export function ContributionSection({ orderId, refreshKey }: { orderId: string; 
         </div>
         <div className="profit-line profit-line--strong">
           <span>কন্ট্রিবিউশন</span>
-          <span style={{ color: c.contribution != null && c.contribution >= 0 ? '#1a7a45' : c.contribution != null ? '#b3261e' : undefined }}>
+          <span style={{ color: c.contribution != null && c.contribution >= 0 ? '#b07d10' : c.contribution != null ? '#b3261e' : undefined }}>
             {c.contribution != null ? formatBdt(c.contribution) : 'অসম্পূর্ণ'}
           </span>
         </div>

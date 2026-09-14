@@ -1,20 +1,31 @@
-import type { PaymentMethod, PaymentTxnStatus } from '../types/payment'
+import type { PaymentMethod, PaymentSource, PaymentTxnStatus } from '../types/payment'
 
 export const paymentMethodLabel: Record<PaymentMethod, string> = {
   CASH: 'ক্যাশ',
   BKASH: 'বিকাশ',
+  NAGAD: 'নগদ',
+  ROCKET: 'রকেট',
   CARD: 'কার্ড',
+  BANK: 'ব্যাংক ট্রান্সফার',
   ONLINE: 'অনলাইন',
-  COD: 'ক্যাশ অন ডেলিভারি',
 }
 
-export const paymentMethods: PaymentMethod[] = ['CASH', 'BKASH', 'CARD', 'ONLINE', 'COD']
+/// All methods (admin manual entry).
+export const paymentMethods: PaymentMethod[] = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'CARD', 'BANK', 'ONLINE']
+
+/// Methods a customer can pick when reporting a payment they already made.
+export const claimMethods: PaymentMethod[] = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'BANK', 'ONLINE']
 
 export const txnStatusLabel: Record<PaymentTxnStatus, string> = {
-  PENDING: 'অপেক্ষমাণ',
-  SUCCESS: 'সফল',
-  FAILED: 'ব্যর্থ',
+  PENDING: 'যাচাইয়ের অপেক্ষায়',
+  SUCCESS: 'নিশ্চিত',
+  FAILED: 'বাতিল',
   REFUNDED: 'ফেরত',
 }
 
 export const txnStatuses: PaymentTxnStatus[] = ['SUCCESS', 'PENDING', 'FAILED', 'REFUNDED']
+
+export const paymentSourceLabel: Record<PaymentSource, string> = {
+  ADMIN: 'অ্যাডমিন',
+  CUSTOMER: 'গ্রাহক',
+}

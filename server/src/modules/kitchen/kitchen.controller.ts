@@ -14,6 +14,21 @@ export async function production(req: Request, res: Response) {
   res.json({ production: await kitchenService.getProductionDay(date) })
 }
 
-export async function updateStatus(req: Request, res: Response) {
-  res.json({ item: await kitchenService.updateStatus(req.body) })
+/// Move one order line to an adjacent stage.
+export async function moveLine(req: Request, res: Response) {
+  const production = await kitchenService.moveLine(req.params.id, req.body.stage)
+  res.json({ production })
+}
+
+/// Move all lines of a product (on a day) from one stage to an adjacent one.
+export async function bulkMove(req: Request, res: Response) {
+  const { date, productId, from, to } = req.body
+  const production = await kitchenService.bulkMoveProduct(date, productId, from, to)
+  res.json({ production })
+}
+
+/// Pack (or un-pack) a ready order.
+export async function pack(req: Request, res: Response) {
+  const production = await kitchenService.packOrder(req.params.id, req.body.packed)
+  res.json({ production })
 }
