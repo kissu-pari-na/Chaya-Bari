@@ -6,7 +6,7 @@ import type { Product } from '../types/product'
 import './ProductCard.css'
 
 /** Split a product name into its first word and the remainder, so the card can
- *  render a two-tone heading (cream + gold) like the reference design. */
+ *  render the reference's stacked title (a large outlined word + a solid line). */
 function splitName(name: string): [string, string] {
   const trimmed = name.trim()
   const i = trimmed.indexOf(' ')
@@ -19,21 +19,30 @@ export function ProductCard({ product: p }: { product: Product }) {
   const onSale = p.salePrice != null && p.salePrice < p.price
   const shown = onSale ? p.salePrice! : p.price
   const [first, rest] = splitName(p.name)
-  const sub = p.description?.trim() || p.categoryName || 'ঘরে তৈরি, তাজা পরিবেশিত'
+  const solid = rest || p.categoryName || ''
+  const desc = p.description?.trim() || p.categoryName || 'ঘরে তৈরি, তাজা পরিবেশিত'
 
   return (
     <Link to={`/products/${p.id}`} className="pcard">
-      <span className="pcard__diag" aria-hidden="true" />
-      <span className="pcard__watermark" aria-hidden="true">{first}</span>
+      {/* geometric background shape (juts out top-right) */}
+      <span className="pcard__shape" aria-hidden="true" />
 
+      {/* card body + diagonal accent wedge */}
+      <span className="pcard__surface" aria-hidden="true">
+        <span className="pcard__wedge" />
+      </span>
+
+      {/* flags */}
       {onSale && <span className="pcard__flag pcard__flag--sale">সেল</span>}
       {!p.isAvailable && <span className="pcard__flag pcard__flag--out">সোল্ড আউট</span>}
 
+      {/* price over the shape */}
       <div className="pcard__price">
         {formatBdt(shown)}
         {onSale && <span className="pcard__was">{formatBdt(p.price)}</span>}
       </div>
 
+      {/* product image, bursting up over the shape */}
       <div className="pcard__media">
         {p.imageUrl ? (
           <img src={p.imageUrl} alt={p.name} />
@@ -42,23 +51,26 @@ export function ProductCard({ product: p }: { product: Product }) {
         )}
       </div>
 
-      <div className="pcard__body">
-        {p.categoryName && <span className="pcard__cat">{p.categoryName}</span>}
-        <h3 className="pcard__name">
-          {first}
-          {rest && <span className="pcard__name-2"> {rest}</span>}
-        </h3>
-        <p className="pcard__sub">{sub}</p>
+      {/* upper visual zone reserves space for the product */}
+      <div className="pcard__visual" aria-hidden="true" />
+
+      {/* lower-left content */}
+      <div className="pcard__content">
+        <div className="pcard__title">
+          <span className="pcard__title-outline">{first}</span>
+          {solid && <span className="pcard__title-solid">{solid}</span>}
+        </div>
+        <p className="pcard__desc">{desc}</p>
         {p.reviewCount > 0 && (
           <div className="pcard__rating">
             <RatingStars rating={p.avgRating} count={p.reviewCount} size="sm" />
           </div>
         )}
 
-        <div className="pcard__foot">
+        <div className="pcard__cta-row">
           {p.isAvailable ? (
             <button
-              className="pcard__add"
+              className="pcard__cta"
               onClick={(e) => {
                 e.preventDefault()
                 addItem(p)
@@ -67,11 +79,12 @@ export function ProductCard({ product: p }: { product: Product }) {
               কার্টে যোগ করুন <span aria-hidden="true">→</span>
             </button>
           ) : (
-            <span className="pcard__add pcard__add--disabled">স্টকে নেই</span>
+            <span className="pcard__cta pcard__cta--disabled">স্টকে নেই</span>
           )}
         </div>
       </div>
 
+      {/* decorative circle straddling the bottom-left corner */}
       <span className="pcard__dot" aria-hidden="true" />
     </Link>
   )
