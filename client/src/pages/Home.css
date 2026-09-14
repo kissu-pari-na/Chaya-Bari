@@ -224,7 +224,7 @@
 
 /* ---------- Promo / combo band (deep green) ---------- */
 .promo {
-  margin-top: 1rem;
+  margin-top: clamp(2.5rem, 5vw, 4rem);
   border-radius: var(--radius-lg);
   background:
     radial-gradient(circle at 12% 20%, rgba(127, 175, 53, 0.18), transparent 42%),
