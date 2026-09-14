@@ -11,10 +11,23 @@ const nullableText = z
   .optional()
   .or(z.literal('').transform(() => undefined))
 
+// Accept either a fully-qualified URL (http/https) or a root-relative path
+// such as `/products/daab-pudding.png` for images served from the app's
+// public folder.
+const imageUrlSchema = z
+  .string()
+  .max(2000)
+  .refine(
+    (value) => value.startsWith('/') || z.string().url().safeParse(value).success,
+    'Image must be a valid URL',
+  )
+  .optional()
+  .or(z.literal('').transform(() => undefined))
+
 export const createProductSchema = z.object({
   name: z.string().min(1, 'Name is required').max(150),
   description: nullableText,
-  imageUrl: z.string().url('Image must be a valid URL').max(2000).optional().or(z.literal('').transform(() => undefined)),
+  imageUrl: imageUrlSchema,
   price: priceSchema,
   // null clears the sale price; a number sets it (must be below the price).
   salePrice: priceSchema.nullable().optional(),
