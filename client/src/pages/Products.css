@@ -40,7 +40,7 @@
 /* ---- Product grid + premium glass cards ---- */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.25rem;
   padding: 16px 10px 8px;
 }
@@ -121,7 +121,7 @@
 .product-card__image {
   position: relative;
   z-index: 1;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 2;
   background: linear-gradient(135deg, #efe9da, #e2dcc9);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
