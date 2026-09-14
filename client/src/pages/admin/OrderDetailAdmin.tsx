@@ -9,6 +9,7 @@ import { formatBdt } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { nextStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { ApiError } from '../../lib/apiClient'
+import { useI18n } from '../../context/LanguageContext'
 import { DeliverySection } from './DeliverySection'
 import { PaymentsSection } from './PaymentsSection'
 import { ContributionSection } from './ContributionSection'
@@ -17,6 +18,7 @@ import '../Orders.css'
 import './Admin.css'
 
 export function OrderDetailAdmin() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const [order, setOrder] = useState<AdminOrder | null>(null)
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,7 @@ export function OrderDetailAdmin() {
     if (!id) return
     fetchAdminOrder(id)
       .then(setOrder)
-      .catch(() => setError('অর্ডারটি পাওয়া যায়নি'))
+      .catch(() => setError(t('অর্ডারটি পাওয়া যায়নি', 'Order not found')))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -38,7 +40,7 @@ export function OrderDetailAdmin() {
     try {
       setOrder(await updateOrderStatus(order.id, status))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'স্ট্যাটাস পরিবর্তন করা যায়নি')
+      setError(err instanceof ApiError ? err.message : t('স্ট্যাটাস পরিবর্তন করা যায়নি', 'Could not change status'))
     } finally {
       setBusy(false)
     }
@@ -51,36 +53,36 @@ export function OrderDetailAdmin() {
     try {
       setOrder(await updateOrderPaymentStatus(order.id, paymentStatus))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'পেমেন্ট স্ট্যাটাস পরিবর্তন করা যায়নি')
+      setError(err instanceof ApiError ? err.message : t('পেমেন্ট স্ট্যাটাস পরিবর্তন করা যায়নি', 'Could not change payment status'))
     } finally {
       setBusy(false)
     }
   }
 
-  if (loading) return <p className="muted">লোড হচ্ছে…</p>
+  if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
   if (error && !order) return <div className="card"><p className="muted">{error}</p></div>
   if (!order) return null
 
   return (
     <section>
-      <Link to="/admin/orders" className="product-detail__back">← সব অর্ডার</Link>
+      <Link to="/admin/orders" className="product-detail__back">← {t('সব অর্ডার', 'All orders')}</Link>
       <div className="card order-detail">
         {error && <div className="auth-error">{error}</div>}
         <div className="order-detail__head">
           <div>
-            <h1>অর্ডার {order.orderNumber}</h1>
-            <p className="muted">ডেলিভারির তারিখ: {order.fulfillmentDate}</p>
+            <h1>{t('অর্ডার', 'Order')} {order.orderNumber}</h1>
+            <p className="muted">{t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}</p>
           </div>
           <div className="order-detail__badges">
             <span className={`status status--${order.status.toLowerCase()}`}>{orderStatusLabel[order.status]}</span>
-            <span className="status status--payment">পেমেন্ট: {paymentStatusLabel[order.paymentStatus]}</span>
+            <span className="status status--payment">{t('পেমেন্ট:', 'Payment:')} {paymentStatusLabel[order.paymentStatus]}</span>
           </div>
         </div>
 
         <div className="admin-order-controls">
           <div>
-            <span className="control-label">স্ট্যাটাস পরিবর্তন:</span>
-            {nextStatuses[order.status].length === 0 && <span className="muted"> (চূড়ান্ত)</span>}
+            <span className="control-label">{t('স্ট্যাটাস পরিবর্তন:', 'Change status:')}</span>
+            {nextStatuses[order.status].length === 0 && <span className="muted"> {t('(চূড়ান্ত)', '(final)')}</span>}
             {nextStatuses[order.status].map((s) => (
               <button key={s} className="btn-ghost" disabled={busy} onClick={() => changeStatus(s)}>
                 {orderStatusLabel[s]}
@@ -88,7 +90,7 @@ export function OrderDetailAdmin() {
             ))}
           </div>
           <div>
-            <span className="control-label">পেমেন্ট:</span>
+            <span className="control-label">{t('পেমেন্ট:', 'Payment:')}</span>
             <select
               value={order.paymentStatus}
               disabled={busy}
@@ -106,10 +108,10 @@ export function OrderDetailAdmin() {
         <table className="document-table">
           <thead>
             <tr>
-              <th>আইটেম</th>
-              <th>পরিমাণ</th>
-              <th>একক মূল্য</th>
-              <th>মোট</th>
+              <th>{t('আইটেম', 'Item')}</th>
+              <th>{t('পরিমাণ', 'Qty')}</th>
+              <th>{t('একক মূল্য', 'Unit price')}</th>
+              <th>{t('মোট', 'Total')}</th>
             </tr>
           </thead>
           <tbody>
@@ -127,27 +129,27 @@ export function OrderDetailAdmin() {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={3}>সাবটোটাল</td>
+              <td colSpan={3}>{t('সাবটোটাল', 'Subtotal')}</td>
               <td>{formatBdt(order.subtotal)}</td>
             </tr>
             {order.productDiscount > 0 && (
               <tr>
-                <td colSpan={3}>ফুড ডিসকাউন্ট{order.couponCode ? ` (${order.couponCode})` : ''}</td>
+                <td colSpan={3}>{t('ফুড ডিসকাউন্ট', 'Food discount')}{order.couponCode ? ` (${order.couponCode})` : ''}</td>
                 <td>−{formatBdt(order.productDiscount)}</td>
               </tr>
             )}
             <tr>
-              <td colSpan={3}>ডেলিভারি চার্জ</td>
+              <td colSpan={3}>{t('ডেলিভারি চার্জ', 'Delivery charge')}</td>
               <td>{formatBdt(order.customerDeliveryCost)}</td>
             </tr>
             {order.deliveryDiscount > 0 && (
               <tr>
-                <td colSpan={3}>ডেলিভারি ডিসকাউন্ট</td>
+                <td colSpan={3}>{t('ডেলিভারি ডিসকাউন্ট', 'Delivery discount')}</td>
                 <td>−{formatBdt(order.deliveryDiscount)}</td>
               </tr>
             )}
             <tr>
-              <td colSpan={3}>সর্বমোট</td>
+              <td colSpan={3}>{t('সর্বমোট', 'Grand total')}</td>
               <td>
                 <strong>{formatBdt(order.total)}</strong>
               </td>
@@ -162,7 +164,7 @@ export function OrderDetailAdmin() {
         <ContributionSection orderId={order.id} />
 
         <div className="order-detail__address">
-          <h3>গ্রাহক ও ঠিকানা</h3>
+          <h3>{t('গ্রাহক ও ঠিকানা', 'Customer & address')}</h3>
           <p>
             {order.customer.name} · {order.customer.email}
             {order.customer.phone ? ` · ${order.customer.phone}` : ''}
@@ -173,7 +175,7 @@ export function OrderDetailAdmin() {
             {order.addressLine}
             {order.area ? `, ${order.area}` : ''}, {order.city}
           </p>
-          {order.notes && <p className="muted">নোট: {order.notes}</p>}
+          {order.notes && <p className="muted">{t('নোট:', 'Note:')} {order.notes}</p>}
         </div>
       </div>
     </section>
