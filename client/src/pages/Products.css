@@ -41,19 +41,52 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 1.25rem;
+  padding: 16px 10px 8px;
 }
 
+/* Layered card: a white content panel in front with an accent panel
+   peeking out behind it (offset up-right) plus a small dot at the
+   bottom-left corner. */
 .product-card {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  background: var(--card);
+  background: transparent;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: visible;
   text-decoration: none;
   color: var(--card-text);
   box-shadow: var(--shadow-card);
   transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+/* The accent panel behind the card */
+.product-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--radius-lg);
+  background: var(--accent);
+  transform: translate(13px, -13px);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+/* The little accent dot at the bottom-left corner */
+.product-card::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  bottom: -9px;
+  width: 26px;
+  height: 26px;
+  z-index: 2;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, background 0.18s ease;
 }
 
 .product-card:hover {
@@ -63,10 +96,23 @@
   text-decoration: none;
 }
 
+.product-card:hover::before {
+  transform: translate(17px, -17px);
+  background: var(--accent-bright);
+}
+
+.product-card:hover::after {
+  transform: scale(1.08);
+  background: var(--accent-bright);
+}
+
 .product-card__image {
   position: relative;
+  z-index: 1;
   aspect-ratio: 4 / 3;
   background: linear-gradient(135deg, #efe9da, #e2dcc9);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,6 +153,12 @@
 }
 
 .product-card__body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  background: var(--card);
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   padding: 0.95rem 1.05rem 1.05rem;
   display: flex;
   flex-direction: column;
