@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
+import { useI18n } from '../context/LanguageContext'
 import { fetchProduction, fetchProductionDates, moveLine, moveProduct, packOrder } from '../lib/kitchen'
+import { pick, localeDigits } from '../lib/i18n'
 import type {
   KitchenStage,
   OrderKitchenStatus,
@@ -11,18 +13,32 @@ import type {
 } from '../types/kitchen'
 import './Kitchen.css'
 
-const bn = (n: number) => n.toLocaleString('bn-BD')
+const bn = (n: number) => localeDigits(n)
 
 const stageLabel: Record<KitchenStage, string> = {
-  TO_COOK: 'রান্নার জন্য',
-  PREPARING: 'তৈরি হচ্ছে',
-  READY: 'প্রস্তুত',
+  get TO_COOK() {
+    return pick('রান্নার জন্য', 'To cook')
+  },
+  get PREPARING() {
+    return pick('তৈরি হচ্ছে', 'Preparing')
+  },
+  get READY() {
+    return pick('প্রস্তুত', 'Ready')
+  },
 }
 const orderStatusLabel: Record<OrderKitchenStatus, string> = {
-  CONFIRMED: 'রান্নার জন্য',
-  PREPARING: 'তৈরি হচ্ছে',
-  READY: 'প্রস্তুত (প্যাক বাকি)',
-  PACKED: 'প্যাকড ✓',
+  get CONFIRMED() {
+    return pick('রান্নার জন্য', 'To cook')
+  },
+  get PREPARING() {
+    return pick('তৈরি হচ্ছে', 'Preparing')
+  },
+  get READY() {
+    return pick('প্রস্তুত (প্যাক বাকি)', 'Ready (to pack)')
+  },
+  get PACKED() {
+    return pick('প্যাকড ✓', 'Packed ✓')
+  },
 }
 const NEXT: Record<KitchenStage, KitchenStage | null> = { TO_COOK: 'PREPARING', PREPARING: 'READY', READY: null }
 const PREV: Record<KitchenStage, KitchenStage | null> = { TO_COOK: null, PREPARING: 'TO_COOK', READY: 'PREPARING' }
@@ -35,6 +51,7 @@ interface Picker {
 
 export function KitchenHome() {
   const { profile } = useBusinessProfile()
+  const { t } = useI18n()
   const [dates, setDates] = useState<ProductionDate[]>([])
   const [activeDate, setActiveDate] = useState<string | null>(null)
   const [day, setDay] = useState<ProductionDay | null>(null)
@@ -51,7 +68,7 @@ export function KitchenHome() {
         if (d.length === 0) setLoading(false)
       })
       .catch(() => {
-        setError('তথ্য লোড করা যায়নি')
+        setError(t('তথ্য লোড করা যায়নি', 'Could not load data'))
         setLoading(false)
       })
   }, [])
@@ -60,7 +77,7 @@ export function KitchenHome() {
     setLoading(true)
     fetchProduction(date)
       .then(setDay)
-      .catch(() => setError('প্রোডাকশন লোড করা যায়নি'))
+      .catch(() => setError(t('প্রোডাকশন লোড করা যায়নি', 'Could not load production')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -74,7 +91,7 @@ export function KitchenHome() {
     try {
       setDay(await fn())
     } catch {
-      setError('পরিবর্তন করা যায়নি')
+      setError(t('পরিবর্তন করা যায়নি', 'Could not apply the change'))
     } finally {
       setBusy(false)
     }
@@ -99,7 +116,7 @@ export function KitchenHome() {
 
   return (
     <section className="kitchen">
-      <h1>{profile.name} — কিচেন</h1>
+      <h1>{profile.name} — {t('কিচেন', 'Kitchen')}</h1>
 
       {dates.length > 0 && (
         <div className="kitchen-dates">
@@ -111,7 +128,7 @@ export function KitchenHome() {
             >
               {d.date}
               <span>
-                {bn(d.orderCount)} অর্ডার{d.toCook > 0 ? ` · ${bn(d.toCook)} বাকি` : ''}
+                {bn(d.orderCount)} {t('অর্ডার', 'orders')}{d.toCook > 0 ? ` · ${bn(d.toCook)} ${t('বাকি', 'left')}` : ''}
               </span>
             </button>
           ))}
@@ -119,11 +136,11 @@ export function KitchenHome() {
       )}
 
       {error && <p className="kitchen-error">{error}</p>}
-      {loading && <p className="muted">লোড হচ্ছে…</p>}
+      {loading && <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>}
 
       {!loading && dates.length === 0 && (
         <div className="card">
-          <p className="muted">নিশ্চিত করা কোনো অর্ডার নেই। অর্ডার নিশ্চিত হলে প্রোডাকশন এখানে দেখা যাবে।</p>
+          <p className="muted">{t('নিশ্চিত করা কোনো অর্ডার নেই। অর্ডার নিশ্চিত হলে প্রোডাকশন এখানে দেখা যাবে।', 'No confirmed orders. Production will appear here once orders are confirmed.')}</p>
         </div>
       )}
 
@@ -132,9 +149,9 @@ export function KitchenHome() {
           {/* ---- Product-wise control ---- */}
           <div className="prod-panel">
             <div className="prod-panel__head">
-              <h2>পণ্যভিত্তিক নিয়ন্ত্রণ</h2>
+              <h2>{t('পণ্যভিত্তিক নিয়ন্ত্রণ', 'Product-wise control')}</h2>
               <span className="muted">
-                {bn(day.totals.orders)} অর্ডার · {bn(day.totals.items)} আইটেম
+                {bn(day.totals.orders)} {t('অর্ডার', 'orders')} · {bn(day.totals.items)} {t('আইটেম', 'items')}
               </span>
             </div>
             <div className="prod-list">
@@ -148,13 +165,13 @@ export function KitchenHome() {
                         <span className="prod-stage__qty">{bn(p.stages[s].qty)}</span>
                         <div className="prod-stage__acts">
                           {PREV[s] && p.stages[s].qty > 0 && (
-                            <button className="mini mini--back" title="একটি অর্ডার ফেরান" onClick={() => openPicker(p, s)}>
+                            <button className="mini mini--back" title={t('একটি অর্ডার ফেরান', 'Move one order back')} onClick={() => openPicker(p, s)}>
                               ↩
                             </button>
                           )}
                           {NEXT[s] && p.stages[s].qty > 0 && (
                             <button className="mini mini--go" onClick={() => bulk(p, s, NEXT[s]!)}>
-                              সব →
+                              {t('সব', 'All')} →
                             </button>
                           )}
                         </div>
@@ -185,12 +202,12 @@ export function KitchenHome() {
                       <span className="ord-line__stage">{stageLabel[l.stage]}</span>
                       <span className="ord-line__acts">
                         {PREV[l.stage] && (
-                          <button className="mini mini--back" title="পেছনে" onClick={() => line(l.id, PREV[l.stage]!)}>
+                          <button className="mini mini--back" title={t('পেছনে', 'Back')} onClick={() => line(l.id, PREV[l.stage]!)}>
                             ↩
                           </button>
                         )}
                         {NEXT[l.stage] && (
-                          <button className="mini mini--go" title="এগিয়ে" onClick={() => line(l.id, NEXT[l.stage]!)}>
+                          <button className="mini mini--go" title={t('এগিয়ে', 'Forward')} onClick={() => line(l.id, NEXT[l.stage]!)}>
                             →
                           </button>
                         )}
@@ -202,14 +219,14 @@ export function KitchenHome() {
                 {/* Order-level packing — a step after all items are cooked. */}
                 {o.status === 'READY' && (
                   <button className="ord-pack ord-pack--do" onClick={() => pack(o.id, true)}>
-                    📦 প্যাক সম্পন্ন
+                    📦 {t('প্যাক সম্পন্ন', 'Packing done')}
                   </button>
                 )}
                 {o.status === 'PACKED' && (
                   <div className="ord-packed">
-                    <span>✓ প্যাক করা হয়েছে — ডেলিভারির জন্য প্রস্তুত</span>
+                    <span>✓ {t('প্যাক করা হয়েছে — ডেলিভারির জন্য প্রস্তুত', 'Packed — ready for delivery')}</span>
                     <button className="mini mini--back" onClick={() => pack(o.id, false)}>
-                      ↩ আনপ্যাক
+                      ↩ {t('আনপ্যাক', 'Unpack')}
                     </button>
                   </div>
                 )}
@@ -224,7 +241,7 @@ export function KitchenHome() {
         <div className="picker-overlay" onClick={() => setPicker(null)}>
           <div className="picker" onClick={(e) => e.stopPropagation()}>
             <div className="picker__head">
-              <strong>{picker.productName}</strong> — কোন অর্ডার “{stageLabel[picker.target]}”-এ ফেরাবেন?
+              <strong>{picker.productName}</strong> — {t(`কোন অর্ডার “${stageLabel[picker.target]}”-এ ফেরাবেন?`, `Which order to move back to “${stageLabel[picker.target]}”?`)}
             </div>
             <ul className="picker__list">
               {picker.lines.map((l) => (
@@ -233,13 +250,13 @@ export function KitchenHome() {
                     <strong>{l.orderNumber}</strong> · {l.recipientName} · {bn(l.quantity)}×
                   </span>
                   <button className="mini mini--back" onClick={() => pickBack(l.lineId)}>
-                    ফেরান
+                    {t('ফেরান', 'Move back')}
                   </button>
                 </li>
               ))}
             </ul>
             <button className="picker__close" onClick={() => setPicker(null)}>
-              বন্ধ
+              {t('বন্ধ', 'Close')}
             </button>
           </div>
         </div>
