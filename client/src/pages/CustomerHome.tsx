@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useAuth } from '../context/AuthContext'
-import { useCart } from '../context/CartContext'
 import { fetchProducts } from '../lib/products'
 import { fetchRatingSummary, fetchTopReviews } from '../lib/reviews'
 import { formatBdt, toBnDigits } from '../lib/format'
-import { RatingStars } from '../components/RatingStars'
+import { ProductCard } from '../components/ProductCard'
 import { effectivePrice, type Product } from '../types/product'
 import type { RatingSummary, Review } from '../types/review'
 import './Home.css'
@@ -60,7 +59,6 @@ const REVIEWS = [
 export function CustomerHome() {
   const { profile } = useBusinessProfile()
   const { user } = useAuth()
-  const { addItem } = useCart()
   const [products, setProducts] = useState<Product[]>([])
   const [topReviews, setTopReviews] = useState<Review[]>([])
   const [rating, setRating] = useState<RatingSummary | null>(null)
@@ -220,50 +218,7 @@ export function CustomerHome() {
       ) : (
         <div className="product-grid">
           {featured.map((p) => (
-            <Link key={p.id} to={`/products/${p.id}`} className="product-card">
-              <div className="product-card__image">
-                {p.imageUrl ? (
-                  <img src={p.imageUrl} alt={p.name} />
-                ) : (
-                  <span className="product-card__placeholder">🍽️</span>
-                )}
-                {p.salePrice != null && p.salePrice < p.price && (
-                  <span className="badge badge--sale product-card__badge product-card__badge--sale">
-                    সেল
-                  </span>
-                )}
-              </div>
-              <div className="product-card__body">
-                <h3>{p.name}</h3>
-                {p.categoryName && <span className="product-card__cat">{p.categoryName}</span>}
-                {p.reviewCount > 0 && (
-                  <div className="product-card__rating">
-                    <RatingStars rating={p.avgRating} count={p.reviewCount} size="sm" />
-                  </div>
-                )}
-                <div className="product-card__foot">
-                  <span className="product-card__price">
-                    {p.salePrice != null && p.salePrice < p.price ? (
-                      <>
-                        <strong>{formatBdt(p.salePrice)}</strong>{' '}
-                        <s className="product-card__was">{formatBdt(p.price)}</s>
-                      </>
-                    ) : (
-                      <strong>{formatBdt(p.price)}</strong>
-                    )}
-                  </span>
-                  <button
-                    className="product-card__add"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      addItem(p)
-                    }}
-                  >
-                    + কার্ট
-                  </button>
-                </div>
-              </div>
-            </Link>
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
       )}
