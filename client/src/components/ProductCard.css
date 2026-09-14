@@ -86,18 +86,18 @@
 .pcard__media {
   position: absolute;
   z-index: 2;
-  top: -18px;
+  top: 18px;
   left: 2%;
   right: 0;
-  height: 300px;
+  height: 232px;
   display: grid;
   place-items: center;
   transition: transform 0.3s ease;
   pointer-events: none;
 }
 .pcard__media img {
-  max-height: 300px;
-  max-width: 100%;
+  max-height: 232px;
+  max-width: 82%;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
