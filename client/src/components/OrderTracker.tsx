@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { orderTrackerView } from '../lib/orderTracking'
 import { orderStatusLabel } from '../lib/orderStatus'
+import { useI18n } from '../context/LanguageContext'
 import type { OrderStatus } from '../types/order'
 import './OrderTracker.css'
 
@@ -12,6 +13,7 @@ interface OrderTrackerProps {
 /// in the fulfillment flow. Derives its state entirely from the order status,
 /// so it stays in sync whenever the order is refetched.
 export function OrderTracker({ status }: OrderTrackerProps) {
+  const { t } = useI18n()
   const view = orderTrackerView(status)
 
   if (view.cancelled) {
@@ -21,8 +23,8 @@ export function OrderTracker({ status }: OrderTrackerProps) {
           ✕
         </div>
         <div>
-          <strong>অর্ডার বাতিল হয়েছে</strong>
-          <p className="muted">এই অর্ডারটি {orderStatusLabel.CANCELLED} করা হয়েছে।</p>
+          <strong>{t('অর্ডার বাতিল হয়েছে', 'Order cancelled')}</strong>
+          <p className="muted">{t('এই অর্ডারটি বাতিল করা হয়েছে।', 'This order has been cancelled.')}</p>
         </div>
       </div>
     )
@@ -35,7 +37,7 @@ export function OrderTracker({ status }: OrderTrackerProps) {
     <div
       className="order-tracker"
       role="list"
-      aria-label={`অর্ডার ট্র্যাকিং — বর্তমান অবস্থা: ${orderStatusLabel[status]}`}
+      aria-label={t(`অর্ডার ট্র্যাকিং — বর্তমান অবস্থা: ${orderStatusLabel[status]}`, `Order tracking — current status: ${orderStatusLabel[status]}`)}
       style={{ '--track-progress': `${progressPct}%` } as CSSProperties}
     >
       <div className="order-tracker__rail" aria-hidden="true">

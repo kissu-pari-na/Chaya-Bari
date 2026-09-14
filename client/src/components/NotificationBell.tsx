@@ -7,9 +7,11 @@ import {
   markNotificationRead,
   type AppNotification,
 } from '../lib/notifications'
+import { useI18n } from '../context/LanguageContext'
 import './NotificationBell.css'
 
 export function NotificationBell() {
+  const { t } = useI18n()
   const [items, setItems] = useState<AppNotification[]>([])
   const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
@@ -65,29 +67,29 @@ export function NotificationBell() {
 
   return (
     <div className="notif" ref={ref}>
-      <button className="notif__btn" onClick={() => setOpen((o) => !o)} aria-label="নোটিফিকেশন">
+      <button className="notif__btn" onClick={() => setOpen((o) => !o)} aria-label={t('নোটিফিকেশন', 'Notifications')}>
         🔔
         {unread > 0 && <span className="notif__badge">{unread > 9 ? '9+' : unread}</span>}
       </button>
       {open && (
         <div className="notif__panel">
           <div className="notif__head">
-            <span>নোটিফিকেশন</span>
+            <span>{t('নোটিফিকেশন', 'Notifications')}</span>
             <span className="notif__actions">
               {unread > 0 && (
                 <button className="notif__markall" onClick={handleMarkAll}>
-                  সব পড়া হয়েছে
+                  {t('সব পড়া হয়েছে', 'Mark all read')}
                 </button>
               )}
               {items.length > 0 && (
                 <button className="notif__clear" onClick={handleClearAll}>
-                  সব মুছুন
+                  {t('সব মুছুন', 'Clear all')}
                 </button>
               )}
             </span>
           </div>
           <div className="notif__list">
-            {items.length === 0 && <p className="notif__empty">কোনো নোটিফিকেশন নেই।</p>}
+            {items.length === 0 && <p className="notif__empty">{t('কোনো নোটিফিকেশন নেই।', 'No notifications.')}</p>}
             {items.map((n) => (
               <button
                 key={n.id}

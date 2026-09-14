@@ -29,6 +29,11 @@ function readStored(): Lang {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(readStored)
 
+  // Mirror into the i18n module synchronously during render so that plain
+  // helpers (formatters, getter-based label maps) read the current language
+  // on the very same render the toggle triggers — not one render late.
+  setModuleLang(lang)
+
   useEffect(() => {
     setModuleLang(lang)
     try {

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../context/LanguageContext'
 import { roleHome } from '../components/ProtectedRoute'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
@@ -8,6 +9,7 @@ import './Auth.css'
 
 export function Register() {
   const { register } = useAuth()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -27,7 +29,7 @@ export function Register() {
       if (err instanceof ApiError && err.details?.length) {
         setError(err.details.map((d) => d.message).join(' · '))
       } else {
-        setError(err instanceof ApiError ? err.message : 'কিছু একটা সমস্যা হয়েছে')
+        setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
       }
     } finally {
       setSubmitting(false)
@@ -40,22 +42,22 @@ export function Register() {
         <div className="auth-card__logo">
           <Logo size={48} />
         </div>
-        <h1>রেজিস্টার</h1>
+        <h1>{t('রেজিস্টার', 'Register')}</h1>
         {error && <div className="auth-error">{error}</div>}
         <label>
-          নাম
+          {t('নাম', 'Name')}
           <input value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
         </label>
         <label>
-          ইমেইল
+          {t('ইমেইল', 'Email')}
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         <label>
-          ফোন (ঐচ্ছিক)
+          {t('ফোন (ঐচ্ছিক)', 'Phone (optional)')}
           <input value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
         </label>
         <label>
-          পাসওয়ার্ড
+          {t('পাসওয়ার্ড', 'Password')}
           <input
             type="password"
             value={password}
@@ -66,10 +68,10 @@ export function Register() {
           />
         </label>
         <button type="submit" disabled={submitting}>
-          {submitting ? 'অপেক্ষা করুন…' : 'রেজিস্টার'}
+          {submitting ? t('অপেক্ষা করুন…', 'Please wait…') : t('রেজিস্টার', 'Register')}
         </button>
         <p className="auth-alt">
-          আগে থেকে অ্যাকাউন্ট আছে? <Link to="/login">লগইন করুন</Link>
+          {t('আগে থেকে অ্যাকাউন্ট আছে?', 'Already have an account?')} <Link to="/login">{t('লগইন করুন', 'Log in')}</Link>
         </p>
       </form>
     </div>

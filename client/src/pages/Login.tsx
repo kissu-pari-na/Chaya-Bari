@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../context/LanguageContext'
 import { roleHome } from '../components/ProtectedRoute'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
@@ -8,6 +9,7 @@ import './Auth.css'
 
 export function Login() {
   const { login } = useAuth()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
@@ -24,7 +26,7 @@ export function Login() {
       const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
       navigate(from ?? roleHome[user.role], { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'কিছু একটা সমস্যা হয়েছে')
+      setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
     } finally {
       setSubmitting(false)
     }
@@ -36,14 +38,14 @@ export function Login() {
         <div className="auth-card__logo">
           <Logo size={48} />
         </div>
-        <h1>লগইন</h1>
+        <h1>{t('লগইন', 'Log in')}</h1>
         {error && <div className="auth-error">{error}</div>}
         <label>
-          ইমেইল
+          {t('ইমেইল', 'Email')}
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         <label>
-          পাসওয়ার্ড
+          {t('পাসওয়ার্ড', 'Password')}
           <input
             type="password"
             value={password}
@@ -53,10 +55,10 @@ export function Login() {
           />
         </label>
         <button type="submit" disabled={submitting}>
-          {submitting ? 'অপেক্ষা করুন…' : 'লগইন'}
+          {submitting ? t('অপেক্ষা করুন…', 'Please wait…') : t('লগইন', 'Log in')}
         </button>
         <p className="auth-alt">
-          অ্যাকাউন্ট নেই? <Link to="/register">রেজিস্টার করুন</Link>
+          {t('অ্যাকাউন্ট নেই?', "Don't have an account?")} <Link to="/register">{t('রেজিস্টার করুন', 'Register')}</Link>
         </p>
       </form>
     </div>

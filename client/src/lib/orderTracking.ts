@@ -1,4 +1,5 @@
 import type { OrderStatus } from '../types/order'
+import { pick } from './i18n'
 
 export interface TrackStep {
   status: OrderStatus
@@ -9,15 +10,16 @@ export interface TrackStep {
 
 /// The customer-facing milestones an order moves through, in order. CANCELLED
 /// is intentionally excluded — it is an off-path terminal state handled
-/// separately by the tracker.
+/// separately by the tracker. `label`/`description` are getters so they render
+/// in the active language when read (or spread) during a render.
 export const trackSteps: TrackStep[] = [
-  { status: 'PENDING', icon: '📝', label: 'অর্ডার গৃহীত', description: 'আপনার অর্ডার আমরা পেয়েছি' },
-  { status: 'CONFIRMED', icon: '✅', label: 'নিশ্চিত', description: 'অর্ডার নিশ্চিত করা হয়েছে' },
-  { status: 'PREPARING', icon: '👨‍🍳', label: 'তৈরি হচ্ছে', description: 'রান্নাঘরে তৈরি হচ্ছে' },
-  { status: 'READY', icon: '🍱', label: 'প্রস্তুত', description: 'অর্ডার প্রস্তুত' },
-  { status: 'PACKED', icon: '📦', label: 'প্যাকড', description: 'প্যাক করা হয়েছে' },
-  { status: 'OUT_FOR_DELIVERY', icon: '🛵', label: 'ডেলিভারিতে', description: 'পথে রয়েছে' },
-  { status: 'DELIVERED', icon: '🎉', label: 'ডেলিভার্ড', description: 'পৌঁছে দেওয়া হয়েছে' },
+  { status: 'PENDING', icon: '📝', get label() { return pick('অর্ডার গৃহীত', 'Order received') }, get description() { return pick('আপনার অর্ডার আমরা পেয়েছি', 'We have received your order') } },
+  { status: 'CONFIRMED', icon: '✅', get label() { return pick('নিশ্চিত', 'Confirmed') }, get description() { return pick('অর্ডার নিশ্চিত করা হয়েছে', 'Your order has been confirmed') } },
+  { status: 'PREPARING', icon: '👨‍🍳', get label() { return pick('তৈরি হচ্ছে', 'Preparing') }, get description() { return pick('রান্নাঘরে তৈরি হচ্ছে', 'Being prepared in the kitchen') } },
+  { status: 'READY', icon: '🍱', get label() { return pick('প্রস্তুত', 'Ready') }, get description() { return pick('অর্ডার প্রস্তুত', 'Your order is ready') } },
+  { status: 'PACKED', icon: '📦', get label() { return pick('প্যাকড', 'Packed') }, get description() { return pick('প্যাক করা হয়েছে', 'Packed and ready to go') } },
+  { status: 'OUT_FOR_DELIVERY', icon: '🛵', get label() { return pick('ডেলিভারিতে', 'Out for delivery') }, get description() { return pick('পথে রয়েছে', 'On the way to you') } },
+  { status: 'DELIVERED', icon: '🎉', get label() { return pick('ডেলিভার্ড', 'Delivered') }, get description() { return pick('পৌঁছে দেওয়া হয়েছে', 'Delivered to you') } },
 ]
 
 export type TrackState = 'done' | 'current' | 'upcoming'

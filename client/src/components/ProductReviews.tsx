@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchProductReviews } from '../lib/reviews'
 import { toBnDigits } from '../lib/format'
+import { useI18n } from '../context/LanguageContext'
 import { RatingStars } from './RatingStars'
 import type { RatingSummary, Review } from '../types/review'
 import './ProductReviews.css'
@@ -12,6 +13,7 @@ interface ProductReviewsProps {
 /// Read-only reviews block for the product detail page. Reviews can only be
 /// *submitted* from an order's review page, so there is no form here.
 export function ProductReviews({ productId }: ProductReviewsProps) {
+  const { t } = useI18n()
   const [reviews, setReviews] = useState<Review[]>([])
   const [summary, setSummary] = useState<RatingSummary>({ average: 0, count: 0 })
   const [loading, setLoading] = useState(true)
@@ -35,26 +37,28 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
   return (
     <section className="reviews-block">
       <div className="reviews-block__head">
-        <h2>রিভিউ ও রেটিং</h2>
+        <h2>{t('রিভিউ ও রেটিং', 'Reviews & Ratings')}</h2>
         {summary.count > 0 ? (
           <div className="reviews-block__summary">
             <RatingStars rating={summary.average} />
             <span className="reviews-block__count">
-              {toBnDigits(summary.count)} জন ক্রেতার মতামত
+              {t(`${toBnDigits(summary.count)} জন ক্রেতার মতামত`, `${toBnDigits(summary.count)} customer reviews`)}
             </span>
           </div>
         ) : (
-          <span className="reviews-block__count">এখনও কোনো রিভিউ নেই</span>
+          <span className="reviews-block__count">{t('এখনও কোনো রিভিউ নেই', 'No reviews yet')}</span>
         )}
       </div>
 
       <p className="reviews-block__hint">
-        রিভিউ দিতে চান? ডেলিভারি সম্পন্ন হলে <strong>আমার অর্ডার</strong> থেকে সেই অর্ডারের রিভিউ পাতায় গিয়ে
-        রিভিউ দিন।
+        {t(
+          'রিভিউ দিতে চান? ডেলিভারি সম্পন্ন হলে আমার অর্ডার থেকে সেই অর্ডারের রিভিউ পাতায় গিয়ে রিভিউ দিন।',
+          'Want to leave a review? Once your order is delivered, go to its review page from My Orders.',
+        )}
       </p>
 
       {loading ? (
-        <p className="muted">লোড হচ্ছে…</p>
+        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
       ) : reviews.length === 0 ? null : (
         <ul className="review-list">
           {reviews.map((r) => (

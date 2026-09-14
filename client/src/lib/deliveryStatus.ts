@@ -1,12 +1,25 @@
 import type { DeliveryStatus } from '../types/delivery'
+import { pick } from './i18n'
 
 export const deliveryStatusLabel: Record<DeliveryStatus, string> = {
-  PENDING: 'অপেক্ষমাণ',
-  ASSIGNED: 'অ্যাসাইনড',
-  PICKED_UP: 'পিকআপ হয়েছে',
-  DELIVERED: 'ডেলিভার্ড',
-  FAILED: 'ব্যর্থ',
-  CANCELLED: 'বাতিল',
+  get PENDING() {
+    return pick('অপেক্ষমাণ', 'Pending')
+  },
+  get ASSIGNED() {
+    return pick('অ্যাসাইনড', 'Assigned')
+  },
+  get PICKED_UP() {
+    return pick('পিকআপ হয়েছে', 'Picked up')
+  },
+  get DELIVERED() {
+    return pick('ডেলিভার্ড', 'Delivered')
+  },
+  get FAILED() {
+    return pick('ব্যর্থ', 'Failed')
+  },
+  get CANCELLED() {
+    return pick('বাতিল', 'Cancelled')
+  },
 }
 
 export const deliveryStatuses: DeliveryStatus[] = [

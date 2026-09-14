@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { fetchCategories, fetchProducts } from '../lib/products'
+import { useI18n } from '../context/LanguageContext'
 import { ProductCard } from '../components/ProductCard'
 import type { Category, Product } from '../types/product'
 import './Products.css'
 
 export function ProductList() {
+  const { t } = useI18n()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined)
@@ -20,7 +22,7 @@ export function ProductList() {
     setLoading(true)
     fetchProducts(activeCategory)
       .then((p) => active && setProducts(p))
-      .catch(() => active && setError('পণ্য লোড করা যায়নি'))
+      .catch(() => active && setError('__LOAD_ERROR__'))
       .finally(() => active && setLoading(false))
     return () => {
       active = false
@@ -29,14 +31,14 @@ export function ProductList() {
 
   return (
     <section>
-      <h1>আমাদের পণ্য</h1>
+      <h1>{t('আমাদের পণ্য', 'Our Products')}</h1>
 
       <div className="category-filter">
         <button
           className={!activeCategory ? 'chip chip--active' : 'chip'}
           onClick={() => setActiveCategory(undefined)}
         >
-          সব
+          {t('সব', 'All')}
         </button>
         {categories.map((c) => (
           <button
@@ -49,9 +51,9 @@ export function ProductList() {
         ))}
       </div>
 
-      {loading && <p className="muted">লোড হচ্ছে…</p>}
-      {error && <p className="muted">{error}</p>}
-      {!loading && !error && products.length === 0 && <p className="muted">কোনো পণ্য নেই।</p>}
+      {loading && <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>}
+      {error && <p className="muted">{t('পণ্য লোড করা যায়নি', 'Could not load products')}</p>}
+      {!loading && !error && products.length === 0 && <p className="muted">{t('কোনো পণ্য নেই।', 'No products available.')}</p>}
 
       <div className="product-grid">
         {products.map((p) => (

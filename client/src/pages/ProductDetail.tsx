@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchProduct } from '../lib/products'
 import { formatBdt } from '../lib/format'
 import { useCart } from '../context/CartContext'
+import { useI18n } from '../context/LanguageContext'
 import { RatingStars } from '../components/RatingStars'
 import { ProductReviews } from '../components/ProductReviews'
 import type { Product } from '../types/product'
@@ -11,6 +12,7 @@ import './Products.css'
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { addItem } = useCart()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -23,25 +25,25 @@ export function ProductDetail() {
     setLoading(true)
     fetchProduct(id)
       .then((p) => active && setProduct(p))
-      .catch(() => active && setError('পণ্যটি পাওয়া যায়নি'))
+      .catch(() => active && setError('__NOT_FOUND__'))
       .finally(() => active && setLoading(false))
     return () => {
       active = false
     }
   }, [id])
 
-  if (loading) return <p className="muted">লোড হচ্ছে…</p>
+  if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
   if (error || !product)
     return (
       <div className="card">
-        <p className="muted">{error ?? 'পণ্যটি পাওয়া যায়নি'}</p>
-        <Link to="/products">← পণ্যে ফিরে যান</Link>
+        <p className="muted">{t('পণ্যটি পাওয়া যায়নি', 'Product not found')}</p>
+        <Link to="/products">← {t('পণ্যে ফিরে যান', 'Back to products')}</Link>
       </div>
     )
 
   return (
     <section className="card product-detail">
-      <Link to="/products" className="product-detail__back">← সব পণ্য</Link>
+      <Link to="/products" className="product-detail__back">← {t('সব পণ্য', 'All products')}</Link>
       <div className="product-detail__layout">
         <div className="product-detail__image">
           {product.imageUrl ? (
@@ -69,7 +71,7 @@ export function ProductDetail() {
             )}
           </p>
           {product.description && <p>{product.description}</p>}
-          {product.prepInfo && <p className="muted">প্রস্তুতি: {product.prepInfo}</p>}
+          {product.prepInfo && <p className="muted">{t('প্রস্তুতি:', 'Prep:')} {product.prepInfo}</p>}
           {product.isAvailable ? (
             <div className="product-detail__actions">
               <button
@@ -79,16 +81,16 @@ export function ProductDetail() {
                   setAdded(true)
                 }}
               >
-                কার্টে যোগ করুন
+                {t('কার্টে যোগ করুন', 'Add to cart')}
               </button>
               {added && (
                 <button className="btn-ghost" onClick={() => navigate('/cart')}>
-                  কার্টে যান →
+                  {t('কার্টে যান', 'Go to cart')} →
                 </button>
               )}
             </div>
           ) : (
-            <p className="product-detail__soldout">এই মুহূর্তে সোল্ড আউট</p>
+            <p className="product-detail__soldout">{t('এই মুহূর্তে সোল্ড আউট', 'Currently sold out')}</p>
           )}
         </div>
       </div>

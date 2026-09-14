@@ -1,36 +1,38 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchMyOrders } from '../lib/orders'
-import { formatBdt } from '../lib/format'
+import { formatBdt, toBnDigits } from '../lib/format'
 import { orderStatusLabel } from '../lib/orderStatus'
+import { useI18n } from '../context/LanguageContext'
 import type { Order } from '../types/order'
 import './Orders.css'
 
 export function MyOrders() {
+  const { t } = useI18n()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     fetchMyOrders()
       .then(setOrders)
-      .catch(() => setError('অর্ডার লোড করা যায়নি'))
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <p className="muted">লোড হচ্ছে…</p>
+  if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
 
   return (
     <section>
-      <span className="eyebrow">আপনার অর্ডার ইতিহাস</span>
-      <h1 className="myorders-title">আমার অর্ডার</h1>
-      {error && <p className="muted">{error}</p>}
+      <span className="eyebrow">{t('আপনার অর্ডার ইতিহাস', 'Your order history')}</span>
+      <h1 className="myorders-title">{t('আমার অর্ডার', 'My Orders')}</h1>
+      {error && <p className="muted">{t('অর্ডার লোড করা যায়নি', 'Could not load orders')}</p>}
       {!error && orders.length === 0 && (
         <div className="orders-empty">
           <div className="orders-empty__icon" aria-hidden="true">🧺</div>
-          <p>এখনো কোনো অর্ডার নেই।</p>
+          <p>{t('এখনো কোনো অর্ডার নেই।', 'No orders yet.')}</p>
           <Link to="/products" className="btn btn--primary">
-            অর্ডার শুরু করুন
+            {t('অর্ডার শুরু করুন', 'Start ordering')}
           </Link>
         </div>
       )}
@@ -47,9 +49,9 @@ export function MyOrders() {
                 </div>
                 <div className="order-row__sub">
                   <span>📅 {o.fulfillmentDate}</span>
-                  <span>· {count.toLocaleString('bn-BD')} আইটেম</span>
+                  <span>· {toBnDigits(count)} {t('আইটেম', 'items')}</span>
                   {preview && <span className="order-row__preview">· {preview}{o.items.length > 2 ? '…' : ''}</span>}
-                  {o.status === 'DELIVERED' && <span className="order-row__review">⭐ রিভিউ দিন</span>}
+                  {o.status === 'DELIVERED' && <span className="order-row__review">⭐ {t('রিভিউ দিন', 'Leave a review')}</span>}
                 </div>
               </div>
               <div className="order-row__meta">
