@@ -5,16 +5,23 @@
    ছায়া বাড়ি — Dark Luxury Food design system (see /design.md)
    ============================================================ */
 :root {
-  /* --- Brand palette (fixed) --- */
-  --bg-900: #0b0d0a; /* primary background */
-  --bg-800: #151a12; /* secondary dark */
-  --bg-700: #1a2015;
-  --green-deep: #1f3516; /* deep green */
-  --accent: #7faf35; /* accent green */
-  --accent-bright: #9acb45; /* bright accent */
-  --cream: #f5f1e7; /* warm cream */
+  /* --- Brand palette (Ember: red + gold on near-black; see /design.md §2) --- */
+  --bg-900: #0b0b0c; /* primary background (neutral near-black) */
+  --bg-800: #161416; /* secondary dark */
+  --bg-700: #1f1b1c;
+  --green-deep: #7a1c17; /* deep red panel (legacy token name) */
+  --accent: #e4322b; /* accent RED — primary action */
+  --accent-bright: #f5b300; /* amber GOLD — highlights, values, warm hover */
+  --gold: #f5b300;
+  --gold-bright: #ffc633;
+  --red-bright: #ff4a3d;
+  /* Warm accent aliases used across component CSS (amber + terracotta-red). */
+  --saffron-500: #f5b300;
+  --saffron-100: rgba(245, 179, 0, 0.16);
+  --terra-600: #e4322b;
+  --cream: #f5f1e7; /* warm cream text on dark */
   --muted-cream: #b8b9b2; /* muted text on dark */
-  --border-dark: #30352a; /* border on dark */
+  --border-dark: #2a2626; /* border on dark */
 
   /* --- Surfaces: dark glass everywhere; printable documents opt into .paper,
      which resets these tokens back to a light sheet. --- */
@@ -40,8 +47,8 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18);
   --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.28);
   --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.42);
-  --shadow-card: 0 8px 24px rgba(15, 20, 12, 0.1);
-  --glow-accent: 0 8px 22px rgba(127, 175, 53, 0.28);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --glow-accent: 0 8px 22px rgba(228, 50, 43, 0.32);
 
   /* Glass surfaces (premium translucent panels on the dark storefront) */
   --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018));
@@ -58,10 +65,10 @@
   --page-bg: #f3efe4;
   --on-page: #23261d;
   --on-page-muted: #6a6d5f;
-  --heading: #1f3516;
+  --heading: #26201f;
   --ghost-border: var(--card-border);
   --ghost-fg: var(--card-text);
-  --link: #4a7a1f;
+  --link: #c22a22;
 
   /* Back-compat aliases (older component CSS references these) */
   --color-heading: var(--heading);
@@ -240,7 +247,7 @@ a:hover {
     --card-text: #23261d;
     --card-muted: #6a6d5f;
     --card-border: #e6e0d0;
-    --card-heading: #1f3516;
+    --card-heading: #7a1c17;
     background: #fff;
     color: var(--card-text);
     border-color: var(--card-border);
@@ -281,12 +288,12 @@ button.btn {
 /* Primary: accent green, dark readable text */
 .btn--primary {
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
   box-shadow: var(--glow-accent);
 }
 
 .btn--primary:hover {
-  background: var(--accent-bright);
+  background: var(--red-bright);
   transform: translateY(-1px);
 }
 
@@ -294,11 +301,11 @@ button.btn {
 .btn--brand {
   background: var(--green-deep);
   color: var(--cream);
-  border-color: rgba(127, 175, 53, 0.35);
+  border-color: rgba(228, 50, 43, 0.35);
 }
 
 .btn--brand:hover {
-  background: #274219;
+  background: #8f231d;
   transform: translateY(-1px);
 }
 
@@ -310,7 +317,7 @@ button.btn {
 }
 
 .btn--ghost:hover {
-  background: rgba(127, 175, 53, 0.1);
+  background: rgba(228, 50, 43, 0.1);
   border-color: var(--accent);
   color: var(--accent-bright);
 }
@@ -353,7 +360,7 @@ button.btn {
 
 .badge--sale {
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
 }
 
 .badge--new {
@@ -475,7 +482,7 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(127, 175, 53, 0.25);
+  box-shadow: 0 0 0 3px rgba(228, 50, 43, 0.25);
 }
 
 :focus-visible {

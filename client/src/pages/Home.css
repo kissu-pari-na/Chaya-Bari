@@ -13,8 +13,8 @@
   overflow: hidden;
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at 78% 30%, rgba(127, 175, 53, 0.16), transparent 45%),
-    linear-gradient(155deg, #0d120a 0%, var(--bg-800) 55%, var(--green-deep) 140%);
+    radial-gradient(circle at 78% 30%, rgba(228, 50, 43, 0.16), transparent 45%),
+    linear-gradient(155deg, #0c0b0b 0%, var(--bg-800) 55%, var(--green-deep) 140%);
   border: 1px solid var(--border-dark);
   color: var(--cream);
   box-shadow: var(--shadow-lg);
@@ -45,8 +45,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(127, 175, 53, 0.14);
-  border: 1px solid rgba(127, 175, 53, 0.4);
+  background: rgba(228, 50, 43, 0.14);
+  border: 1px solid rgba(228, 50, 43, 0.4);
   color: var(--accent-bright);
   font-size: 0.72rem;
   font-weight: 700;
@@ -115,9 +115,9 @@
   width: min(400px, 100%);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #2a3420, #10140c 72%);
-  border: 1px solid rgba(127, 175, 53, 0.25);
-  box-shadow: 0 0 0 14px rgba(127, 175, 53, 0.06), var(--shadow-lg);
+  background: radial-gradient(circle at 38% 32%, #2a1717, #0d0b0c 72%);
+  border: 1px solid rgba(228, 50, 43, 0.25);
+  box-shadow: 0 0 0 14px rgba(228, 50, 43, 0.06), var(--shadow-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -134,12 +134,12 @@
 }
 .hero__ring--outer {
   inset: 8%;
-  border: 1.5px dashed rgba(154, 203, 69, 0.28);
+  border: 1.5px dashed rgba(245, 179, 0, 0.28);
   animation: hero-spin 26s linear infinite;
 }
 .hero__ring--inner {
   inset: 24%;
-  border: 1px solid rgba(154, 203, 69, 0.16);
+  border: 1px solid rgba(245, 179, 0, 0.16);
   animation: hero-spin 18s linear infinite reverse;
 }
 
@@ -147,7 +147,7 @@
   position: absolute;
   inset: 30%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(127, 175, 53, 0.35), transparent 70%);
+  background: radial-gradient(circle, rgba(228, 50, 43, 0.35), transparent 70%);
   filter: blur(14px);
   animation: hero-pulse 5s ease-in-out infinite;
   pointer-events: none;
@@ -220,8 +220,8 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
-  border: 2px solid rgba(154, 203, 69, 0.5);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(127, 175, 53, 0.08);
+  border: 2px solid rgba(245, 179, 0, 0.5);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(228, 50, 43, 0.08);
   backdrop-filter: blur(6px);
 }
 .hero__orb--center {
@@ -231,7 +231,7 @@
   width: 27cqw;
   height: 27cqw;
   border-color: var(--accent-bright);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(154, 203, 69, 0.16);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(245, 179, 0, 0.16);
 }
 .hero__orb--center .hero__orb-name {
   max-width: 118px;
@@ -295,7 +295,7 @@
   bottom: 12%;
   left: -3%;
   background: var(--cream);
-  color: #0b0d0a;
+  color: #1a1512;
   border-radius: var(--radius-md);
   padding: 0.55rem 0.85rem;
   box-shadow: var(--shadow-md);
@@ -426,9 +426,9 @@
   margin-top: 1rem;
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at 12% 20%, rgba(127, 175, 53, 0.18), transparent 42%),
+    radial-gradient(circle at 12% 20%, rgba(228, 50, 43, 0.18), transparent 42%),
     linear-gradient(120deg, var(--green-deep), #16260f);
-  border: 1px solid rgba(127, 175, 53, 0.28);
+  border: 1px solid rgba(228, 50, 43, 0.28);
   color: var(--cream);
   padding: clamp(1.75rem, 4vw, 2.75rem);
   display: flex;

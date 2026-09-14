@@ -74,7 +74,7 @@
 
 .app-header__cart-count {
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
   font-size: 0.72rem;
   font-weight: 700;
   border-radius: var(--radius-pill);
@@ -113,7 +113,7 @@
 }
 
 .app-header__logout:hover {
-  background: rgba(127, 175, 53, 0.12);
+  background: rgba(228, 50, 43, 0.12);
   border-color: var(--accent);
 }
 

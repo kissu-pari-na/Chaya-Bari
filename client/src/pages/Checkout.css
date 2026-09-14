@@ -87,7 +87,7 @@
 
 .address-opt--on {
   border-color: var(--accent);
-  background: rgba(127, 175, 53, 0.12);
+  background: rgba(228, 50, 43, 0.12);
 }
 
 .address-form {
@@ -200,7 +200,7 @@
   width: 100%;
   margin-top: 0.85rem;
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
   border: none;
   padding: 0.9rem;
   border-radius: var(--radius-md);
@@ -213,7 +213,7 @@
 }
 
 .checkout__place:hover:not(:disabled) {
-  background: var(--accent-bright);
+  background: var(--red-bright);
   transform: translateY(-1px);
 }
 

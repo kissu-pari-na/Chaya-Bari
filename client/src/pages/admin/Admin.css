@@ -10,7 +10,7 @@
 .inline-form button,
 .admin-form__actions button[type='submit'] {
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
   border: none;
   padding: 0.55rem 1.15rem;
   border-radius: var(--radius-md);
@@ -25,7 +25,7 @@
 .admin-head button:hover,
 .inline-form button:hover,
 .admin-form__actions button[type='submit']:hover {
-  background: var(--accent-bright);
+  background: var(--red-bright);
   transform: translateY(-1px);
 }
 
@@ -86,7 +86,7 @@
 }
 
 .toggle--on {
-  background: rgba(127, 175, 53, 0.16);
+  background: rgba(228, 50, 43, 0.16);
   border-color: var(--accent);
   color: var(--accent-bright);
 }
@@ -105,7 +105,7 @@
 
 .btn-ghost:hover {
   border-color: var(--accent);
-  background: rgba(127, 175, 53, 0.1);
+  background: rgba(228, 50, 43, 0.1);
 }
 
 .btn-danger {
@@ -442,7 +442,7 @@
 }
 .btn-mini--ok {
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
 }
 .btn-mini--no {
   background: transparent;

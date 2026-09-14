@@ -1,31 +1,42 @@
-# Design System --- Dark Luxury Food
+# Design System --- Dark Luxury Food (Ember: Red + Gold on Black)
 
 ## 1. Design Direction
 
 Create a premium, modern food-ordering experience inspired by dark
-luxury restaurant interfaces.
+luxury restaurant interfaces — a near-black canvas lit by a bold **crimson
+red** and a warm **amber gold**, over frosted-glass surfaces.
 
-**Core feeling:** premium, appetizing, warm, confident, modern.
+**Core feeling:** premium, appetizing, bold, confident, modern.
 
-Avoid: - Generic red/yellow fast-food styling - Excessive gradients -
-Overly decorative UI - Crowded layouts
+Avoid: - Cheap fast-food red/yellow (keep the red deep and the gold refined,
+never neon) - Excessive gradients - Overly decorative UI - Crowded layouts
 
 ## 2. Color Palette
 
+Two accents on a neutral near-black:
+
+- **Red** is the primary brand action — buttons, active nav, focus,
+  arrows, the logo.
+- **Gold** is the highlight/positive tone — prices, ratings, values, a
+  secondary "confirm" button, success confirmations.
+- Surfaces are frosted **dark glass** (translucent white over the dark).
+
 ``` text
-Primary Background:   #0B0D0A
-Secondary Dark:       #151A12
-Deep Green:           #1F3516
-Accent Green:         #7FAF35
-Bright Accent:        #9ACB45
-Warm Cream:           #F5F1E7
+Primary Background:   #0B0B0C   (neutral near-black)
+Secondary Dark:       #161416
+Deep Red (panels):    #7A1C17
+Accent Red:           #E4322B   (primary action)
+Bright Red (hover):   #FF4A3D
+Amber Gold:           #F5B300   (highlights, values, secondary CTA)
+Bright Gold:          #FFC633
+Warm Cream:           #F5F1E7   (text on dark)
 Muted Text:           #B8B9B2
-Border:               #30352A
+Border:               #2A2626
 ```
 
 Use dark backgrounds for hero, navigation, trust sections, and premium
-promotional areas. Use warm cream/light surfaces for menus and product
-browsing.
+promotional areas; frosted dark-glass cards throughout. Documents
+(invoices/receipts) still print on a clean white sheet.
 
 ## 3. Typography
 
@@ -84,7 +95,7 @@ Dark, minimal, and uncluttered.
 Include: - Logo - Home - Menu - Combo Deals - About - Reviews -
 Contact - Search - Account - Cart
 
-Use green only for active states and important actions.
+Use **red** for active states and important actions; **gold** for highlights, values, and ratings.
 
 ## 7. Food Cards
 
@@ -98,10 +109,13 @@ Use rounded corners around 12--18px and subtle borders/shadows.
 
 ## 8. Buttons
 
-Primary: - Green background - Dark/white readable text - Rounded
-10--14px - Strong hover state
+Primary: - Red background (`#E4322B`) - White readable text - Rounded
+10--14px - Warm hover (brighter red / gold glow)
 
-Secondary: - Transparent/dark background - Cream border - Cream text
+Secondary / confirm: - Gold background (`#F5B300`) with near-black text, for
+one clear "confirm" action per view
+
+Tertiary: - Transparent/dark background - Cream border - Cream text
 
 Cart/add buttons should be compact and highly recognizable.
 
@@ -122,11 +136,11 @@ Emphasize the homemade advantage.
 Possible features: - 100% Homemade - Fresh Ingredients - Made With
 Love - Hygienic & Safe - Home-Style Taste - Fast Delivery
 
-Use simple line icons with the green accent.
+Use simple line icons with the red/gold accent.
 
 ## 11. Promotional Section
 
-Use a deep-green/dark promotional panel rather than a bright advertising
+Use a deep-red/dark promotional panel rather than a bright advertising
 banner.
 
 Example:

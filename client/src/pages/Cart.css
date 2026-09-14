@@ -48,7 +48,7 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: linear-gradient(160deg, #1c2616, #0f1409);
+  background: linear-gradient(160deg, #241617, #0d0b0c);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
@@ -140,7 +140,7 @@
   width: 100%;
   margin-top: 0.75rem;
   background: var(--accent);
-  color: #0b0d0a;
+  color: #fff;
   border: none;
   padding: 0.85rem;
   border-radius: var(--radius-md);
@@ -153,7 +153,7 @@
 }
 
 .cart-summary__checkout:hover {
-  background: var(--accent-bright);
+  background: var(--red-bright);
   transform: translateY(-1px);
 }
 

@@ -114,11 +114,11 @@
 }
 
 .notif__item--unread {
-  background: rgba(127, 175, 53, 0.1);
+  background: rgba(228, 50, 43, 0.1);
 }
 
 .notif__item--unread:hover {
-  background: rgba(127, 175, 53, 0.16);
+  background: rgba(228, 50, 43, 0.16);
 }
 
 .notif__title {
