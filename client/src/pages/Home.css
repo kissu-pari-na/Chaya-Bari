@@ -423,8 +423,7 @@
 
 /* ---------- Promo / combo band (deep ember red, gilded) ---------- */
 .promo {
-  position: relative;
-  margin-top: 1rem;
+  margin-top: clamp(2.5rem, 5vw, 4rem);
   border-radius: var(--radius-lg);
   overflow: hidden;
   background:
