@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { fetchOrderingSetting, updateOrderingSetting, type OrderingSetting } from '../../lib/orders'
 import { ApiError } from '../../lib/apiClient'
+import { useI18n } from '../../context/LanguageContext'
 import './Admin.css'
 
 export function OrderingSettingsAdmin() {
+  const { t } = useI18n()
   const [setting, setSetting] = useState<OrderingSetting | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -12,7 +14,7 @@ export function OrderingSettingsAdmin() {
   useEffect(() => {
     fetchOrderingSetting()
       .then(setSetting)
-      .catch(() => setError('সেটিংস লোড করা যায়নি'))
+      .catch(() => setError(t('সেটিংস লোড করা যায়নি', 'Could not load settings')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -30,22 +32,22 @@ export function OrderingSettingsAdmin() {
       if (err instanceof ApiError && err.details?.length) {
         setError(err.details.map((d) => d.message).join(' · '))
       } else {
-        setError(err instanceof ApiError ? err.message : 'সংরক্ষণ করা যায়নি')
+        setError(err instanceof ApiError ? err.message : t('সংরক্ষণ করা যায়নি', 'Could not save'))
       }
     }
   }
 
-  if (loading || !setting) return <p className="muted">লোড হচ্ছে…</p>
+  if (loading || !setting) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
 
   return (
     <section>
-      <h1>অর্ডার সেটিংস</h1>
-      <p className="muted">অগ্রিম অর্ডারের কাটঅফ সময় ও ডেলিভারি চার্জ কনফিগার করুন।</p>
+      <h1>{t('অর্ডার সেটিংস', 'Ordering settings')}</h1>
+      <p className="muted">{t('অগ্রিম অর্ডারের কাটঅফ সময় ও ডেলিভারি চার্জ কনফিগার করুন।', 'Configure pre-order cutoff time and delivery charge.')}</p>
       <form className="admin-form" onSubmit={handleSubmit}>
         {error && <div className="auth-error">{error}</div>}
         <div className="admin-form__row">
           <label>
-            কাটঅফ সময় (HH:mm)
+            {t('কাটঅফ সময় (HH:mm)', 'Cutoff time (HH:mm)')}
             <input
               value={setting.cutoffTime}
               onChange={(e) => setSetting({ ...setting, cutoffTime: e.target.value })}
@@ -54,7 +56,7 @@ export function OrderingSettingsAdmin() {
             />
           </label>
           <label>
-            সর্বনিম্ন অগ্রিম দিন
+            {t('সর্বনিম্ন অগ্রিম দিন', 'Minimum advance days')}
             <input
               type="number"
               min={0}
@@ -67,7 +69,7 @@ export function OrderingSettingsAdmin() {
         </div>
         <div className="admin-form__row">
           <label>
-            ডিফল্ট ডেলিভারি চার্জ (৳)
+            {t('ডিফল্ট ডেলিভারি চার্জ (৳)', 'Default delivery charge (৳)')}
             <input
               type="number"
               min={0}
@@ -78,7 +80,7 @@ export function OrderingSettingsAdmin() {
             />
           </label>
           <label>
-            টাইমজোন
+            {t('টাইমজোন', 'Timezone')}
             <input
               value={setting.timezone}
               onChange={(e) => setSetting({ ...setting, timezone: e.target.value })}
@@ -87,8 +89,8 @@ export function OrderingSettingsAdmin() {
           </label>
         </div>
         <div className="admin-form__actions">
-          <button type="submit">সংরক্ষণ করুন</button>
-          {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
+          <button type="submit">{t('সংরক্ষণ করুন', 'Save')}</button>
+          {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>{t('সংরক্ষিত হয়েছে', 'Saved')}</span>}
         </div>
       </form>
     </section>

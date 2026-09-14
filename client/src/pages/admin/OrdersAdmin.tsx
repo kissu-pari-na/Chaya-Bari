@@ -4,11 +4,13 @@ import { fetchAdminOrders, type OrderFilters } from '../../lib/orders'
 import { formatBdt } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { orderStatuses, paymentStatuses } from '../../lib/orderEnums'
+import { useI18n } from '../../context/LanguageContext'
 import type { AdminOrder } from '../../types/order'
 import '../Orders.css'
 import './Admin.css'
 
 export function OrdersAdmin() {
+  const { t } = useI18n()
   const [orders, setOrders] = useState<AdminOrder[]>([])
   const [filters, setFilters] = useState<OrderFilters>({})
   const [loading, setLoading] = useState(true)
@@ -28,11 +30,11 @@ export function OrdersAdmin() {
 
   return (
     <section>
-      <h1>অর্ডার ব্যবস্থাপনা</h1>
+      <h1>{t('অর্ডার ব্যবস্থাপনা', 'Order management')}</h1>
 
       <div className="order-filters">
         <input
-          placeholder="খুঁজুন (নাম, নম্বর, ইমেইল)"
+          placeholder={t('খুঁজুন (নাম, নম্বর, ইমেইল)', 'Search (name, number, email)')}
           value={filters.search ?? ''}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value || undefined }))}
         />
@@ -40,7 +42,7 @@ export function OrdersAdmin() {
           value={filters.status ?? ''}
           onChange={(e) => setFilters((f) => ({ ...f, status: (e.target.value || undefined) as OrderFilters['status'] }))}
         >
-          <option value="">সব স্ট্যাটাস</option>
+          <option value="">{t('সব স্ট্যাটাস', 'All statuses')}</option>
           {orderStatuses.map((s) => (
             <option key={s} value={s}>
               {orderStatusLabel[s]}
@@ -53,7 +55,7 @@ export function OrdersAdmin() {
             setFilters((f) => ({ ...f, paymentStatus: (e.target.value || undefined) as OrderFilters['paymentStatus'] }))
           }
         >
-          <option value="">সব পেমেন্ট</option>
+          <option value="">{t('সব পেমেন্ট', 'All payments')}</option>
           {paymentStatuses.map((s) => (
             <option key={s} value={s}>
               {paymentStatusLabel[s]}
@@ -61,7 +63,7 @@ export function OrdersAdmin() {
           ))}
         </select>
         <label className="date-filter">
-          থেকে
+          {t('থেকে', 'From')}
           <input
             type="date"
             value={filters.fromDate ?? ''}
@@ -69,7 +71,7 @@ export function OrdersAdmin() {
           />
         </label>
         <label className="date-filter">
-          পর্যন্ত
+          {t('পর্যন্ত', 'To')}
           <input
             type="date"
             value={filters.toDate ?? ''}
@@ -79,18 +81,18 @@ export function OrdersAdmin() {
       </div>
 
       {loading ? (
-        <p className="muted">লোড হচ্ছে…</p>
+        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
       ) : (
         <div className="table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>অর্ডার</th>
-                <th>গ্রাহক</th>
-                <th>ডেলিভারি</th>
-                <th>মোট</th>
-                <th>স্ট্যাটাস</th>
-                <th>পেমেন্ট</th>
+                <th>{t('অর্ডার', 'Order')}</th>
+                <th>{t('গ্রাহক', 'Customer')}</th>
+                <th>{t('ডেলিভারি', 'Delivery')}</th>
+                <th>{t('মোট', 'Total')}</th>
+                <th>{t('স্ট্যাটাস', 'Status')}</th>
+                <th>{t('পেমেন্ট', 'Payment')}</th>
               </tr>
             </thead>
             <tbody>
@@ -113,7 +115,7 @@ export function OrdersAdmin() {
               {orders.length === 0 && (
                 <tr>
                   <td colSpan={6} className="muted">
-                    কোনো অর্ডার নেই।
+                    {t('কোনো অর্ডার নেই।', 'No orders.')}
                   </td>
                 </tr>
               )}
