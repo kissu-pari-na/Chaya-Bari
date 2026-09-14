@@ -3,7 +3,7 @@ import { Header } from '../components/Header'
 
 export function CustomerLayout() {
   return (
-    <div className="page theme-dark">
+    <div className="page">
       <Header variant="customer" />
       <main className="page__content">
         <Outlet />

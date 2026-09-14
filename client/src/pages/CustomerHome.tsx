@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../context/LanguageContext'
 import { fetchProducts } from '../lib/products'
 import { fetchRatingSummary, fetchTopReviews } from '../lib/reviews'
 import { formatBdt, toBnDigits } from '../lib/format'
@@ -10,13 +11,6 @@ import { effectivePrice, type Product } from '../types/product'
 import type { RatingSummary, Review } from '../types/review'
 import './Home.css'
 import './Products.css'
-
-const TRUST = [
-  { icon: '🏠', title: '১০০% ঘরে তৈরি', text: 'প্রতিটি পদ যত্ন করে বাড়িতে রান্না করা।' },
-  { icon: '🥬', title: 'তাজা উপকরণ', text: 'প্রতিদিন বাছাই করা টাটকা উপকরণে।' },
-  { icon: '🛵', title: 'দ্রুত ডেলিভারি', text: 'আপনার দুয়ারে নির্ভরযোগ্য পৌঁছানো।' },
-  { icon: '🧼', title: 'স্বাস্থ্যসম্মত', text: 'পরিচ্ছন্ন রান্নাঘর, নিরাপদ প্যাকেজিং।' },
-]
 
 // Fallback food emoji for a product with no uploaded image yet — matched to the
 // product name/category so the placeholder still looks sensible.
@@ -35,30 +29,10 @@ function dishEmoji(p: Product, index: number): string {
   return hit ? hit[1] : ['🍲', '🥘', '🍽️'][index % 3]
 }
 
-const REVIEWS = [
-  {
-    name: 'সাদিয়া রহমান',
-    meta: 'নিয়মিত ক্রেতা',
-    stars: 5,
-    text: 'একদম ঘরের মতো স্বাদ! বিরিয়ানি আর পায়েস দুটোই অসাধারণ ছিল। সময়মতো পৌঁছেছে।',
-  },
-  {
-    name: 'তানভীর হাসান',
-    meta: 'ঢাকা',
-    stars: 5,
-    text: 'তাজা, গরম আর পরিমাণে ভালো। পরিবারের সবাই পছন্দ করেছে। আবার অর্ডার করব।',
-  },
-  {
-    name: 'নুসরাত জাহান',
-    meta: 'কম্বো ক্রেতা',
-    stars: 4,
-    text: 'কম্বো ডিলগুলো দারুণ সাশ্রয়ী। খাবারের মান নিয়ে কোনো অভিযোগ নেই।',
-  },
-]
-
 export function CustomerHome() {
   const { profile } = useBusinessProfile()
   const { user } = useAuth()
+  const { t } = useI18n()
   const [products, setProducts] = useState<Product[]>([])
   const [topReviews, setTopReviews] = useState<Review[]>([])
   const [rating, setRating] = useState<RatingSummary | null>(null)
@@ -74,6 +48,43 @@ export function CustomerHome() {
       .then(setRating)
       .catch(() => setRating(null))
   }, [])
+
+  const TRUST = [
+    { icon: '🏠', title: t('১০০% ঘরে তৈরি', '100% Homemade'), text: t('প্রতিটি পদ যত্ন করে বাড়িতে রান্না করা।', 'Every dish carefully cooked at home.') },
+    { icon: '🥬', title: t('তাজা উপকরণ', 'Fresh Ingredients'), text: t('প্রতিদিন বাছাই করা টাটকা উপকরণে।', 'Handpicked fresh ingredients every day.') },
+    { icon: '🛵', title: t('দ্রুত ডেলিভারি', 'Fast Delivery'), text: t('আপনার দুয়ারে নির্ভরযোগ্য পৌঁছানো।', 'Reliable delivery right to your door.') },
+    { icon: '🧼', title: t('স্বাস্থ্যসম্মত', 'Hygienic'), text: t('পরিচ্ছন্ন রান্নাঘর, নিরাপদ প্যাকেজিং।', 'Clean kitchen, safe packaging.') },
+  ]
+
+  const REVIEWS = [
+    {
+      name: t('সাদিয়া রহমান', 'Sadia Rahman'),
+      meta: t('নিয়মিত ক্রেতা', 'Regular customer'),
+      stars: 5,
+      text: t(
+        'একদম ঘরের মতো স্বাদ! বিরিয়ানি আর পায়েস দুটোই অসাধারণ ছিল। সময়মতো পৌঁছেছে।',
+        'Tastes just like home! The biryani and payesh were both excellent. Arrived on time.',
+      ),
+    },
+    {
+      name: t('তানভীর হাসান', 'Tanvir Hasan'),
+      meta: t('ঢাকা', 'Dhaka'),
+      stars: 5,
+      text: t(
+        'তাজা, গরম আর পরিমাণে ভালো। পরিবারের সবাই পছন্দ করেছে। আবার অর্ডার করব।',
+        'Fresh, hot and generous portions. The whole family loved it. Will order again.',
+      ),
+    },
+    {
+      name: t('নুসরাত জাহান', 'Nusrat Jahan'),
+      meta: t('কম্বো ক্রেতা', 'Combo buyer'),
+      stars: 4,
+      text: t(
+        'কম্বো ডিলগুলো দারুণ সাশ্রয়ী। খাবারের মান নিয়ে কোনো অভিযোগ নেই।',
+        'The combo deals are great value. No complaints about the food quality.',
+      ),
+    },
+  ]
 
   const available = products.filter((p) => p.isAvailable)
   const featured = available.slice(0, 4)
@@ -127,26 +138,29 @@ export function CustomerHome() {
       {/* ---------- Hero ---------- */}
       <section className="hero">
         <div className="hero__content">
-          <span className="hero__trust">✦ ১০০% ঘরে তৈরি</span>
+          <span className="hero__trust">✦ {t('১০০% ঘরে তৈরি', '100% Homemade')}</span>
           <h1 className="hero__title">
-            খাঁটি <span>ঘরোয়া</span> খাবার
+            {t('খাঁটি', 'Authentic')} <span>{t('ঘরোয়া', 'Home-style')}</span> {t('খাবার', 'Food')}
           </h1>
           <p className="hero__sub">{profile.tagline}</p>
           <p className="hero__lede">
-            {profile.name} থেকে ঘরের মমতায় তৈরি খাবার আগাম অর্ডার করুন — {profile.address.city},{' '}
-            {profile.address.country}-জুড়ে আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।
+            {t(
+              `${profile.name} থেকে ঘরের মমতায় তৈরি খাবার আগাম অর্ডার করুন — ${profile.address.city}, ${profile.address.country}-জুড়ে আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।`,
+              `Pre-order lovingly home-cooked food from ${profile.name} — across ${profile.address.city}, ${profile.address.country} we deliver freshly cooked meals to your door.`,
+            )}
           </p>
           <div className="hero__cta">
             <Link to="/products" className="btn btn--primary btn--lg">
-              অর্ডার করুন
+              {t('অর্ডার করুন', 'Order Now')}
             </Link>
             <Link to="/products" className="btn btn--on-dark btn--lg">
-              মেনু দেখুন
+              {t('মেনু দেখুন', 'View Menu')}
             </Link>
           </div>
           {user && (
             <p className="hero__welcome">
-              আবার স্বাগতম, <strong>{user.name}</strong>! আজ কী অর্ডার করবেন?
+              {t('আবার স্বাগতম,', 'Welcome back,')} <strong>{user.name}</strong>!{' '}
+              {t('আজ কী অর্ডার করবেন?', 'What will you order today?')}
             </p>
           )}
         </div>
@@ -169,32 +183,29 @@ export function CustomerHome() {
               renderOrb(p, `hero__orb hero__orb--${i + 1}`, i + 1, false),
             )}
 
-            <div className="hero__rating">
-              {hasRating ? (
-                <>
-                  {toBnDigits(rating!.average.toFixed(1))} ★
-                  <span>{toBnDigits(rating!.count)}+ রিভিউ</span>
-                </>
-              ) : (
-                <>
-                  ৪.৯ ★<span>৫০০+ রিভিউ</span>
-                </>
-              )}
-            </div>
+            {/* Only show a rating badge once real reviews exist. */}
+            {hasRating && (
+              <div className="hero__rating">
+                {toBnDigits(rating!.average.toFixed(1))} ★
+                <span>
+                  {toBnDigits(rating!.count)}+ {t('রিভিউ', 'reviews')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* ---------- Trust strip ---------- */}
       <div className="trust">
-        {TRUST.map((t) => (
-          <div key={t.title} className="trust__tile">
+        {TRUST.map((item) => (
+          <div key={item.title} className="trust__tile">
             <span className="trust__icon" aria-hidden="true">
-              {t.icon}
+              {item.icon}
             </span>
             <div>
-              <p className="trust__title">{t.title}</p>
-              <p className="trust__text">{t.text}</p>
+              <p className="trust__title">{item.title}</p>
+              <p className="trust__text">{item.text}</p>
             </div>
           </div>
         ))}
@@ -203,17 +214,19 @@ export function CustomerHome() {
       {/* ---------- Featured dishes ---------- */}
       <div className="section-head">
         <div>
-          <span className="eyebrow">আমাদের রান্নাঘর থেকে</span>
-          <h2 className="section-head__title">জনপ্রিয় পদ</h2>
+          <span className="eyebrow">{t('আমাদের রান্নাঘর থেকে', 'From our kitchen')}</span>
+          <h2 className="section-head__title">{t('জনপ্রিয় পদ', 'Popular Dishes')}</h2>
         </div>
         <Link to="/products" className="btn btn--ghost">
-          সব দেখুন →
+          {t('সব দেখুন', 'View all')} →
         </Link>
       </div>
 
       {featured.length === 0 ? (
         <p className="home__featured-empty">
-          আমাদের পূর্ণ মেনু দেখতে <Link to="/products">পণ্যের পাতায়</Link> যান।
+          {t('আমাদের পূর্ণ মেনু দেখতে', 'To see our full menu visit the')}{' '}
+          <Link to="/products">{t('পণ্যের পাতায়', 'products page')}</Link>{' '}
+          {t('যান।', '.')}
         </p>
       ) : (
         <div className="product-grid">
@@ -227,23 +240,25 @@ export function CustomerHome() {
       <section className="promo">
         <div>
           <h2 className="promo__title">
-            সেরা কম্বো — <span>আরও সাশ্রয়ে!</span>
+            {t('সেরা কম্বো —', 'Best Combos —')} <span>{t('আরও সাশ্রয়ে!', 'even better value!')}</span>
           </h2>
           <p className="promo__text">
-            পরিবারের জন্য বাছাই করা কম্বো প্যাকে বেশি খাবার, কম দামে। ঘরে তৈরি স্বাদ উপভোগ করুন
-            আরও সাশ্রয়ে।
+            {t(
+              'পরিবারের জন্য বাছাই করা কম্বো প্যাকে বেশি খাবার, কম দামে। ঘরে তৈরি স্বাদ উপভোগ করুন আরও সাশ্রয়ে।',
+              'Curated family combo packs — more food, less cost. Enjoy home-cooked taste for even less.',
+            )}
           </p>
         </div>
         <Link to="/products" className="btn btn--primary btn--lg">
-          কম্বো দেখুন
+          {t('কম্বো দেখুন', 'View Combos')}
         </Link>
       </section>
 
       {/* ---------- Reviews ---------- */}
       <div className="section-head">
         <div>
-          <span className="eyebrow">ক্রেতাদের কথা</span>
-          <h2 className="section-head__title">সবাই যা বলছেন</h2>
+          <span className="eyebrow">{t('ক্রেতাদের কথা', 'What customers say')}</span>
+          <h2 className="section-head__title">{t('সবাই যা বলছেন', 'Everyone is talking')}</h2>
         </div>
       </div>
       <div className="reviews">
@@ -261,7 +276,7 @@ export function CustomerHome() {
                   </span>
                   <div>
                     <div className="review__name">{r.customerName}</div>
-                    <div className="review__meta">{r.productName ?? 'যাচাইকৃত ক্রেতা'}</div>
+                    <div className="review__meta">{r.productName ?? t('যাচাইকৃত ক্রেতা', 'Verified buyer')}</div>
                   </div>
                 </div>
               </div>

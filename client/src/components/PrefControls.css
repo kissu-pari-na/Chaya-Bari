@@ -1,0 +1,59 @@
+.prefs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Segmented Bangla / EN switch */
+.prefs__lang {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ghost-border);
+  background: var(--card-2);
+}
+
+.prefs__lang-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--on-page-muted);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.32rem 0.55rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.prefs__lang-btn:hover {
+  color: var(--on-page);
+}
+
+.prefs__lang-btn--active {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #2a1a02;
+}
+
+/* Theme toggle */
+.prefs__theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ghost-border);
+  background: var(--card-2);
+  color: var(--on-page);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.prefs__theme:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}

@@ -87,7 +87,7 @@
   color-scheme: dark;
 }
 
-/* --- DARK theme (customer storefront + auth) --- */
+/* --- DARK theme (default look; toggled via <html class="theme-dark">) --- */
 .theme-dark {
   --page-bg: var(--bg-900);
   --on-page: var(--cream);
@@ -99,13 +99,59 @@
   color-scheme: dark;
 }
 
+/* --- LIGHT theme (toggled via <html class="theme-light">). Warm cream
+   paper with the same red + gold accents, so surfaces read light instead of
+   dark glass. --- */
+.theme-light {
+  --page-bg: #f3efe4;
+  --on-page: #23201f;
+  --on-page-muted: #6a6459;
+  --heading: #2a1512;
+  --ghost-border: rgba(122, 28, 23, 0.22);
+  --ghost-fg: #2a1512;
+  --link: #c22a22;
+  color-scheme: light;
+
+  /* Surfaces flip from dark glass to light paper. */
+  --card: #ffffff;
+  --card-2: #f6f1e6;
+  --card-text: #23201f;
+  --card-muted: #6a6459;
+  --card-border: #e7decb;
+  --card-heading: #7a1c17;
+  --border-dark: #e2d8c6;
+
+  --glass-bg: linear-gradient(180deg, #ffffff, #fbf7ee);
+  --glass-border: #e7deca;
+  --glass-shadow: 0 16px 38px rgba(60, 40, 20, 0.12);
+  --shadow-card: 0 8px 22px rgba(60, 40, 20, 0.1);
+}
+
+/* Light-theme form controls (the global inputs below are dark by default). */
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  background: #ffffff;
+  color: var(--card-text);
+  border-color: var(--card-border);
+}
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: #9a9184;
+}
+.theme-light select option,
+.theme-light select optgroup {
+  background-color: #ffffff;
+  color: #23201f;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: var(--bg-900);
+  background: var(--page-bg);
   color: var(--on-page);
   font-family: var(--font-body);
   font-size: 16px;

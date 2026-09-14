@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { BusinessProfileProvider } from './context/BusinessProfileContext'
 import { CartProvider } from './context/CartContext'
+import { LanguageProvider } from './context/LanguageContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { CustomerLayout } from './layouts/CustomerLayout'
 import { AdminLayout } from './layouts/AdminLayout'
@@ -38,10 +40,12 @@ import { Register } from './pages/Register'
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BusinessProfileProvider>
-        <CartProvider>
-          <Routes>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <BusinessProfileProvider>
+            <CartProvider>
+              <Routes>
             {/* Auth */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -92,9 +96,11 @@ export default function App() {
                 <Route index element={<KitchenHome />} />
               </Route>
             </Route>
-          </Routes>
-        </CartProvider>
-      </BusinessProfileProvider>
-    </AuthProvider>
+              </Routes>
+            </CartProvider>
+          </BusinessProfileProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   )
 }

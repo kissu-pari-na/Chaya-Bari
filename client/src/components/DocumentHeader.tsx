@@ -10,10 +10,10 @@ export function DocumentHeader() {
     <div className="doc-header">
       {/* Accent mark on the dark glass sheet; deep-green mark when printed on white. */}
       <span className="doc-header__logo doc-header__logo--screen">
-        <Logo size={56} />
+        <Logo size={56} link={false} />
       </span>
       <span className="doc-header__logo doc-header__logo--print">
-        <Logo size={56} onLight />
+        <Logo size={56} onLight link={false} />
       </span>
       <div className="doc-header__details">
         {profile.tagline && <p className="doc-header__tagline">{profile.tagline}</p>}

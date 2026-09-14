@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useI18n } from '../context/LanguageContext'
 import { RatingStars } from './RatingStars'
 import { formatBdt } from '../lib/format'
 import type { Product } from '../types/product'
@@ -16,11 +17,12 @@ function splitName(name: string): [string, string] {
 
 export function ProductCard({ product: p }: { product: Product }) {
   const { addItem } = useCart()
+  const { t } = useI18n()
   const onSale = p.salePrice != null && p.salePrice < p.price
   const shown = onSale ? p.salePrice! : p.price
   const [first, rest] = splitName(p.name)
   const solid = rest || p.categoryName || ''
-  const desc = p.description?.trim() || p.categoryName || 'ঘরে তৈরি, তাজা পরিবেশিত'
+  const desc = p.description?.trim() || p.categoryName || t('ঘরে তৈরি, তাজা পরিবেশিত', 'Homemade, freshly served')
 
   return (
     <Link to={`/products/${p.id}`} className="pcard">
@@ -33,8 +35,8 @@ export function ProductCard({ product: p }: { product: Product }) {
       </span>
 
       {/* flags */}
-      {onSale && <span className="pcard__flag pcard__flag--sale">সেল</span>}
-      {!p.isAvailable && <span className="pcard__flag pcard__flag--out">সোল্ড আউট</span>}
+      {onSale && <span className="pcard__flag pcard__flag--sale">{t('সেল', 'Sale')}</span>}
+      {!p.isAvailable && <span className="pcard__flag pcard__flag--out">{t('সোল্ড আউট', 'Sold out')}</span>}
 
       {/* price over the shape */}
       <div className="pcard__price">
@@ -76,10 +78,10 @@ export function ProductCard({ product: p }: { product: Product }) {
                 addItem(p)
               }}
             >
-              কার্টে যোগ করুন <span aria-hidden="true">→</span>
+              {t('কার্টে যোগ করুন', 'Add to cart')} <span aria-hidden="true">→</span>
             </button>
           ) : (
-            <span className="pcard__cta pcard__cta--disabled">স্টকে নেই</span>
+            <span className="pcard__cta pcard__cta--disabled">{t('স্টকে নেই', 'Out of stock')}</span>
           )}
         </div>
       </div>

@@ -1,14 +1,17 @@
-/// Formats an amount in Bangladeshi Taka using the ৳ symbol.
+import { localeDigits } from './i18n'
+
+/// Formats an amount in Bangladeshi Taka using the ৳ symbol. Digits render in
+/// the active language (Bengali numerals in Bangla mode, ASCII in English).
 export function formatBdt(amount: number): string {
-  return `৳${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+  const n = amount.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  return `৳${localeDigits(n)}`
 }
 
-const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
-
-/// Converts the ASCII digits in a string/number to Bengali numerals, leaving
-/// other characters (like a decimal point) untouched.
+/// Converts the ASCII digits in a string/number to the active language's
+/// numerals (Bengali in Bangla mode, unchanged in English). Other characters
+/// (like a decimal point) are left untouched.
 export function toBnDigits(value: string | number): string {
-  return String(value).replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)])
+  return localeDigits(value)
 }
 
 /// A 5-slot star string (filled + hollow) for a whole-or-half-rounded rating.
