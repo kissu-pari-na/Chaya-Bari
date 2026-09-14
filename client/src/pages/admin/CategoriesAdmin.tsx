@@ -7,9 +7,11 @@ import {
 } from '../../lib/products'
 import type { Category } from '../../types/product'
 import { ApiError } from '../../lib/apiClient'
+import { useI18n } from '../../context/LanguageContext'
 import './Admin.css'
 
 export function CategoriesAdmin() {
+  const { t } = useI18n()
   const [categories, setCategories] = useState<Category[]>([])
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
@@ -21,11 +23,11 @@ export function CategoriesAdmin() {
       setCategories(await fetchAdminCategories())
       setError(null)
     } catch {
-      setError('ক্যাটাগরি লোড করা যায়নি')
+      setError(t('ক্যাটাগরি লোড করা যায়নি', 'Could not load categories'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void reload()
@@ -40,7 +42,7 @@ export function CategoriesAdmin() {
       setName('')
       await reload()
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'যোগ করা যায়নি')
+      setError(err instanceof ApiError ? err.message : t('যোগ করা যায়নি', 'Could not add'))
     }
   }
 
@@ -50,36 +52,36 @@ export function CategoriesAdmin() {
   }
 
   async function handleDelete(category: Category) {
-    if (!window.confirm(`"${category.name}" মুছে ফেলবেন? পণ্যগুলো ক্যাটাগরিহীন হয়ে যাবে।`)) return
+    if (!window.confirm(t(`"${category.name}" মুছে ফেলবেন? পণ্যগুলো ক্যাটাগরিহীন হয়ে যাবে।`, `Delete "${category.name}"? Its products will become uncategorized.`))) return
     await deleteCategory(category.id)
     await reload()
   }
 
   return (
     <section>
-      <h1>ক্যাটাগরি ব্যবস্থাপনা</h1>
+      <h1>{t('ক্যাটাগরি ব্যবস্থাপনা', 'Category management')}</h1>
 
       <form className="inline-form" onSubmit={handleCreate}>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="নতুন ক্যাটাগরির নাম"
+          placeholder={t('নতুন ক্যাটাগরির নাম', 'New category name')}
           maxLength={100}
         />
-        <button type="submit">যোগ করুন</button>
+        <button type="submit">{t('যোগ করুন', 'Add')}</button>
       </form>
       {error && <div className="auth-error">{error}</div>}
 
       {loading ? (
-        <p className="muted">লোড হচ্ছে…</p>
+        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
       ) : (
         <div className="table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>নাম</th>
-                <th>ক্রম</th>
-                <th>সক্রিয়</th>
+                <th>{t('নাম', 'Name')}</th>
+                <th>{t('ক্রম', 'Order')}</th>
+                <th>{t('সক্রিয়', 'Active')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -93,12 +95,12 @@ export function CategoriesAdmin() {
                       className={c.isActive ? 'toggle toggle--on' : 'toggle'}
                       onClick={() => handleToggle(c)}
                     >
-                      {c.isActive ? 'হ্যাঁ' : 'না'}
+                      {c.isActive ? t('হ্যাঁ', 'Yes') : t('না', 'No')}
                     </button>
                   </td>
                   <td className="admin-table__actions">
                     <button className="btn-danger" onClick={() => handleDelete(c)}>
-                      মুছুন
+                      {t('মুছুন', 'Delete')}
                     </button>
                   </td>
                 </tr>
@@ -106,7 +108,7 @@ export function CategoriesAdmin() {
               {categories.length === 0 && (
                 <tr>
                   <td colSpan={4} className="muted">
-                    কোনো ক্যাটাগরি নেই।
+                    {t('কোনো ক্যাটাগরি নেই।', 'No categories yet.')}
                   </td>
                 </tr>
               )}

@@ -9,12 +9,14 @@ import {
 } from '../../lib/products'
 import type { Category, Product, ProductInput } from '../../types/product'
 import { formatBdt } from '../../lib/format'
+import { useI18n } from '../../context/LanguageContext'
 import { ProductForm } from './ProductForm'
 import './Admin.css'
 
 type Mode = { kind: 'list' } | { kind: 'create' } | { kind: 'edit'; product: Product }
 
 export function ProductsAdmin() {
+  const { t } = useI18n()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
@@ -29,11 +31,11 @@ export function ProductsAdmin() {
       setCategories(c)
       setError(null)
     } catch {
-      setError('তথ্য লোড করা যায়নি')
+      setError(t('তথ্য লোড করা যায়নি', 'Could not load data'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void reload()
@@ -57,7 +59,7 @@ export function ProductsAdmin() {
   }
 
   async function handleDelete(product: Product) {
-    if (!window.confirm(`"${product.name}" মুছে ফেলবেন?`)) return
+    if (!window.confirm(t(`"${product.name}" মুছে ফেলবেন?`, `Delete "${product.name}"?`))) return
     await deleteProduct(product.id)
     await reload()
   }
@@ -79,11 +81,11 @@ export function ProductsAdmin() {
   return (
     <section>
       <div className="admin-head">
-        <h1>পণ্য ব্যবস্থাপনা</h1>
-        <button onClick={() => setMode({ kind: 'create' })}>+ নতুন পণ্য</button>
+        <h1>{t('পণ্য ব্যবস্থাপনা', 'Product management')}</h1>
+        <button onClick={() => setMode({ kind: 'create' })}>+ {t('নতুন পণ্য', 'New product')}</button>
       </div>
 
-      {loading && <p className="muted">লোড হচ্ছে…</p>}
+      {loading && <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>}
       {error && <p className="muted">{error}</p>}
 
       {!loading && !error && (
@@ -91,11 +93,11 @@ export function ProductsAdmin() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>নাম</th>
-                <th>ক্যাটাগরি</th>
-                <th>মূল্য</th>
-                <th>সক্রিয়</th>
-                <th>উপলব্ধ</th>
+                <th>{t('নাম', 'Name')}</th>
+                <th>{t('ক্যাটাগরি', 'Category')}</th>
+                <th>{t('মূল্য', 'Price')}</th>
+                <th>{t('সক্রিয়', 'Active')}</th>
+                <th>{t('উপলব্ধ', 'Available')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -110,7 +112,7 @@ export function ProductsAdmin() {
                       className={p.isActive ? 'toggle toggle--on' : 'toggle'}
                       onClick={() => handleToggle(p, 'isActive')}
                     >
-                      {p.isActive ? 'হ্যাঁ' : 'না'}
+                      {p.isActive ? t('হ্যাঁ', 'Yes') : t('না', 'No')}
                     </button>
                   </td>
                   <td>
@@ -118,18 +120,18 @@ export function ProductsAdmin() {
                       className={p.isAvailable ? 'toggle toggle--on' : 'toggle'}
                       onClick={() => handleToggle(p, 'isAvailable')}
                     >
-                      {p.isAvailable ? 'হ্যাঁ' : 'না'}
+                      {p.isAvailable ? t('হ্যাঁ', 'Yes') : t('না', 'No')}
                     </button>
                   </td>
                   <td className="admin-table__actions">
                     <button className="btn-ghost" onClick={() => setMode({ kind: 'edit', product: p })}>
-                      সম্পাদনা
+                      {t('সম্পাদনা', 'Edit')}
                     </button>
                     <Link className="btn-ghost" to={`/admin/products/${p.id}/recipe`}>
-                      রেসিপি
+                      {t('রেসিপি', 'Recipe')}
                     </Link>
                     <button className="btn-danger" onClick={() => handleDelete(p)}>
-                      মুছুন
+                      {t('মুছুন', 'Delete')}
                     </button>
                   </td>
                 </tr>
@@ -137,7 +139,7 @@ export function ProductsAdmin() {
               {products.length === 0 && (
                 <tr>
                   <td colSpan={6} className="muted">
-                    কোনো পণ্য নেই। নতুন পণ্য যোগ করুন।
+                    {t('কোনো পণ্য নেই। নতুন পণ্য যোগ করুন।', 'No products yet. Add a new product.')}
                   </td>
                 </tr>
               )}
