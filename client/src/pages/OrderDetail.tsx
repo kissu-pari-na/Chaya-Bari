@@ -5,6 +5,7 @@ import { formatBdt } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { DocumentHeader } from '../components/DocumentHeader'
+import { OrderTracker } from '../components/OrderTracker'
 import { PaymentPanel } from './PaymentPanel'
 import type { Order } from '../types/order'
 import './Orders.css'
@@ -49,6 +50,8 @@ export function OrderDetail() {
           <span className="status status--payment">পেমেন্ট: {paymentStatusLabel[order.paymentStatus]}</span>
         </div>
       </div>
+
+      <OrderTracker status={order.status} />
 
       {order.status === 'DELIVERED' && (
         <Link to={`/orders/${order.id}/review`} className="order-detail__review-cta">
