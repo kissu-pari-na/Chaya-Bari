@@ -15,7 +15,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 384px;
+  min-height: 440px;
   margin-top: 16px; /* room for the shape + product to jut above the card */
   overflow: visible;
   text-decoration: none;
@@ -86,24 +86,24 @@
 .pcard__media {
   position: absolute;
   z-index: 2;
-  top: -14px;
-  left: 4%;
-  right: 2%;
-  height: 224px;
+  top: -18px;
+  left: 2%;
+  right: 0;
+  height: 300px;
   display: grid;
   place-items: center;
   transition: transform 0.3s ease;
   pointer-events: none;
 }
 .pcard__media img {
-  max-height: 224px;
+  max-height: 300px;
   max-width: 100%;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.6));
 }
 .pcard__glyph {
-  font-size: 5rem;
+  font-size: 6.5rem;
   filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.55));
 }
 
@@ -156,7 +156,7 @@
 
 /* Reserve the upper zone for the product visual. */
 .pcard__visual {
-  height: 182px;
+  height: 242px;
   flex-shrink: 0;
 }
 
@@ -273,7 +273,7 @@
 
 @media (max-width: 420px) {
   .pcard {
-    min-height: 372px;
+    min-height: 428px;
   }
   .pcard__price {
     font-size: 1.7rem;
