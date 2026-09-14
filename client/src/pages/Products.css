@@ -204,20 +204,6 @@
   flex-wrap: wrap;
 }
 
-.product-detail__order--active {
-  cursor: pointer;
-  opacity: 1;
-  background: linear-gradient(180deg, #ea342c, #d0241d);
-  color: #fff;
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: var(--glow-accent), var(--sheen-red);
-}
-
-.product-detail__order--active:hover {
-  background: linear-gradient(180deg, #f5443b, #de2c24);
-  transform: translateY(-1px);
-}
-
 .product-detail__back {
   display: inline-block;
   margin-bottom: 1rem;
@@ -276,6 +262,21 @@
   cursor: not-allowed;
   opacity: 0.75;
   transition: background 0.14s ease, transform 0.14s ease;
+}
+
+/* Orderable state — must follow the base rule so its cursor/opacity win. */
+.product-detail__order--active {
+  cursor: pointer;
+  opacity: 1;
+  background: linear-gradient(180deg, #ea342c, #d0241d);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: var(--glow-accent), var(--sheen-red);
+}
+
+.product-detail__order--active:hover {
+  background: linear-gradient(180deg, #f5443b, #de2c24);
+  transform: translateY(-1px);
 }
 
 .product-detail__soldout {
