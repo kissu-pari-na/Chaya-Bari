@@ -1,37 +1,39 @@
 import { useBusinessProfile } from '../context/BusinessProfileContext'
+import { useI18n } from '../context/LanguageContext'
 import { DocumentHeader } from '../components/DocumentHeader'
 import './Document.css'
 
-const sampleInvoice = {
-  id: 'INV-100234',
-  date: '2026-09-11',
-  customerName: 'রহিম উদ্দিন',
-  items: [
-    { name: 'বিরিয়ানি (১ প্লেট)', qty: 2, price: 220 },
-    { name: 'বোরহানি', qty: 1, price: 40 },
-  ],
-  deliveryFee: 30,
-}
-
 export function Invoice() {
   const { profile } = useBusinessProfile()
+  const { t } = useI18n()
+
+  const sampleInvoice = {
+    id: 'INV-100234',
+    date: '2026-09-11',
+    customerName: t('রহিম উদ্দিন', 'Rahim Uddin'),
+    items: [
+      { name: t('বিরিয়ানি (১ প্লেট)', 'Biryani (1 plate)'), qty: 2, price: 220 },
+      { name: t('বোরহানি', 'Borhani'), qty: 1, price: 40 },
+    ],
+    deliveryFee: 30,
+  }
   const subtotal = sampleInvoice.items.reduce((sum, item) => sum + item.qty * item.price, 0)
   const total = subtotal + sampleInvoice.deliveryFee
 
   return (
     <section className="paper document">
       <DocumentHeader />
-      <h1>ইনভয়েস / রিসিপ্ট</h1>
+      <h1>{t('ইনভয়েস / রিসিপ্ট', 'Invoice / Receipt')}</h1>
       <p className="muted">
-        ইনভয়েস নম্বর: {sampleInvoice.id} · তারিখ: {sampleInvoice.date} · গ্রাহক: {sampleInvoice.customerName}
+        {t('ইনভয়েস নম্বর:', 'Invoice no:')} {sampleInvoice.id} · {t('তারিখ:', 'Date:')} {sampleInvoice.date} · {t('গ্রাহক:', 'Customer:')} {sampleInvoice.customerName}
       </p>
       <table className="document-table">
         <thead>
           <tr>
-            <th>আইটেম</th>
-            <th>পরিমাণ</th>
-            <th>একক মূল্য</th>
-            <th>মোট</th>
+            <th>{t('আইটেম', 'Item')}</th>
+            <th>{t('পরিমাণ', 'Qty')}</th>
+            <th>{t('একক মূল্য', 'Unit price')}</th>
+            <th>{t('মোট', 'Total')}</th>
           </tr>
         </thead>
         <tbody>
@@ -50,19 +52,19 @@ export function Invoice() {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={3}>সাবটোটাল</td>
+            <td colSpan={3}>{t('সাবটোটাল', 'Subtotal')}</td>
             <td>
               {subtotal} {profile.defaultSettings.currency}
             </td>
           </tr>
           <tr>
-            <td colSpan={3}>ডেলিভারি ফি</td>
+            <td colSpan={3}>{t('ডেলিভারি ফি', 'Delivery fee')}</td>
             <td>
               {sampleInvoice.deliveryFee} {profile.defaultSettings.currency}
             </td>
           </tr>
           <tr>
-            <td colSpan={3}>সর্বমোট</td>
+            <td colSpan={3}>{t('সর্বমোট', 'Grand total')}</td>
             <td>
               <strong>
                 {total} {profile.defaultSettings.currency}
@@ -72,7 +74,7 @@ export function Invoice() {
         </tfoot>
       </table>
       <p className="muted small">
-        এই ইনভয়েসটি {profile.name} কর্তৃক প্রদত্ত। কোনো প্রশ্ন থাকলে {profile.contact.phone} নম্বরে যোগাযোগ করুন।
+        {t(`এই ইনভয়েসটি ${profile.name} কর্তৃক প্রদত্ত। কোনো প্রশ্ন থাকলে ${profile.contact.phone} নম্বরে যোগাযোগ করুন।`, `This invoice is issued by ${profile.name}. For any questions, contact ${profile.contact.phone}.`)}
       </p>
     </section>
   )

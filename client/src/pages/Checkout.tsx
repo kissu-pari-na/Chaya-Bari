@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type SyntheticEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeOrder, previewCoupon } from '../lib/orders'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt } from '../lib/format'
@@ -18,6 +19,7 @@ const emptyAddress: AddressInput = {
 
 export function Checkout() {
   const { items, subtotal, clear } = useCart()
+  const { t } = useI18n()
   const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState<Address[]>([])
@@ -40,7 +42,7 @@ export function Checkout() {
         setWindow(w)
         setFulfillmentDate(w.earliestFulfillmentDate)
       })
-      .catch(() => setError('অর্ডার তথ্য লোড করা যায়নি'))
+      .catch(() => setError(t('অর্ডার তথ্য লোড করা যায়নি', 'Could not load ordering info')))
     fetchAddresses()
       .then((a) => {
         setAddresses(a)
@@ -74,7 +76,7 @@ export function Checkout() {
       setCoupon(preview)
     } catch (err) {
       setCoupon(null)
-      setCouponError(err instanceof ApiError ? err.message : 'কুপন প্রয়োগ করা যায়নি')
+      setCouponError(err instanceof ApiError ? err.message : t('কুপন প্রয়োগ করা যায়নি', 'Could not apply coupon'))
     }
   }
 
@@ -87,9 +89,9 @@ export function Checkout() {
   if (items.length === 0) {
     return (
       <section className="card">
-        <h1>চেকআউট</h1>
-        <p className="muted">কার্ট খালি।</p>
-        <Link to="/products">পণ্য দেখুন →</Link>
+        <h1>{t('চেকআউট', 'Checkout')}</h1>
+        <p className="muted">{t('কার্ট খালি।', 'Your cart is empty.')}</p>
+        <Link to="/products">{t('পণ্য দেখুন', 'Browse products')} →</Link>
       </section>
     )
   }
@@ -113,7 +115,7 @@ export function Checkout() {
       if (err instanceof ApiError && err.details?.length) {
         setError(err.details.map((d) => d.message).join(' · '))
       } else {
-        setError(err instanceof ApiError ? err.message : 'অর্ডার সম্পন্ন করা যায়নি')
+        setError(err instanceof ApiError ? err.message : t('অর্ডার সম্পন্ন করা যায়নি', 'Could not place the order'))
       }
     } finally {
       setSubmitting(false)
@@ -123,11 +125,11 @@ export function Checkout() {
   return (
     <section className="checkout">
       <form className="card checkout__main" onSubmit={handleSubmit}>
-        <h1>চেকআউট</h1>
+        <h1>{t('চেকআউট', 'Checkout')}</h1>
         {error && <div className="auth-error">{error}</div>}
 
         <fieldset>
-          <legend>ডেলিভারি ঠিকানা</legend>
+          <legend>{t('ডেলিভারি ঠিকানা', 'Delivery address')}</legend>
           {addresses.length > 0 && (
             <div className="address-options">
               {addresses.map((a) => (
@@ -150,7 +152,7 @@ export function Checkout() {
               ))}
               <label className={useNew ? 'address-opt address-opt--on' : 'address-opt'}>
                 <input type="radio" name="address" checked={useNew} onChange={() => setUseNew(true)} />
-                <span>নতুন ঠিকানা যোগ করুন</span>
+                <span>{t('নতুন ঠিকানা যোগ করুন', 'Add a new address')}</span>
               </label>
             </div>
           )}
@@ -159,7 +161,7 @@ export function Checkout() {
             <div className="address-form">
               <div className="admin-form__row">
                 <label>
-                  প্রাপকের নাম
+                  {t('প্রাপকের নাম', 'Recipient name')}
                   <input
                     value={newAddress.recipientName}
                     onChange={(e) => setNewAddress({ ...newAddress, recipientName: e.target.value })}
@@ -167,7 +169,7 @@ export function Checkout() {
                   />
                 </label>
                 <label>
-                  ফোন
+                  {t('ফোন', 'Phone')}
                   <input
                     value={newAddress.recipientPhone}
                     onChange={(e) => setNewAddress({ ...newAddress, recipientPhone: e.target.value })}
@@ -176,7 +178,7 @@ export function Checkout() {
                 </label>
               </div>
               <label>
-                ঠিকানা
+                {t('ঠিকানা', 'Address')}
                 <input
                   value={newAddress.addressLine}
                   onChange={(e) => setNewAddress({ ...newAddress, addressLine: e.target.value })}
@@ -185,11 +187,11 @@ export function Checkout() {
               </label>
               <div className="admin-form__row">
                 <label>
-                  এলাকা
+                  {t('এলাকা', 'Area')}
                   <input value={newAddress.area} onChange={(e) => setNewAddress({ ...newAddress, area: e.target.value })} />
                 </label>
                 <label>
-                  শহর
+                  {t('শহর', 'City')}
                   <input
                     value={newAddress.city}
                     onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
@@ -200,7 +202,7 @@ export function Checkout() {
               {addresses.length > 0 && (
                 <label className="admin-form__check">
                   <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
-                  এই ঠিকানা সংরক্ষণ করুন
+                  {t('এই ঠিকানা সংরক্ষণ করুন', 'Save this address')}
                 </label>
               )}
             </div>
@@ -208,9 +210,9 @@ export function Checkout() {
         </fieldset>
 
         <fieldset>
-          <legend>ডেলিভারির তারিখ</legend>
+          <legend>{t('ডেলিভারির তারিখ', 'Delivery date')}</legend>
           <label>
-            তারিখ নির্বাচন করুন
+            {t('তারিখ নির্বাচন করুন', 'Choose a date')}
             <input
               type="date"
               value={fulfillmentDate}
@@ -221,19 +223,22 @@ export function Checkout() {
           </label>
           {window && (
             <p className="hint">
-              অগ্রিম অর্ডার: সর্বনিম্ন {window.earliestFulfillmentDate} তারিখের জন্য (কাটঅফ {window.cutoffTime})।
+              {t(
+                `অগ্রিম অর্ডার: সর্বনিম্ন ${window.earliestFulfillmentDate} তারিখের জন্য (কাটঅফ ${window.cutoffTime})।`,
+                `Pre-order: earliest for ${window.earliestFulfillmentDate} (cutoff ${window.cutoffTime}).`,
+              )}
             </p>
           )}
         </fieldset>
 
         <fieldset>
-          <legend>নোট (ঐচ্ছিক)</legend>
+          <legend>{t('নোট (ঐচ্ছিক)', 'Note (optional)')}</legend>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={1000} />
         </fieldset>
       </form>
 
       <aside className="card checkout__summary">
-        <h2>অর্ডার সারাংশ</h2>
+        <h2>{t('অর্ডার সারাংশ', 'Order summary')}</h2>
         <ul>
           {items.map((i) => (
             <li key={i.productId}>
@@ -247,50 +252,50 @@ export function Checkout() {
         <div className="coupon-box">
           {coupon ? (
             <div className="coupon-applied">
-              <span>✓ কুপন <strong>{coupon.coupon.code}</strong> প্রয়োগ হয়েছে</span>
-              <button type="button" onClick={clearCoupon}>সরান</button>
+              <span>✓ {t('কুপন', 'Coupon')} <strong>{coupon.coupon.code}</strong> {t('প্রয়োগ হয়েছে', 'applied')}</span>
+              <button type="button" onClick={clearCoupon}>{t('সরান', 'Remove')}</button>
             </div>
           ) : (
             <div className="coupon-input">
               <input
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="কুপন কোড"
+                placeholder={t('কুপন কোড', 'Coupon code')}
               />
-              <button type="button" onClick={handleApplyCoupon}>প্রয়োগ</button>
+              <button type="button" onClick={handleApplyCoupon}>{t('প্রয়োগ', 'Apply')}</button>
             </div>
           )}
           {couponError && <p className="hint hint--err">{couponError}</p>}
         </div>
 
         <div className="checkout__line">
-          <span>সাবটোটাল</span>
+          <span>{t('সাবটোটাল', 'Subtotal')}</span>
           <span>{formatBdt(displaySubtotal)}</span>
         </div>
         {productDiscount > 0 && (
           <div className="checkout__line checkout__line--discount">
-            <span>ফুড ডিসকাউন্ট</span>
+            <span>{t('ফুড ডিসকাউন্ট', 'Food discount')}</span>
             <span>−{formatBdt(productDiscount)}</span>
           </div>
         )}
         <div className="checkout__line">
-          <span>ডেলিভারি চার্জ</span>
+          <span>{t('ডেলিভারি চার্জ', 'Delivery charge')}</span>
           <span>{formatBdt(deliveryCost)}</span>
         </div>
         {deliveryDiscount > 0 && (
           <div className="checkout__line checkout__line--discount">
-            <span>ডেলিভারি ডিসকাউন্ট</span>
+            <span>{t('ডেলিভারি ডিসকাউন্ট', 'Delivery discount')}</span>
             <span>−{formatBdt(deliveryDiscount)}</span>
           </div>
         )}
         <div className="checkout__line checkout__line--total">
-          <span>সর্বমোট</span>
+          <span>{t('সর্বমোট', 'Grand total')}</span>
           <span>{formatBdt(total)}</span>
         </div>
         <button type="button" onClick={handleSubmit} disabled={submitting} className="checkout__place">
-          {submitting ? 'অর্ডার হচ্ছে…' : 'অর্ডার নিশ্চিত করুন'}
+          {submitting ? t('অর্ডার হচ্ছে…', 'Placing order…') : t('অর্ডার নিশ্চিত করুন', 'Confirm order')}
         </button>
-        <p className="hint">পেমেন্ট পরবর্তী ধাপে যুক্ত হবে; আপাতত অর্ডার রেকর্ড হবে।</p>
+        <p className="hint">{t('পেমেন্ট পরবর্তী ধাপে যুক্ত হবে; আপাতত অর্ডার রেকর্ড হবে।', 'Payment is added in a later step; for now the order is recorded.')}</p>
       </aside>
     </section>
   )

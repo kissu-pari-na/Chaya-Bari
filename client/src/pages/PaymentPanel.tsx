@@ -4,6 +4,7 @@ import { bkashCreate, bkashExecute, fetchPaymentInfo, submitClaim } from '../lib
 import { claimMethods, paymentMethodLabel, txnStatusLabel } from '../lib/paymentLabels'
 import { formatBdt } from '../lib/format'
 import { ApiError } from '../lib/apiClient'
+import { useI18n } from '../context/LanguageContext'
 import type { Order } from '../types/order'
 import type { PaymentInfo, PaymentMethod } from '../types/payment'
 
@@ -15,6 +16,7 @@ interface PaymentPanelProps {
 /// Customer payment options on an order: pay online via bKash, or report a
 /// manual payment (cash / transfer) that an admin then verifies.
 export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
+  const { t } = useI18n()
   const [searchParams, setSearchParams] = useSearchParams()
   const [info, setInfo] = useState<PaymentInfo | null>(null)
 
@@ -47,15 +49,19 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
     params.delete('status')
     setSearchParams(params, { replace: true })
     if (status && status !== 'success') {
-      setError('বিকাশ পেমেন্ট সম্পন্ন হয়নি।')
+      setError(t('বিকাশ পেমেন্ট সম্পন্ন হয়নি।', 'bKash payment was not completed.'))
       return
     }
     bkashExecute(order.id, paymentID)
       .then((r) => {
         onOrderChange(r.order)
-        setMsg(r.status === 'completed' ? 'বিকাশ পেমেন্ট সফল হয়েছে!' : 'বিকাশ পেমেন্ট সম্পন্ন হয়নি।')
+        setMsg(
+          r.status === 'completed'
+            ? t('বিকাশ পেমেন্ট সফল হয়েছে!', 'bKash payment successful!')
+            : t('বিকাশ পেমেন্ট সম্পন্ন হয়নি।', 'bKash payment was not completed.'),
+        )
       })
-      .catch(() => setError('বিকাশ পেমেন্ট যাচাই করা যায়নি।'))
+      .catch(() => setError(t('বিকাশ পেমেন্ট যাচাই করা যায়নি।', 'Could not verify bKash payment.')))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -68,19 +74,25 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
       const start = await bkashCreate(order.id, callbackURL, Number(amount) || undefined)
       if (start.mock) {
         // Sandbox: no real gateway page — confirm and settle in place.
-        const ok = window.confirm('বিকাশ (স্যান্ডবক্স): পেমেন্ট সফল হিসেবে সম্পন্ন করবেন?')
+        const ok = window.confirm(
+          t('বিকাশ (স্যান্ডবক্স): পেমেন্ট সফল হিসেবে সম্পন্ন করবেন?', 'bKash (sandbox): complete this payment as successful?'),
+        )
         if (!ok) {
-          setMsg('বিকাশ পেমেন্ট বাতিল করা হয়েছে।')
+          setMsg(t('বিকাশ পেমেন্ট বাতিল করা হয়েছে।', 'bKash payment cancelled.'))
           return
         }
         const r = await bkashExecute(order.id, start.paymentID)
         onOrderChange(r.order)
-        setMsg(r.status === 'completed' ? 'বিকাশ পেমেন্ট সফল হয়েছে!' : 'বিকাশ পেমেন্ট সম্পন্ন হয়নি।')
+        setMsg(
+          r.status === 'completed'
+            ? t('বিকাশ পেমেন্ট সফল হয়েছে!', 'bKash payment successful!')
+            : t('বিকাশ পেমেন্ট সম্পন্ন হয়নি।', 'bKash payment was not completed.'),
+        )
       } else {
         window.location.href = start.bkashURL
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'বিকাশ পেমেন্ট শুরু করা যায়নি।')
+      setError(err instanceof ApiError ? err.message : t('বিকাশ পেমেন্ট শুরু করা যায়নি।', 'Could not start bKash payment.'))
     } finally {
       setBusy(false)
     }
@@ -92,11 +104,11 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
     setMsg(null)
     const amt = Number(amount)
     if (!Number.isFinite(amt) || amt <= 0) {
-      setError('পরিমাণ ০-এর বেশি হতে হবে।')
+      setError(t('পরিমাণ ০-এর বেশি হতে হবে।', 'Amount must be greater than 0.'))
       return
     }
     if (method !== 'CASH' && !reference.trim()) {
-      setError('অনলাইন পেমেন্টের জন্য ট্রানজেকশন আইডি/রেফারেন্স দিন।')
+      setError(t('অনলাইন পেমেন্টের জন্য ট্রানজেকশন আইডি/রেফারেন্স দিন।', 'Provide a transaction ID/reference for online payments.'))
       return
     }
     setBusy(true)
@@ -110,10 +122,10 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
       onOrderChange(r.order)
       setReference('')
       setNote('')
-      setMsg('পেমেন্টের তথ্য জমা হয়েছে। যাচাইয়ের পর নিশ্চিত করা হবে।')
+      setMsg(t('পেমেন্টের তথ্য জমা হয়েছে। যাচাইয়ের পর নিশ্চিত করা হবে।', 'Payment details submitted. It will be confirmed after verification.'))
     } catch (err) {
       if (err instanceof ApiError && err.details?.length) setError(err.details.map((d) => d.message).join(' · '))
-      else setError(err instanceof ApiError ? err.message : 'তথ্য জমা দেওয়া যায়নি।')
+      else setError(err instanceof ApiError ? err.message : t('তথ্য জমা দেওয়া যায়নি।', 'Could not submit the details.'))
     } finally {
       setBusy(false)
     }
@@ -121,14 +133,14 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
 
   return (
     <div className="pay-panel">
-      <h3>পেমেন্ট</h3>
+      <h3>{t('পেমেন্ট', 'Payment')}</h3>
 
       <div className="pay-panel__summary">
         <span>
-          পরিশোধিত: <strong>{formatBdt(order.amountPaid)}</strong>
+          {t('পরিশোধিত:', 'Paid:')} <strong>{formatBdt(order.amountPaid)}</strong>
         </span>
         <span>
-          বাকি:{' '}
+          {t('বাকি:', 'Due:')}{' '}
           <strong className={due > 0 ? 'pay-due' : 'pay-paid'}>{formatBdt(due)}</strong>
         </span>
       </div>
@@ -155,27 +167,27 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
           {/* Online: bKash */}
           <div className="pay-online">
             <button type="button" className="pay-bkash" onClick={payWithBkash} disabled={busy}>
-              বিকাশে পেমেন্ট করুন (৳{Number(amount) || due})
+              {t('বিকাশে পেমেন্ট করুন', 'Pay with bKash')} (৳{Number(amount) || due})
             </button>
-            <p className="hint">বিকাশে তাৎক্ষণিক পেমেন্ট — সফল হলে সঙ্গে সঙ্গে নিশ্চিত হবে।</p>
+            <p className="hint">{t('বিকাশে তাৎক্ষণিক পেমেন্ট — সফল হলে সঙ্গে সঙ্গে নিশ্চিত হবে।', 'Instant bKash payment — confirmed immediately on success.')}</p>
           </div>
 
-          <div className="pay-divider"><span>অথবা</span></div>
+          <div className="pay-divider"><span>{t('অথবা', 'or')}</span></div>
 
           {/* Manual: report a payment you already made */}
           <form className="pay-claim" onSubmit={handleClaim}>
-            <p className="pay-claim__title">সরাসরি পরিশোধ করে জানান</p>
+            <p className="pay-claim__title">{t('সরাসরি পরিশোধ করে জানান', 'Report a direct payment')}</p>
             {info && (info.bkash || info.nagad || info.rocket || info.bankInfo) && (
               <div className="pay-accounts">
-                {info.bkash && <span>বিকাশ: <strong>{info.bkash}</strong></span>}
-                {info.nagad && <span>নগদ: <strong>{info.nagad}</strong></span>}
-                {info.rocket && <span>রকেট: <strong>{info.rocket}</strong></span>}
+                {info.bkash && <span>{t('বিকাশ:', 'bKash:')} <strong>{info.bkash}</strong></span>}
+                {info.nagad && <span>{t('নগদ:', 'Nagad:')} <strong>{info.nagad}</strong></span>}
+                {info.rocket && <span>{t('রকেট:', 'Rocket:')} <strong>{info.rocket}</strong></span>}
                 {info.bankInfo && <span>{info.bankInfo}</span>}
               </div>
             )}
             <div className="pay-claim__row">
               <label>
-                মাধ্যম
+                {t('মাধ্যম', 'Method')}
                 <select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
                   {claimMethods.map((m) => (
                     <option key={m} value={m}>
@@ -185,22 +197,22 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
                 </select>
               </label>
               <label>
-                পরিমাণ (৳)
+                {t('পরিমাণ (৳)', 'Amount (৳)')}
                 <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
               </label>
             </div>
             <label>
-              ট্রানজেকশন আইডি / রেফারেন্স {method === 'CASH' ? '(ঐচ্ছিক)' : ''}
-              <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="যেমন: bKash TrxID" />
+              {t('ট্রানজেকশন আইডি / রেফারেন্স', 'Transaction ID / reference')} {method === 'CASH' ? t('(ঐচ্ছিক)', '(optional)') : ''}
+              <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder={t('যেমন: bKash TrxID', 'e.g. bKash TrxID')} />
             </label>
             <label>
-              নোট (ঐচ্ছিক)
+              {t('নোট (ঐচ্ছিক)', 'Note (optional)')}
               <input value={note} onChange={(e) => setNote(e.target.value)} />
             </label>
             <button type="submit" className="pay-claim__submit" disabled={busy}>
-              পেমেন্টের তথ্য জমা দিন
+              {t('পেমেন্টের তথ্য জমা দিন', 'Submit payment details')}
             </button>
-            <p className="hint">আমরা যাচাই করে পেমেন্ট নিশ্চিত করব।</p>
+            <p className="hint">{t('আমরা যাচাই করে পেমেন্ট নিশ্চিত করব।', 'We will verify and confirm the payment.')}</p>
           </form>
         </>
       )}

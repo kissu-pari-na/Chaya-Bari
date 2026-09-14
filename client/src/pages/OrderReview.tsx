@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { fetchOrderReview, submitOrderReviews } from '../lib/reviews'
 import { StarPicker } from '../components/StarPicker'
 import { RatingStars } from '../components/RatingStars'
+import { useI18n } from '../context/LanguageContext'
 import type { OrderReviewData, OrderReviewSubmit } from '../types/review'
 import './OrderReview.css'
 
@@ -15,6 +16,7 @@ interface Draft {
 const DEFAULT_RATING = 5
 
 export function OrderReview() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const [data, setData] = useState<OrderReviewData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -45,7 +47,7 @@ export function OrderReview() {
     setLoading(true)
     fetchOrderReview(id)
       .then((d) => active && hydrate(d))
-      .catch(() => active && setError('অর্ডারটি পাওয়া যায়নি'))
+      .catch(() => active && setError('__NOT_FOUND__'))
       .finally(() => active && setLoading(false))
     return () => {
       active = false
@@ -72,7 +74,7 @@ export function OrderReview() {
       body.overall = { rating: overall.rating, comment: overall.comment.trim() || undefined }
     }
     if ((body.items?.length ?? 0) === 0 && !body.overall) {
-      setSubmitErr('জমা দেওয়ার মতো কিছু নেই')
+      setSubmitErr(t('জমা দেওয়ার মতো কিছু নেই', 'Nothing to submit'))
       return
     }
     setSaving(true)
@@ -82,18 +84,18 @@ export function OrderReview() {
       hydrate(updated)
       setDone(true)
     } catch (err) {
-      setSubmitErr(err instanceof Error ? err.message : 'রিভিউ জমা দেওয়া যায়নি')
+      setSubmitErr(err instanceof Error ? err.message : t('রিভিউ জমা দেওয়া যায়নি', 'Could not submit the review'))
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <p className="muted">লোড হচ্ছে…</p>
+  if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
   if (error || !data)
     return (
       <div className="card">
-        <p className="muted">{error ?? 'অর্ডারটি পাওয়া যায়নি'}</p>
-        <Link to="/orders">← আমার অর্ডার</Link>
+        <p className="muted">{t('অর্ডারটি পাওয়া যায়নি', 'Order not found')}</p>
+        <Link to="/orders">← {t('আমার অর্ডার', 'My Orders')}</Link>
       </div>
     )
 
@@ -102,17 +104,17 @@ export function OrderReview() {
   return (
     <section className="card order-review">
       <Link to={`/orders/${data.orderId}`} className="order-review__back">
-        ← অর্ডার {data.orderNumber}
+        ← {t('অর্ডার', 'Order')} {data.orderNumber}
       </Link>
-      <h1>রিভিউ দিন</h1>
-      <p className="muted">অর্ডার {data.orderNumber} এর পণ্যগুলোর রিভিউ ও রেটিং দিন। একবার জমা দিলে রিভিউ পরিবর্তন করা যাবে না।</p>
+      <h1>{t('রিভিউ দিন', 'Leave a Review')}</h1>
+      <p className="muted">{t(`অর্ডার ${data.orderNumber} এর পণ্যগুলোর রিভিউ ও রেটিং দিন। একবার জমা দিলে রিভিউ পরিবর্তন করা যাবে না।`, `Rate and review the products in order ${data.orderNumber}. Reviews cannot be changed once submitted.`)}</p>
 
       {!data.canReview ? (
         <p className="order-review__gate">
-          এই অর্ডারটি এখনও ডেলিভার হয়নি। ডেলিভারি সম্পন্ন হলে আপনি রিভিউ দিতে পারবেন।
+          {t('এই অর্ডারটি এখনও ডেলিভার হয়নি। ডেলিভারি সম্পন্ন হলে আপনি রিভিউ দিতে পারবেন।', 'This order has not been delivered yet. You can review it once delivery is complete.')}
         </p>
       ) : allReviewed ? (
-        <p className="order-review__done">✓ এই অর্ডারের রিভিউ দেওয়া হয়ে গেছে। ধন্যবাদ!</p>
+        <p className="order-review__done">✓ {t('এই অর্ডারের রিভিউ দেওয়া হয়ে গেছে। ধন্যবাদ!', 'This order has already been reviewed. Thank you!')}</p>
       ) : (
         <form onSubmit={handleSubmit}>
           <div className="rev-list">
@@ -128,7 +130,7 @@ export function OrderReview() {
                     <>
                       <div className="rev-row__locked-stars">
                         <RatingStars rating={p.rating!} />
-                        <span className="rev-row__done-tag">✓ রিভিউ দেওয়া হয়েছে</span>
+                        <span className="rev-row__done-tag">✓ {t('রিভিউ দেওয়া হয়েছে', 'Reviewed')}</span>
                       </div>
                       {p.comment && <p className="rev-row__locked-comment">“{p.comment}”</p>}
                     </>
@@ -137,13 +139,13 @@ export function OrderReview() {
                       <StarPicker
                         value={drafts[p.productId]?.rating ?? DEFAULT_RATING}
                         onChange={(r) => setDraft(p.productId, { rating: r })}
-                        ariaLabel={`${p.productName} রেটিং`}
+                        ariaLabel={t(`${p.productName} রেটিং`, `${p.productName} rating`)}
                       />
                       <textarea
                         className="rev-row__text"
                         rows={2}
                         maxLength={1000}
-                        placeholder="এই পণ্য সম্পর্কে আপনার মতামত (ঐচ্ছিক)…"
+                        placeholder={t('এই পণ্য সম্পর্কে আপনার মতামত (ঐচ্ছিক)…', 'Your thoughts on this product (optional)…')}
                         value={drafts[p.productId]?.comment ?? ''}
                         onChange={(e) => setDraft(p.productId, { comment: e.target.value })}
                       />
@@ -155,12 +157,12 @@ export function OrderReview() {
           </div>
 
           <div className="rev-overall">
-            <h2>সামগ্রিক অভিজ্ঞতা</h2>
+            <h2>{t('সামগ্রিক অভিজ্ঞতা', 'Overall experience')}</h2>
             {data.overall != null ? (
               <div className="rev-row rev-row--locked">
                 <div className="rev-row__locked-stars">
                   <RatingStars rating={data.overall.rating} />
-                  <span className="rev-row__done-tag">✓ রিভিউ দেওয়া হয়েছে</span>
+                  <span className="rev-row__done-tag">✓ {t('রিভিউ দেওয়া হয়েছে', 'Reviewed')}</span>
                 </div>
                 {data.overall.comment && (
                   <p className="rev-row__locked-comment">“{data.overall.comment}”</p>
@@ -168,17 +170,17 @@ export function OrderReview() {
               </div>
             ) : (
               <>
-                <p className="muted">পুরো অর্ডার নিয়ে আপনার সামগ্রিক রেটিং ও মতামত।</p>
+                <p className="muted">{t('পুরো অর্ডার নিয়ে আপনার সামগ্রিক রেটিং ও মতামত।', 'Your overall rating and thoughts on the whole order.')}</p>
                 <StarPicker
                   value={overall.rating}
                   onChange={(r) => setOverall((o) => ({ ...o, rating: r }))}
-                  ariaLabel="সামগ্রিক রেটিং"
+                  ariaLabel={t('সামগ্রিক রেটিং', 'Overall rating')}
                 />
                 <textarea
                   className="rev-row__text"
                   rows={2}
                   maxLength={1000}
-                  placeholder="সামগ্রিক অভিজ্ঞতা লিখুন (ঐচ্ছিক)…"
+                  placeholder={t('সামগ্রিক অভিজ্ঞতা লিখুন (ঐচ্ছিক)…', 'Describe your overall experience (optional)…')}
                   value={overall.comment}
                   onChange={(e) => setOverall((o) => ({ ...o, comment: e.target.value }))}
                 />
@@ -187,10 +189,10 @@ export function OrderReview() {
           </div>
 
           {submitErr && <p className="rev-err">{submitErr}</p>}
-          {done && <p className="rev-ok">✓ ধন্যবাদ! আপনার রিভিউ সংরক্ষণ করা হয়েছে।</p>}
+          {done && <p className="rev-ok">✓ {t('ধন্যবাদ! আপনার রিভিউ সংরক্ষণ করা হয়েছে।', 'Thank you! Your review has been saved.')}</p>}
 
           <button className="rev-submit" type="submit" disabled={saving}>
-            {saving ? 'জমা হচ্ছে…' : 'রিভিউ জমা দিন'}
+            {saving ? t('জমা হচ্ছে…', 'Submitting…') : t('রিভিউ জমা দিন', 'Submit review')}
           </button>
         </form>
       )}
