@@ -126,7 +126,7 @@ export function RecipeAdmin() {
               রেসিপি মুছুন
             </button>
           )}
-          {saved && <span className="hint" style={{ color: '#2f5233', fontWeight: 600 }}>সংরক্ষিত</span>}
+          {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>সংরক্ষিত</span>}
         </div>
       </form>
 

@@ -201,17 +201,28 @@ admin/kitchen account. Each role lands on its own area:
 
 ## Phase 7 — what's implemented
 
-- **Payment transactions** recorded separately from the order (not a ledger),
-  so a payment gateway can be integrated later. Each has a method
-  (cash, bKash, card, online, cash-on-delivery), amount, transaction status
-  (success / pending / failed / refunded), and an optional reference.
+- **Payment transactions** recorded separately from the order (not a ledger).
+  Each has a method (cash, bKash, Nagad, Rocket, card, bank transfer, online),
+  amount, transaction status (success / pending / failed / refunded), a source
+  (customer / admin), and an optional reference. **There is no cash-on-delivery.**
 - **Derived order payment status**: the order's status
   (Pending → Partially Paid → Paid, or Refunded) is recomputed from its
   payments — net collected = successful payments minus refunds — along with
-  `amountPaid` / `amountDue`.
-- **Admin**: a payments panel on the order detail lists transactions and
-  records new ones (with a live paid/due/status summary); refunds are recorded
-  as a refunded transaction. **Customer**: sees paid/due on their order.
+  `amountPaid` / `amountDue`. **Pending (unverified) claims never count.**
+- **Manual payment + verification**: a customer who pays directly (cash or any
+  transfer) reports it on their order — method, amount, transaction reference —
+  which creates a *pending* claim and notifies admins. An admin **verifies or
+  rejects** it from the order's payments panel; only on verify does it count
+  toward paid/due. The customer is notified either way.
+- **bKash online payment**: a "Pay with bKash" button on the order runs the
+  bKash Tokenized Checkout flow (create → redirect → execute) and records a
+  confirmed payment automatically on success. It runs in a **sandbox/mock mode**
+  out of the box and becomes live by setting the `BKASH_*` env vars — no code
+  change (see `server/.env.example`).
+- **Admin**: a payments panel lists transactions with source + status, verifies
+  pending claims, and records confirmed payments directly. **Customer**: sees
+  paid/due, pays via bKash, reports manual payments, and tracks each claim's
+  verification status.
 
 ## Phase 8 — what's implemented
 

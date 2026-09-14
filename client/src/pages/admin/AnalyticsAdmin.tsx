@@ -13,8 +13,8 @@ function today(): string {
 }
 
 const quadrantMeta: Record<ProductQuadrant, { title: string; hint: string; color: string }> = {
-  BEST: { title: 'বেস্ট (চাহিদা↑ লাভ↑)', hint: 'এগুলো প্রমোট করুন', color: '#1a7a45' },
-  OPTIMIZE: { title: 'অপ্টিমাইজ (চাহিদা↑ লাভ↓)', hint: 'দাম/খরচ পর্যালোচনা করুন', color: '#8a6d1a' },
+  BEST: { title: 'বেস্ট (চাহিদা↑ লাভ↑)', hint: 'এগুলো প্রমোট করুন', color: '#c8901a' },
+  OPTIMIZE: { title: 'অপ্টিমাইজ (চাহিদা↑ লাভ↓)', hint: 'দাম/খরচ পর্যালোচনা করুন', color: '#b5651d' },
   MARKETING: { title: 'মার্কেটিং সুযোগ (চাহিদা↓ লাভ↑)', hint: 'প্রচার বাড়ান', color: '#1a5b8a' },
   REVIEW: { title: 'পর্যালোচনা (চাহিদা↓ লাভ↓)', hint: 'পরিবর্তন/বাদ দেওয়ার কথা ভাবুন', color: '#b3261e' },
 }

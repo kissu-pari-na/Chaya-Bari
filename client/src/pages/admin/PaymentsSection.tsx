@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { deletePayment, fetchPayments, gatewayCharge, recordPayment } from '../../lib/payments'
-import { paymentMethodLabel, paymentMethods, txnStatusLabel, txnStatuses } from '../../lib/paymentLabels'
+import { deletePayment, fetchPayments, recordPayment, verifyPayment } from '../../lib/payments'
+import { paymentMethodLabel, paymentMethods, paymentSourceLabel, txnStatusLabel, txnStatuses } from '../../lib/paymentLabels'
 import { paymentStatusLabel } from '../../lib/orderStatus'
 import { formatBdt } from '../../lib/format'
 import { ApiError } from '../../lib/apiClient'
@@ -28,6 +28,8 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
       .finally(() => setLoading(false))
   }, [order.id])
 
+  const pendingCount = payments.filter((p) => p.status === 'PENDING').length
+
   async function handleRecord(event: FormEvent) {
     event.preventDefault()
     setError(null)
@@ -53,20 +55,14 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
     }
   }
 
-  async function handleGateway() {
+  async function handleVerify(payment: Payment, action: 'verify' | 'reject') {
     setError(null)
-    const amt = Number(amount) || order.amountDue
-    if (!amt || amt <= 0) {
-      setError('বকেয়া নেই — পরিমাণ দিন')
-      return
-    }
     try {
-      const { payment, order: updated } = await gatewayCharge(order.id, amt, 'BKASH')
-      setPayments((ps) => [...ps, payment])
-      onOrderChange(updated)
-      setAmount(String(updated.amountDue || ''))
+      const { payment: updated, order: refreshed } = await verifyPayment(payment.id, action)
+      setPayments((ps) => ps.map((p) => (p.id === updated.id ? updated : p)))
+      onOrderChange(refreshed)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'গেটওয়ে পেমেন্ট ব্যর্থ')
+      setError(err instanceof ApiError ? err.message : 'যাচাই করা যায়নি')
     }
   }
 
@@ -75,8 +71,6 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
     await deletePayment(payment.id)
     const refreshed = await fetchPayments(order.id)
     setPayments(refreshed)
-    // Re-derive paid/due locally for the summary via a fresh fetch of the order.
-    // Simpler: recompute from rows here.
     const paid = refreshed.reduce(
       (s, p) => (p.status === 'SUCCESS' ? s + p.amount : p.status === 'REFUNDED' ? s - p.amount : s),
       0,
@@ -86,7 +80,10 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
 
   return (
     <div className="payments-panel">
-      <h3>পেমেন্ট</h3>
+      <h3>
+        পেমেন্ট
+        {pendingCount > 0 && <span className="pay-pending-badge">{pendingCount} যাচাইয়ের অপেক্ষায়</span>}
+      </h3>
 
       <div className="pay-summary">
         <div>
@@ -113,6 +110,7 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
             <thead>
               <tr>
                 <th>মাধ্যম</th>
+                <th>উৎস</th>
                 <th>পরিমাণ</th>
                 <th>স্ট্যাটাস</th>
                 <th>রেফারেন্স</th>
@@ -121,13 +119,25 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
             </thead>
             <tbody>
               {payments.map((p) => (
-                <tr key={p.id}>
+                <tr key={p.id} className={p.status === 'PENDING' ? 'pay-row--pending' : undefined}>
                   <td>{paymentMethodLabel[p.method]}</td>
+                  <td>{paymentSourceLabel[p.source]}</td>
                   <td>{formatBdt(p.amount)}</td>
                   <td>{txnStatusLabel[p.status]}</td>
                   <td>{p.reference ?? '—'}</td>
                   <td className="admin-table__actions">
-                    <button className="btn-danger" onClick={() => handleDelete(p)}>মুছুন</button>
+                    {p.status === 'PENDING' ? (
+                      <>
+                        <button className="btn-mini btn-mini--ok" onClick={() => handleVerify(p, 'verify')}>
+                          নিশ্চিত
+                        </button>
+                        <button className="btn-mini btn-mini--no" onClick={() => handleVerify(p, 'reject')}>
+                          বাতিল
+                        </button>
+                      </>
+                    ) : (
+                      <button className="btn-danger" onClick={() => handleDelete(p)}>মুছুন</button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -138,6 +148,7 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
 
       <form className="pay-form" onSubmit={handleRecord}>
         {error && <div className="auth-error">{error}</div>}
+        <p className="hint" style={{ marginTop: 0 }}>অ্যাডমিন হিসেবে সরাসরি নিশ্চিত পেমেন্ট রেকর্ড করুন।</p>
         <div className="admin-form__row">
           <label>
             মাধ্যম
@@ -172,11 +183,7 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
         </div>
         <div className="admin-form__actions">
           <button type="submit">পেমেন্ট রেকর্ড করুন</button>
-          <button type="button" className="btn-ghost" onClick={handleGateway}>
-            অনলাইন পেমেন্ট নিন (বিকাশ মক)
-          </button>
         </div>
-        <p className="hint">অনলাইন পেমেন্ট বিকাশ/গেটওয়ে ইন্টিগ্রেশন পয়েন্ট — মক চার্জ সফল পেমেন্ট হিসেবে রেকর্ড হবে।</p>
       </form>
     </div>
   )

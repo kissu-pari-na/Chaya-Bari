@@ -1,30 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+/* Web fonts are loaded via <link> in index.html (with preconnect) for reliable,
+   non-blocking loading. Bengali-capable fallbacks are set in the font tokens. */
 
 /* ============================================================
    ছায়া বাড়ি — Dark Luxury Food design system (see /design.md)
    ============================================================ */
 :root {
-  /* --- Brand palette (fixed) --- */
-  --bg-900: #0b0d0a; /* primary background */
-  --bg-800: #151a12; /* secondary dark */
-  --bg-700: #1a2015;
-  --green-deep: #1f3516; /* deep green */
-  --accent: #7faf35; /* accent green */
-  --accent-bright: #9acb45; /* bright accent */
-  --cream: #f5f1e7; /* warm cream */
+  /* --- Brand palette (Ember: red + gold on near-black; see /design.md §2) --- */
+  --bg-900: #0b0b0c; /* primary background (neutral near-black) */
+  --bg-800: #161416; /* secondary dark */
+  --bg-700: #1f1b1c;
+  --green-deep: #7a1c17; /* deep red panel (legacy token name) */
+  --accent: #e4322b; /* accent RED — primary action */
+  --accent-bright: #f5b300; /* amber GOLD — highlights, values, warm hover */
+  --gold: #f5b300;
+  --gold-bright: #ffc633;
+  --red-bright: #ff4a3d;
+  /* Warm accent aliases used across component CSS (amber + terracotta-red). */
+  --saffron-500: #f5b300;
+  --saffron-100: rgba(245, 179, 0, 0.16);
+  --terra-600: #e4322b;
+  --cream: #f5f1e7; /* warm cream text on dark */
   --muted-cream: #b8b9b2; /* muted text on dark */
-  --border-dark: #30352a; /* border on dark */
+  --border-dark: #2a2626; /* border on dark */
 
-  /* --- Light surfaces (cards / menus / admin) --- */
-  --card: #ffffff;
-  --card-2: #faf7ee;
-  --card-text: #23261d;
-  --card-muted: #6a6d5f;
-  --card-border: #e6e0d0;
-  --card-heading: #1f3516;
+  /* --- Surfaces: dark glass everywhere; printable documents opt into .paper,
+     which resets these tokens back to a light sheet. --- */
+  --card: rgba(255, 255, 255, 0.045);
+  --card-2: rgba(255, 255, 255, 0.07);
+  --card-text: #f5f1e7;
+  --card-muted: #b8b9b2;
+  --card-border: rgba(245, 224, 184, 0.12); /* warm gold hairline */
+  --card-heading: #f5f1e7;
 
-  /* Feedback */
-  --success: #4b8a3a;
+  /* Feedback (success reads as warm gold, not green — on-palette) */
+  --success: #b07d10;
   --danger: #c0453a;
   --danger-bg: #f7e4e2;
 
@@ -38,28 +47,44 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18);
   --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.28);
   --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.42);
-  --shadow-card: 0 8px 24px rgba(15, 20, 12, 0.1);
-  --glow-accent: 0 8px 22px rgba(127, 175, 53, 0.28);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --glow-accent: 0 4px 12px rgba(228, 50, 43, 0.22);
+  --glow-gold: 0 4px 12px rgba(245, 179, 0, 0.2);
+  /* Reusable subtle sheens — a soft top highlight only, so buttons read
+     polished, not neon. */
+  --sheen-glass: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --sheen-red: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --sheen-gold: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 
-  /* Fonts */
-  --font-display: 'Anek Bangla', 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* Glass surfaces (premium translucent panels on the dark storefront).
+     A warm gold top-light + faint amber wash gives the frosted glass a
+     glossy, gilded read. */
+  --glass-bg: radial-gradient(130% 90% at 50% -12%, rgba(245, 179, 0, 0.07), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.014));
+  --glass-border: rgba(245, 224, 184, 0.14);
+  --glass-shadow: 0 18px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* Fonts are self-hosted (see fonts.css). Bengali-capable fallbacks
+     ('Noto Sans Bengali', Windows' 'Nirmala UI') follow, so Bengali always
+     renders with a real Bengali font even in the unlikely event a face fails. */
+  --font-display: 'Anek Bangla', 'Noto Sans Bengali', 'Nirmala UI', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', system-ui, sans-serif;
 
   /* --- Semantic tokens (LIGHT theme defaults: admin / kitchen) --- */
   --page-bg: #f3efe4;
   --on-page: #23261d;
   --on-page-muted: #6a6d5f;
-  --heading: #1f3516;
+  --heading: #26201f;
   --ghost-border: var(--card-border);
   --ghost-fg: var(--card-text);
-  --link: #4a7a1f;
+  --link: #c22a22;
 
   /* Back-compat aliases (older component CSS references these) */
   --color-heading: var(--heading);
   --color-muted: var(--on-page-muted);
 
   font-family: var(--font-body);
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 /* --- DARK theme (customer storefront + auth) --- */
@@ -131,13 +156,22 @@ a:hover {
 }
 
 .eyebrow {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--accent);
   font-family: var(--font-body);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 1.6rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent));
 }
 
 .muted {
@@ -161,14 +195,28 @@ a:hover {
   margin: 0 auto;
 }
 
-/* ---------- Cards (light surfaces on any theme) ---------- */
+/* ---------- Cards: premium glass panels ---------- */
 .card {
-  background: var(--card);
+  position: relative;
+  background: var(--glass-bg), var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem 1.75rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
   color: var(--card-text);
+}
+
+/* thin gilded top edge — the signature glossy highlight on glass panels */
+.card::after,
+.paper::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
+  pointer-events: none;
 }
 
 .card h1,
@@ -184,6 +232,55 @@ a:hover {
 
 .card--pad-lg {
   padding: 2rem 2.25rem;
+}
+
+/* ---------- Paper: document sheet (invoices, receipts, order view).
+   On screen it uses the same dark glass surface as the rest of the app;
+   when printed it flips to a clean white sheet (see @media print below). ---------- */
+.paper {
+  position: relative;
+  background: var(--glass-bg);
+  color: var(--card-text);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.paper h1,
+.paper h2,
+.paper h3,
+.paper h4 {
+  color: var(--card-heading);
+}
+
+.paper .muted {
+  color: var(--card-muted);
+}
+
+.paper a {
+  color: var(--link);
+}
+
+@media print {
+  .paper {
+    --card: #ffffff;
+    --card-2: #faf7ee;
+    --card-text: #23261d;
+    --card-muted: #6a6d5f;
+    --card-border: #e6e0d0;
+    --card-heading: #7a1c17;
+    background: #fff;
+    color: var(--card-text);
+    border-color: var(--card-border);
+    box-shadow: none;
+    backdrop-filter: none;
+    color-scheme: light;
+  }
+  .paper::after {
+    display: none;
+  }
 }
 
 /* ---------- Buttons ---------- */
@@ -214,27 +311,31 @@ button.btn {
   transform: translateY(1px);
 }
 
-/* Primary: accent green, dark readable text */
+/* Primary: ember-red with a soft top-light gloss */
 .btn--primary {
-  background: var(--accent);
-  color: #0b0d0a;
-  box-shadow: var(--glow-accent);
+  background: linear-gradient(180deg, #ea342c, #d0241d);
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: var(--glow-accent), var(--sheen-red);
 }
 
 .btn--primary:hover {
-  background: var(--accent-bright);
+  background: linear-gradient(180deg, #f5443b, #de2c24);
+  box-shadow: 0 6px 16px rgba(228, 50, 43, 0.3), var(--sheen-red);
   transform: translateY(-1px);
 }
 
-/* Brand: deep green with cream text */
+/* Brand: deep-red with cream text */
 .btn--brand {
-  background: var(--green-deep);
+  background: linear-gradient(180deg, #8a231d, #6f1913);
   color: var(--cream);
-  border-color: rgba(127, 175, 53, 0.35);
+  border-color: rgba(245, 179, 0, 0.22);
+  box-shadow: var(--sheen-glass), var(--shadow-sm);
 }
 
 .btn--brand:hover {
-  background: #274219;
+  background: linear-gradient(180deg, #99291f, #7a1c15);
+  border-color: rgba(245, 179, 0, 0.38);
   transform: translateY(-1px);
 }
 
@@ -246,7 +347,7 @@ button.btn {
 }
 
 .btn--ghost:hover {
-  background: rgba(127, 175, 53, 0.1);
+  background: rgba(228, 50, 43, 0.1);
   border-color: var(--accent);
   color: var(--accent-bright);
 }
@@ -288,13 +389,15 @@ button.btn {
 }
 
 .badge--sale {
-  background: var(--accent);
-  color: #0b0d0a;
+  background: linear-gradient(180deg, #ea342c, #d0241d);
+  color: #fff;
+  box-shadow: var(--sheen-red);
 }
 
 .badge--new {
-  background: var(--green-deep);
-  color: var(--accent-bright);
+  background: linear-gradient(180deg, #8a231d, #6f1913);
+  color: var(--gold-bright);
+  box-shadow: var(--sheen-glass);
 }
 
 .badge--muted {
@@ -313,7 +416,18 @@ button.btn {
 }
 
 .section-head__title {
-  margin: 0;
+  margin: 0.35rem 0 0;
+  position: relative;
+}
+
+.section-head__title::after {
+  content: '';
+  display: block;
+  width: 2.75rem;
+  height: 3px;
+  margin-top: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--accent), transparent);
 }
 
 .section-head__sub {
@@ -356,14 +470,44 @@ button.btn {
   font-size: 1.5rem;
   font-weight: 700;
   font-family: var(--font-display);
-  color: var(--green-deep);
+  color: var(--accent-bright);
+  text-shadow: 0 0 18px rgba(245, 179, 0, 0.2);
 }
 
-/* ---------- Global inputs ---------- */
+/* ---------- Global inputs (dark by default) ---------- */
 input,
 select,
 textarea {
   font-family: var(--font-body);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cream);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+}
+
+/* The native <select> popup renders its own list; give the options a SOLID
+   dark background + legible text so they aren't light-on-light. Uses opaque
+   colors (a translucent background would blend with the OS white popup). */
+select option,
+select optgroup {
+  background-color: #17131a;
+  color: #f5f1e7;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #89857e;
+}
+
+/* When a paper sheet is printed, its inputs render light too. */
+@media print {
+  .paper input,
+  .paper select,
+  .paper textarea {
+    background: #fff;
+    color: var(--card-text);
+    border-color: var(--card-border);
+  }
 }
 
 input:focus-visible,
@@ -371,7 +515,7 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(127, 175, 53, 0.25);
+  box-shadow: 0 0 0 3px rgba(228, 50, 43, 0.25);
 }
 
 :focus-visible {

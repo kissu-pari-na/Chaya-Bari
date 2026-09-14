@@ -1,8 +1,14 @@
 import { Prisma, type Payment, type PaymentStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
-import type { RecordPaymentInput } from './payment.schemas.js'
-import { notifyPaymentReceived } from '../notifications/notification.service.js'
+import type { ClaimPaymentInput, RecordPaymentInput } from './payment.schemas.js'
+import {
+  notifyOrderStatus,
+  notifyPaymentReceived,
+  notifyPaymentSubmitted,
+  notifyPaymentVerified,
+} from '../notifications/notification.service.js'
+import * as bkash from './bkash.js'
 
 export interface PublicPayment {
   id: string
@@ -10,6 +16,7 @@ export interface PublicPayment {
   method: Payment['method']
   amount: number
   status: Payment['status']
+  source: Payment['source']
   reference: string | null
   note: string | null
   createdAt: string
@@ -22,13 +29,15 @@ export function toPublicPayment(p: Payment): PublicPayment {
     method: p.method,
     amount: Number(p.amount),
     status: p.status,
+    source: p.source,
     reference: p.reference,
     note: p.note,
     createdAt: p.createdAt.toISOString(),
   }
 }
 
-/// Net amount actually collected = successful payments minus refunds.
+/// Net amount actually collected = successful payments minus refunds. Pending
+/// (unverified) claims never count.
 export function netPaid(payments: Payment[]): Prisma.Decimal {
   return payments.reduce((sum, p) => {
     if (p.status === 'SUCCESS') return sum.add(p.amount)
@@ -53,14 +62,43 @@ export function derivePaymentStatus(payments: Payment[], total: Prisma.Decimal):
 async function recomputeOrderPaymentStatus(orderId: string): Promise<void> {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payments: true } })
   if (!order) return
-  const status = derivePaymentStatus(order.payments, order.total)
-  await prisma.order.update({ where: { id: orderId }, data: { paymentStatus: status } })
+  const paymentStatus = derivePaymentStatus(order.payments, order.total)
+
+  // Auto-confirm a pending order once it is fully paid, so paid orders reach the
+  // kitchen without a manual admin step. Never touch cancelled or already
+  // progressed orders.
+  const autoConfirm = paymentStatus === 'PAID' && order.status === 'PENDING'
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { paymentStatus, ...(autoConfirm ? { status: 'CONFIRMED' } : {}) },
+  })
+
+  if (autoConfirm) {
+    await notifyOrderStatus(order.customerId, 'CONFIRMED', order.orderNumber, order.id)
+  }
+}
+
+/// Loads an order and asserts it belongs to the given customer.
+async function ownedOrder(orderId: string, customerId: string) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } })
+  if (!order || order.customerId !== customerId) throw HttpError.notFound('Order not found')
+  return order
+}
+
+/// Outstanding amount for an order (never below 0).
+async function outstanding(orderId: string, total: Prisma.Decimal): Promise<Prisma.Decimal> {
+  const payments = await prisma.payment.findMany({ where: { orderId } })
+  const due = total.sub(netPaid(payments))
+  return due.gt(0) ? due : new Prisma.Decimal(0)
 }
 
 export async function listPayments(orderId: string): Promise<PublicPayment[]> {
   const payments = await prisma.payment.findMany({ where: { orderId }, orderBy: { createdAt: 'asc' } })
   return payments.map(toPublicPayment)
 }
+
+// ---- Admin: record a confirmed payment directly ----
 
 export async function recordPayment(orderId: string, input: RecordPaymentInput): Promise<PublicPayment> {
   const order = await prisma.order.findUnique({ where: { id: orderId } })
@@ -72,6 +110,7 @@ export async function recordPayment(orderId: string, input: RecordPaymentInput):
       method: input.method,
       amount: new Prisma.Decimal(input.amount),
       status: input.status ?? 'SUCCESS',
+      source: 'ADMIN',
       reference: input.reference,
       note: input.note,
     },
@@ -88,6 +127,120 @@ export async function deletePayment(id: string): Promise<void> {
   if (!payment) throw HttpError.notFound('Payment not found')
   await prisma.payment.delete({ where: { id } })
   await recomputeOrderPaymentStatus(payment.orderId)
+}
+
+// ---- Customer: submit a manual payment claim (awaits verification) ----
+
+export async function submitClaim(orderId: string, customerId: string, input: ClaimPaymentInput): Promise<PublicPayment> {
+  const order = await ownedOrder(orderId, customerId)
+
+  const payment = await prisma.payment.create({
+    data: {
+      orderId,
+      method: input.method,
+      amount: new Prisma.Decimal(input.amount),
+      status: 'PENDING',
+      source: 'CUSTOMER',
+      reference: input.reference,
+      note: input.note,
+    },
+  })
+  // A pending claim doesn't change the paid total, but keep status consistent.
+  await recomputeOrderPaymentStatus(orderId)
+  await notifyPaymentSubmitted(Number(payment.amount), input.method, order.orderNumber, order.id)
+  return toPublicPayment(payment)
+}
+
+// ---- Admin: verify or reject a pending claim ----
+
+export async function verifyPayment(id: string, action: 'verify' | 'reject'): Promise<PublicPayment> {
+  const payment = await prisma.payment.findUnique({ where: { id }, include: { order: true } })
+  if (!payment) throw HttpError.notFound('Payment not found')
+  if (payment.status !== 'PENDING') throw HttpError.badRequest('Only pending payments can be verified')
+
+  const updated = await prisma.payment.update({
+    where: { id },
+    data: { status: action === 'verify' ? 'SUCCESS' : 'FAILED' },
+  })
+  await recomputeOrderPaymentStatus(payment.orderId)
+  await notifyPaymentVerified(
+    payment.order.customerId,
+    action === 'verify',
+    Number(updated.amount),
+    payment.order.orderNumber,
+    payment.orderId,
+  )
+  return toPublicPayment(updated)
+}
+
+// ---- Customer: bKash online payment ----
+
+export interface BkashStart {
+  paymentID: string
+  bkashURL: string
+  mock: boolean
+}
+
+export async function startBkashPayment(
+  orderId: string,
+  customerId: string,
+  callbackURL: string,
+  requestedAmount?: number,
+): Promise<BkashStart> {
+  const order = await ownedOrder(orderId, customerId)
+  const due = await outstanding(orderId, order.total)
+  if (due.lte(0)) throw HttpError.badRequest('This order has no outstanding amount')
+
+  const amount = requestedAmount ? new Prisma.Decimal(requestedAmount) : due
+  if (amount.gt(due)) throw HttpError.badRequest('Amount exceeds the outstanding due')
+
+  const result = await bkash.createPayment({
+    amount: Number(amount),
+    callbackURL,
+    payerReference: order.recipientPhone || order.orderNumber,
+    merchantInvoiceNumber: order.orderNumber,
+  })
+
+  // Record a pending row so the attempt is traceable; execute flips it to SUCCESS.
+  await prisma.payment.create({
+    data: {
+      orderId,
+      method: 'BKASH',
+      amount,
+      status: 'PENDING',
+      source: 'CUSTOMER',
+      reference: result.paymentID,
+      note: result.mock ? 'bKash (sandbox)' : 'bKash',
+    },
+  })
+  return result
+}
+
+export async function executeBkashPayment(
+  orderId: string,
+  customerId: string,
+  paymentID: string,
+): Promise<{ payment: PublicPayment; status: 'completed' | 'failed' }> {
+  const order = await ownedOrder(orderId, customerId)
+  const row = await prisma.payment.findFirst({ where: { orderId, reference: paymentID } })
+  if (!row) throw HttpError.notFound('Payment attempt not found')
+
+  // Idempotency: if already settled, just report it.
+  if (row.status === 'SUCCESS') return { payment: toPublicPayment(row), status: 'completed' }
+
+  const result = await bkash.executePayment(paymentID, Number(row.amount))
+  if (result.status !== 'Completed') {
+    const failed = await prisma.payment.update({ where: { id: row.id }, data: { status: 'FAILED' } })
+    return { payment: toPublicPayment(failed), status: 'failed' }
+  }
+
+  const settled = await prisma.payment.update({
+    where: { id: row.id },
+    data: { status: 'SUCCESS', reference: result.trxID, note: row.note ?? 'bKash' },
+  })
+  await recomputeOrderPaymentStatus(orderId)
+  await notifyPaymentReceived(order.customerId, Number(settled.amount), order.orderNumber, order.id)
+  return { payment: toPublicPayment(settled), status: 'completed' }
 }
 
 /// Paid / due totals for one order, from its payments.

@@ -2,7 +2,7 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { PublicOrder } from './order.service.js'
-import { paymentTotals } from '../payments/payment.service.js'
+import { paymentTotals, toPublicPayment } from '../payments/payment.service.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 export interface AdminOrder extends PublicOrder {
@@ -59,6 +59,7 @@ function toAdminOrder(order: OrderRow): AdminOrder {
     delivery: order.delivery
       ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
       : null,
+    payments: order.payments.map(toPublicPayment),
     customer: {
       id: order.customer.id,
       name: order.customer.user.name,
@@ -114,7 +115,8 @@ export async function getOrder(id: string): Promise<AdminOrder> {
 const transitions: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['PREPARING', 'CANCELLED'],
-  PREPARING: ['PACKED', 'CANCELLED'],
+  PREPARING: ['READY', 'CANCELLED'],
+  READY: ['PACKED', 'CANCELLED'],
   PACKED: ['OUT_FOR_DELIVERY', 'CANCELLED'],
   OUT_FOR_DELIVERY: ['DELIVERED', 'CANCELLED'],
   DELIVERED: [],
@@ -127,7 +129,13 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   if (order.status !== status && !transitions[order.status].includes(status)) {
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
-  await prisma.order.update({ where: { id }, data: { status } })
+  // Stamp the delivery time on first transition to DELIVERED; it drives the
+  // day-after review invite.
+  const markDelivered = status === 'DELIVERED' && !order.deliveredAt
+  await prisma.order.update({
+    where: { id },
+    data: { status, ...(markDelivered ? { deliveredAt: new Date() } : {}) },
+  })
   if (order.status !== status) {
     await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
   }

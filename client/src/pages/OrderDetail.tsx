@@ -5,6 +5,7 @@ import { formatBdt } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { DocumentHeader } from '../components/DocumentHeader'
+import { PaymentPanel } from './PaymentPanel'
 import type { Order } from '../types/order'
 import './Orders.css'
 
@@ -27,14 +28,14 @@ export function OrderDetail() {
   if (loading) return <p className="muted">লোড হচ্ছে…</p>
   if (error || !order)
     return (
-      <div className="card">
+      <div className="paper">
         <p className="muted">{error ?? 'অর্ডারটি পাওয়া যায়নি'}</p>
         <Link to="/orders">← আমার অর্ডার</Link>
       </div>
     )
 
   return (
-    <section className="card order-detail">
+    <section className="paper order-detail">
       {justPlaced && <div className="order-placed">✓ আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে!</div>}
       <DocumentHeader />
 
@@ -48,6 +49,12 @@ export function OrderDetail() {
           <span className="status status--payment">পেমেন্ট: {paymentStatusLabel[order.paymentStatus]}</span>
         </div>
       </div>
+
+      {order.status === 'DELIVERED' && (
+        <Link to={`/orders/${order.id}/review`} className="order-detail__review-cta">
+          ⭐ এই অর্ডারের রিভিউ দিন
+        </Link>
+      )}
 
       <table className="document-table">
         <thead>
@@ -134,6 +141,8 @@ export function OrderDetail() {
         </p>
         {order.notes && <p className="muted">নোট: {order.notes}</p>}
       </div>
+
+      <PaymentPanel order={order} onOrderChange={setOrder} />
 
       <Link to="/orders">← আমার সব অর্ডার</Link>
     </section>

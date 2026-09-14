@@ -44,7 +44,7 @@ export function CostingAdmin() {
                   <td>{r.grossProfitPerUnit != null ? formatBdt(r.grossProfitPerUnit) : '—'}</td>
                   <td>
                     {r.marginPct != null ? (
-                      <span style={{ color: r.marginPct >= 0 ? '#1a7a45' : '#b3261e' }}>{r.marginPct.toFixed(1)}%</span>
+                      <span style={{ color: r.marginPct >= 0 ? '#b07d10' : '#b3261e' }}>{r.marginPct.toFixed(1)}%</span>
                     ) : (
                       '—'
                     )}

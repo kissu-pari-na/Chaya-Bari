@@ -37,6 +37,8 @@ model User {
   @@index([role])
 }
 
+// (Review model is defined in Phase 12 near the bottom of this schema.)
+
 /// Customer profile (1-1 with a User). Holds ordering-related info and, later,
 /// derived analytics.
 model Customer {
@@ -47,6 +49,7 @@ model Customer {
   updatedAt DateTime  @updatedAt
   addresses Address[]
   orders    Order[]
+  reviews   Review[]
 }
 
 // -----------------------------------------------------------------------------
@@ -88,8 +91,8 @@ model Product {
 
   priceHistory ProductPriceHistory[]
   orderItems   OrderItem[]
-  kitchenTasks KitchenTask[]
   recipe       Recipe?
+  reviews      Review[]
 
   @@index([categoryId])
   @@index([isActive, isAvailable])
@@ -115,6 +118,7 @@ enum OrderStatus {
   PENDING
   CONFIRMED
   PREPARING
+  READY
   PACKED
   OUT_FOR_DELIVERY
   DELIVERED
@@ -185,11 +189,18 @@ model Order {
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
 
+  /// When the order reached DELIVERED (drives the day-after review invite).
+  deliveredAt        DateTime?
+  /// When the "leave a review" invite (notification + email) was sent, so it
+  /// is only sent once per order.
+  reviewInviteSentAt DateTime?
+
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   items     OrderItem[]
   delivery  Delivery?
   payments  Payment[]
+  reviews   Review[]
 
   @@index([customerId])
   @@index([status])
@@ -212,9 +223,20 @@ model OrderItem {
   quantity      Int
   /// Charged line total (unitPrice × quantity).
   lineTotal     Decimal @db.Decimal(10, 2)
+  /// Kitchen preparation stage of this specific line (per-order, per-product).
+  /// The order's overall status is derived from its lines.
+  kitchenStage  KitchenLineStage @default(TO_COOK)
 
   @@index([orderId])
   @@index([productId])
+}
+
+/// A single order line's kitchen stage. The three stages mirror the kitchen
+/// board columns; the order's status is derived from all its lines.
+enum KitchenLineStage {
+  TO_COOK
+  PREPARING
+  READY
 }
 
 enum CouponScope {
@@ -263,30 +285,11 @@ model OrderingSetting {
 // -----------------------------------------------------------------------------
 // Phase 5 — Kitchen production
 // -----------------------------------------------------------------------------
-
-enum KitchenStatus {
-  PENDING
-  PREPARING
-  PREPARED
-  PACKED
-}
-
-/// Tracks the kitchen's preparation progress for one product on one
-/// fulfillment day. The quantity to make is derived from confirmed orders;
-/// this row just carries the prep/pack status the kitchen taps through.
-model KitchenTask {
-  id              String        @id @default(cuid())
-  fulfillmentDate DateTime      @db.Date
-  productId       String?
-  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productName     String
-  status          KitchenStatus @default(PENDING)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  @@unique([fulfillmentDate, productId])
-  @@index([fulfillmentDate])
-}
+//
+// The kitchen tracks preparation per ORDER (via Order.status: CONFIRMED →
+// PREPARING → PACKED), like a Kitchen Display System — not per aggregated
+// product. So a new order for the same item never inherits another order's
+// prep/pack state. No dedicated table is needed.
 
 // -----------------------------------------------------------------------------
 // Phase 6 — Delivery
@@ -328,9 +331,11 @@ model Delivery {
 enum PaymentMethod {
   CASH
   BKASH
+  NAGAD
+  ROCKET
   CARD
+  BANK
   ONLINE
-  COD
 }
 
 enum PaymentTxnStatus {
@@ -338,6 +343,33 @@ enum PaymentTxnStatus {
   SUCCESS
   FAILED
   REFUNDED
+}
+
+/// Who created the payment record. CUSTOMER rows start as PENDING claims that an
+/// admin must verify before they count toward the order's paid total.
+enum PaymentSource {
+  ADMIN
+  CUSTOMER
+}
+
+/// Public payment-account details shown to customers for manual payments.
+/// Singleton row (id = "singleton"); editable by admins in Business Profile.
+model PaymentSetting {
+  id        String   @id @default("singleton")
+  bkash     String?
+  nagad     String?
+  rocket    String?
+  bankInfo  String?
+  updatedAt DateTime @updatedAt
+}
+
+/// Business identity/profile (name, logo, contact, address, partners, defaults).
+/// Stored as a JSON blob in a singleton row so the whole profile persists and is
+/// shared across all clients; editable by admins in Business Profile settings.
+model BusinessProfileSetting {
+  id        String   @id @default("singleton")
+  data      Json
+  updatedAt DateTime @updatedAt
 }
 
 /// A single payment transaction against an order. Kept separate from the order
@@ -351,6 +383,7 @@ model Payment {
   method    PaymentMethod
   amount    Decimal          @db.Decimal(10, 2)
   status    PaymentTxnStatus @default(SUCCESS)
+  source    PaymentSource    @default(ADMIN)
   reference String?
   note      String?
   createdAt DateTime         @default(now())
@@ -491,12 +524,17 @@ enum NotificationType {
   ORDER_PLACED
   ORDER_CONFIRMED
   ORDER_PREPARING
+  ORDER_READY
   ORDER_PACKED
   ORDER_OUT_FOR_DELIVERY
   ORDER_DELIVERED
   ORDER_CANCELLED
   PAYMENT_RECEIVED
+  PAYMENT_SUBMITTED
+  PAYMENT_VERIFIED
+  PAYMENT_REJECTED
   NEW_ORDER
+  REVIEW_INVITE
 }
 
 /// An in-app notification for a user. Generated from order/payment events.
@@ -509,8 +547,41 @@ model Notification {
   title     String
   body      String
   orderId   String?
+  /// In-app path to open when the notification is clicked (e.g. an order or the
+  /// order's review page). Null for notifications with no destination.
+  link      String?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 12 — Product reviews & ratings
+// -----------------------------------------------------------------------------
+
+/// A customer's star rating (1-5) and optional written feedback, tied to a
+/// specific delivered order. Reviews can only be created from that order's
+/// review page. `productId` set = a review of one product in the order;
+/// `productId` null = the overall order/experience review. At most one product
+/// review per (order, product) and one overall review per order (the latter
+/// enforced by a partial unique index added in the migration).
+model Review {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  /// Whole-star rating from 1 to 5.
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([orderId, productId])
+  @@index([productId])
+  @@index([rating])
+  @@index([orderId])
 }

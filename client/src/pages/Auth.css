@@ -5,23 +5,35 @@
   justify-content: center;
   padding: 1.5rem 1rem;
   background:
-    radial-gradient(circle at 20% 20%, rgba(127, 175, 53, 0.14), transparent 42%),
-    radial-gradient(circle at 82% 78%, rgba(31, 53, 22, 0.55), transparent 45%),
+    radial-gradient(circle at 20% 20%, rgba(228, 50, 43, 0.16), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(245, 179, 0, 0.12), transparent 45%),
     var(--bg-900);
   color: var(--cream);
 }
 
 .auth-card {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   max-width: 400px;
-  background: var(--bg-800);
-  border: 1px solid var(--border-dark);
+  background: var(--glass-bg), var(--bg-800);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 2.25rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
+  pointer-events: none;
 }
 
 .auth-card__logo {
@@ -60,7 +72,7 @@
   border: 1px solid var(--border-dark);
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  background: #0f130c;
+  background: rgba(255, 255, 255, 0.05);
   color: var(--cream);
 }
 
@@ -70,21 +82,22 @@
 
 .auth-card button {
   margin-top: 0.5rem;
-  background: var(--accent);
-  color: #0b0d0a;
-  border: none;
+  background: linear-gradient(180deg, #ea342c, #d0241d);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0.85rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
   font-family: var(--font-body);
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--glow-accent);
-  transition: background 0.14s ease, transform 0.14s ease;
+  box-shadow: var(--glow-accent), var(--sheen-red);
+  transition: background 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
 }
 
 .auth-card button:hover:not(:disabled) {
-  background: var(--accent-bright);
+  background: linear-gradient(180deg, #f5443b, #de2c24);
+  box-shadow: 0 6px 16px rgba(228, 50, 43, 0.3), var(--sheen-red);
   transform: translateY(-1px);
 }
 

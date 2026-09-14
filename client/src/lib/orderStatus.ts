@@ -4,6 +4,7 @@ export const orderStatusLabel: Record<OrderStatus, string> = {
   PENDING: 'অপেক্ষমাণ',
   CONFIRMED: 'নিশ্চিত',
   PREPARING: 'তৈরি হচ্ছে',
+  READY: 'প্রস্তুত',
   PACKED: 'প্যাকড',
   OUT_FOR_DELIVERY: 'ডেলিভারিতে',
   DELIVERED: 'ডেলিভার্ড',

@@ -19,7 +19,7 @@ export function Invoice() {
   const total = subtotal + sampleInvoice.deliveryFee
 
   return (
-    <section className="card document">
+    <section className="paper document">
       <DocumentHeader />
       <h1>ইনভয়েস / রিসিপ্ট</h1>
       <p className="muted">

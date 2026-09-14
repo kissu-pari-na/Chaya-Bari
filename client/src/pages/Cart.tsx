@@ -11,10 +11,11 @@ export function Cart() {
 
   if (items.length === 0) {
     return (
-      <section className="card">
+      <section className="cart-shell cart-shell--empty">
+        <div className="orders-empty__icon" aria-hidden="true">🛒</div>
         <h1>আপনার কার্ট</h1>
         <p className="muted">কার্ট খালি।</p>
-        <Link to="/products">পণ্য দেখুন →</Link>
+        <Link to="/products" className="btn btn--primary">পণ্য দেখুন</Link>
       </section>
     )
   }
@@ -28,7 +29,7 @@ export function Cart() {
   }
 
   return (
-    <section className="card">
+    <section className="cart-shell">
       <h1>আপনার কার্ট</h1>
       <ul className="cart-list">
         {items.map((item) => (

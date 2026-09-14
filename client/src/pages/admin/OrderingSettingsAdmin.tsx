@@ -88,7 +88,7 @@ export function OrderingSettingsAdmin() {
         </div>
         <div className="admin-form__actions">
           <button type="submit">সংরক্ষণ করুন</button>
-          {saved && <span className="hint" style={{ color: '#2f5233', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
+          {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>সংরক্ষিত হয়েছে</span>}
         </div>
       </form>
     </section>

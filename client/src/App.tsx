@@ -13,6 +13,7 @@ import { Cart } from './pages/Cart'
 import { Checkout } from './pages/Checkout'
 import { MyOrders } from './pages/MyOrders'
 import { OrderDetail } from './pages/OrderDetail'
+import { OrderReview } from './pages/OrderReview'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { BusinessProfileSettings } from './pages/BusinessProfileSettings'
 import { ProductsAdmin } from './pages/admin/ProductsAdmin'
@@ -59,6 +60,7 @@ export default function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
+                <Route path="/orders/:id/review" element={<OrderReview />} />
               </Route>
             </Route>
 

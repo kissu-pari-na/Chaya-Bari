@@ -36,6 +36,14 @@ export interface BusinessDefaultSettings {
   timezone: string
 }
 
+/// Account numbers customers send manual payments to, shown at payment time.
+export interface BusinessPaymentInfo {
+  bkash?: string
+  nagad?: string
+  rocket?: string
+  bankInfo?: string
+}
+
 export interface BusinessProfile {
   /** Official business name, always shown throughout the application. */
   name: string
@@ -49,4 +57,6 @@ export interface BusinessProfile {
   deliveryAreas: string[]
   partners: BusinessPartner[]
   defaultSettings: BusinessDefaultSettings
+  /** Where customers send manual (cash/transfer) payments. */
+  paymentInfo?: BusinessPaymentInfo
 }

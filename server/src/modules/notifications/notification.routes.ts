@@ -29,3 +29,11 @@ notificationRouter.post(
     res.status(204).send()
   }),
 )
+
+notificationRouter.delete(
+  '/notifications',
+  asyncHandler(async (req, res) => {
+    await notificationService.clearAll(req.user!.id)
+    res.status(204).send()
+  }),
+)
