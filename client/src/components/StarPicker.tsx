@@ -8,7 +8,7 @@ interface StarPickerProps {
 }
 
 /// Interactive 1–5 star selector.
-export function StarPicker({ value, onChange, ariaLabel = 'রেটিং' }: StarPickerProps) {
+export function StarPicker({ value, onChange, ariaLabel = 'Rating' }: StarPickerProps) {
   const [hover, setHover] = useState(0)
   return (
     <span className="starpick" role="radiogroup" aria-label={ariaLabel}>

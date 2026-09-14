@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
+import { useI18n } from '../context/LanguageContext'
 import { fetchPaymentInfo, updatePaymentInfo } from '../lib/payments'
 import { ApiError } from '../lib/apiClient'
+import { pick } from '../lib/i18n'
 import type { ApplicationRole, BusinessPartner, BusinessProfile } from '../types/business'
 import type { PaymentInfo } from '../types/payment'
 import './BusinessProfileSettings.css'
@@ -9,9 +11,15 @@ import './BusinessProfileSettings.css'
 const emptyPaymentInfo: PaymentInfo = { bkash: '', nagad: '', rocket: '', bankInfo: '' }
 
 const roleLabels: Record<ApplicationRole, string> = {
-  business_owner_admin: 'বিজনেস ওনার / অ্যাডমিন',
-  kitchen: 'কিচেন',
-  customer: 'কাস্টমার',
+  get business_owner_admin() {
+    return pick('বিজনেস ওনার / অ্যাডমিন', 'Business owner / Admin')
+  },
+  get kitchen() {
+    return pick('কিচেন', 'Kitchen')
+  },
+  get customer() {
+    return pick('কাস্টমার', 'Customer')
+  },
 }
 
 function updatePartner(partners: BusinessPartner[], id: string, patch: Partial<BusinessPartner>) {
@@ -20,6 +28,7 @@ function updatePartner(partners: BusinessPartner[], id: string, patch: Partial<B
 
 export function BusinessProfileSettings() {
   const { profile, updateProfile } = useBusinessProfile()
+  const { t } = useI18n()
   const [draft, setDraft] = useState<BusinessProfile>(profile)
   const [deliveryAreasText, setDeliveryAreasText] = useState(profile.deliveryAreas.join(', '))
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>(emptyPaymentInfo)
@@ -61,22 +70,22 @@ export function BusinessProfileSettings() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'সংরক্ষণ করা যায়নি')
+      setError(err instanceof ApiError ? err.message : t('সংরক্ষণ করা যায়নি', 'Could not save'))
     }
   }
 
   return (
     <form className="card profile-form" onSubmit={handleSubmit}>
-      <h1>বিজনেস প্রোফাইল ও সেটিংস</h1>
+      <h1>{t('বিজনেস প্রোফাইল ও সেটিংস', 'Business profile & settings')}</h1>
       <p className="muted">
-        এই তথ্য পুরো অ্যাপ্লিকেশন জুড়ে (কাস্টমার পেজ, অ্যাডমিন, ইনভয়েস, নোটিফিকেশন, রিপোর্ট) ব্যবহৃত হয়।
+        {t('এই তথ্য পুরো অ্যাপ্লিকেশন জুড়ে (কাস্টমার পেজ, অ্যাডমিন, ইনভয়েস, নোটিফিকেশন, রিপোর্ট) ব্যবহৃত হয়।', 'This information is used across the whole app (customer pages, admin, invoices, notifications, reports).')}
       </p>
 
       <fieldset>
-        <legend>পরিচিতি</legend>
+        <legend>{t('পরিচিতি', 'Identity')}</legend>
 
         <label>
-          বিজনেস নাম
+          {t('বিজনেস নাম', 'Business name')}
           <input
             value={draft.name}
             onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
@@ -93,16 +102,16 @@ export function BusinessProfileSettings() {
         </label>
 
         <label>
-          লোগো URL
+          {t('লোগো URL', 'Logo URL')}
           <input
             value={draft.logoUrl}
             onChange={(e) => setDraft((d) => ({ ...d, logoUrl: e.target.value }))}
           />
         </label>
-        <p className="hint">লোগো কনফিগারযোগ্য — নতুন ছবি আপলোড করে কোড পরিবর্তন ছাড়াই বদলানো যাবে।</p>
+        <p className="hint">{t('লোগো কনফিগারযোগ্য — নতুন ছবি আপলোড করে কোড পরিবর্তন ছাড়াই বদলানো যাবে।', 'The logo is configurable — upload a new image to change it without code changes.')}</p>
 
         <label>
-          ট্যাগলাইন
+          {t('ট্যাগলাইন', 'Tagline')}
           <input
             value={draft.tagline ?? ''}
             onChange={(e) => setDraft((d) => ({ ...d, tagline: e.target.value }))}
@@ -111,16 +120,16 @@ export function BusinessProfileSettings() {
       </fieldset>
 
       <fieldset>
-        <legend>যোগাযোগ ও ঠিকানা</legend>
+        <legend>{t('যোগাযোগ ও ঠিকানা', 'Contact & address')}</legend>
         <label>
-          ফোন
+          {t('ফোন', 'Phone')}
           <input
             value={draft.contact.phone}
             onChange={(e) => setDraft((d) => ({ ...d, contact: { ...d.contact, phone: e.target.value } }))}
           />
         </label>
         <label>
-          ইমেইল
+          {t('ইমেইল', 'Email')}
           <input
             type="email"
             value={draft.contact.email}
@@ -128,44 +137,44 @@ export function BusinessProfileSettings() {
           />
         </label>
         <label>
-          ঠিকানা (লাইন ১)
+          {t('ঠিকানা (লাইন ১)', 'Address (line 1)')}
           <input
             value={draft.address.line1}
             onChange={(e) => setDraft((d) => ({ ...d, address: { ...d.address, line1: e.target.value } }))}
           />
         </label>
         <label>
-          এলাকা
+          {t('এলাকা', 'Area')}
           <input
             value={draft.address.area}
             onChange={(e) => setDraft((d) => ({ ...d, address: { ...d.address, area: e.target.value } }))}
           />
         </label>
         <label>
-          শহর
+          {t('শহর', 'City')}
           <input
             value={draft.address.city}
             onChange={(e) => setDraft((d) => ({ ...d, address: { ...d.address, city: e.target.value } }))}
           />
         </label>
         <label>
-          ডেলিভারি / সার্ভিস এলাকা (কমা দিয়ে আলাদা করুন)
+          {t('ডেলিভারি / সার্ভিস এলাকা (কমা দিয়ে আলাদা করুন)', 'Delivery / service areas (comma-separated)')}
           <input value={deliveryAreasText} onChange={(e) => setDeliveryAreasText(e.target.value)} />
         </label>
       </fieldset>
 
       <fieldset>
-        <legend>বিজনেস পার্টনার ও মালিকানা</legend>
+        <legend>{t('বিজনেস পার্টনার ও মালিকানা', 'Business partners & ownership')}</legend>
         <p className="hint">
-          মালিকানার শতাংশ অ্যাপ্লিকেশনের অ্যাক্সেস নিয়ন্ত্রণ করে না — অ্যাক্সেস সবসময় রোল ভিত্তিক (নিচে দেখুন)।
+          {t('মালিকানার শতাংশ অ্যাপ্লিকেশনের অ্যাক্সেস নিয়ন্ত্রণ করে না — অ্যাক্সেস সবসময় রোল ভিত্তিক (নিচে দেখুন)।', 'Ownership percentage does not control app access — access is always role-based (see below).')}
         </p>
 
         <table className="partner-table">
           <thead>
             <tr>
-              <th>নাম</th>
-              <th>মালিকানা %</th>
-              <th>অ্যাপ্লিকেশন রোল</th>
+              <th>{t('নাম', 'Name')}</th>
+              <th>{t('মালিকানা %', 'Ownership %')}</th>
+              <th>{t('অ্যাপ্লিকেশন রোল', 'App role')}</th>
             </tr>
           </thead>
           <tbody>
@@ -205,7 +214,7 @@ export function BusinessProfileSettings() {
                       }))
                     }
                   >
-                    <option value="">কোনো অ্যাকাউন্ট নেই</option>
+                    <option value="">{t('কোনো অ্যাকাউন্ট নেই', 'No account')}</option>
                     {(Object.keys(roleLabels) as ApplicationRole[]).map((role) => (
                       <option key={role} value={role}>
                         {roleLabels[role]}
@@ -218,14 +227,14 @@ export function BusinessProfileSettings() {
           </tbody>
         </table>
         <p className={totalOwnership === 100 ? 'hint' : 'hint hint--warning'}>
-          মোট মালিকানা: {totalOwnership}% {totalOwnership !== 100 && '(১০০% হওয়া উচিত)'}
+          {t('মোট মালিকানা:', 'Total ownership:')} {totalOwnership}% {totalOwnership !== 100 && t('(১০০% হওয়া উচিত)', '(should be 100%)')}
         </p>
       </fieldset>
 
       <fieldset>
-        <legend>ডিফল্ট সেটিংস</legend>
+        <legend>{t('ডিফল্ট সেটিংস', 'Default settings')}</legend>
         <label>
-          মুদ্রা
+          {t('মুদ্রা', 'Currency')}
           <input
             value={draft.defaultSettings.currency}
             onChange={(e) =>
@@ -234,7 +243,7 @@ export function BusinessProfileSettings() {
           />
         </label>
         <label>
-          অর্ডার আইডি প্রিফিক্স
+          {t('অর্ডার আইডি প্রিফিক্স', 'Order ID prefix')}
           <input
             value={draft.defaultSettings.orderIdPrefix}
             onChange={(e) =>
@@ -245,13 +254,12 @@ export function BusinessProfileSettings() {
       </fieldset>
 
       <fieldset>
-        <legend>পেমেন্ট অ্যাকাউন্ট</legend>
+        <legend>{t('পেমেন্ট অ্যাকাউন্ট', 'Payment accounts')}</legend>
         <p className="hint">
-          এই নম্বরগুলো গ্রাহকদের পেমেন্টের সময় দেখানো হয় (সরাসরি/ম্যানুয়াল পেমেন্টের জন্য)। খালি রাখলে
-          দেখানো হবে না।
+          {t('এই নম্বরগুলো গ্রাহকদের পেমেন্টের সময় দেখানো হয় (সরাসরি/ম্যানুয়াল পেমেন্টের জন্য)। খালি রাখলে দেখানো হবে না।', 'These numbers are shown to customers at payment time (for direct/manual payments). Leave blank to hide.')}
         </p>
         <label>
-          বিকাশ নম্বর
+          {t('বিকাশ নম্বর', 'bKash number')}
           <input
             value={paymentInfo.bkash ?? ''}
             onChange={(e) => setPaymentInfo((p) => ({ ...p, bkash: e.target.value }))}
@@ -259,7 +267,7 @@ export function BusinessProfileSettings() {
           />
         </label>
         <label>
-          নগদ নম্বর
+          {t('নগদ নম্বর', 'Nagad number')}
           <input
             value={paymentInfo.nagad ?? ''}
             onChange={(e) => setPaymentInfo((p) => ({ ...p, nagad: e.target.value }))}
@@ -267,7 +275,7 @@ export function BusinessProfileSettings() {
           />
         </label>
         <label>
-          রকেট নম্বর
+          {t('রকেট নম্বর', 'Rocket number')}
           <input
             value={paymentInfo.rocket ?? ''}
             onChange={(e) => setPaymentInfo((p) => ({ ...p, rocket: e.target.value }))}
@@ -275,7 +283,7 @@ export function BusinessProfileSettings() {
           />
         </label>
         <label>
-          ব্যাংক তথ্য
+          {t('ব্যাংক তথ্য', 'Bank info')}
           <input
             value={paymentInfo.bankInfo ?? ''}
             onChange={(e) => setPaymentInfo((p) => ({ ...p, bankInfo: e.target.value }))}
@@ -285,8 +293,8 @@ export function BusinessProfileSettings() {
       </fieldset>
 
       <div className="profile-form__actions">
-        <button type="submit">সংরক্ষণ করুন</button>
-        {saved && <span className="hint hint--success">সংরক্ষিত হয়েছে</span>}
+        <button type="submit">{t('সংরক্ষণ করুন', 'Save')}</button>
+        {saved && <span className="hint hint--success">{t('সংরক্ষিত হয়েছে', 'Saved')}</span>}
         {error && <span className="hint hint--warning">{error}</span>}
       </div>
     </form>
