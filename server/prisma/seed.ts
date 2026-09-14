@@ -79,7 +79,7 @@ async function seedCatalog() {
     { name: 'কলিজা সিঙ্গারা', price: 20, category: 'স্ন্যাকস' },
     { name: 'স্টাফড বান', price: 50, category: 'স্ন্যাকস' },
     { name: 'প্লেইন কেক', price: 350, category: 'কেক ও পুডিং' },
-    { name: 'ডাব পুডিং', price: 120, category: 'কেক ও পুডিং', imageUrl: '/products/daab-pudding.jpg' },
+    { name: 'ডাব পুডিং', price: 120, category: 'কেক ও পুডিং', imageUrl: '/products/daab-pudding.png' },
   ]
 
   let created = 0
