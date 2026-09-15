@@ -215,14 +215,14 @@ export async function sendPasswordResetCode(user: User): Promise<void> {
     <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#555;">We received a request to reset your ${BRAND} password. Use the code below to set a new one.</p>
     <div style="text-align:center;margin:8px 0 18px;">${digitsHtml(code)}</div>
     <p style="margin:0 0 18px;font-size:13px;color:#888;text-align:center;">This code expires in <strong style="color:#d0241d;">10 minutes</strong>.</p>
-    <div style="text-align:center;margin:0 0 14px;">${buttonHtml(appLink('/forgot-password'), 'Reset password')}</div>
+    <div style="text-align:center;margin:0 0 14px;">${buttonHtml(setPasswordUrl(user.email), 'Reset password')}</div>
     <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">If you didn't request a password reset, you can safely ignore this email — your password won't change.</p>`
   await sendEmail({
     to: user.email,
     subject: `${code} is your ${BRAND} password reset code`,
     text:
       `Your ${BRAND} password reset code is ${code}.\n` +
-      `Reset at ${appLink('/forgot-password')} (email: ${user.email}).\n` +
+      `Reset at ${setPasswordUrl(user.email)} (email: ${user.email}).\n` +
       `It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
     html: emailShell(inner),
     attachments: logoAttachment(),
