@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
+import { useContentLang } from '../context/TranslationContext'
 import { RatingStars } from './RatingStars'
 import { formatBdt } from '../lib/format'
 import type { Product } from '../types/product'
@@ -17,13 +18,14 @@ function splitName(name: string): [string, string] {
 
 export function ProductCard({ product: p }: { product: Product }) {
   const { addItem } = useCart()
-  const { t, tc } = useI18n()
+  const { t } = useI18n()
+  const { lc, l } = useContentLang()
   const onSale = p.salePrice != null && p.salePrice < p.price
   const shown = onSale ? p.salePrice! : p.price
-  const displayName = tc(p.name, p.nameEnglish)
+  const displayName = lc(p.name, p.nameEnglish)
   const [first, rest] = splitName(displayName)
-  const solid = rest || p.categoryName || ''
-  const desc = p.description?.trim() || p.categoryName || t('ঘরে তৈরি, তাজা পরিবেশিত', 'Homemade, freshly served')
+  const solid = rest || l(p.categoryName) || ''
+  const desc = l(p.description?.trim() || p.categoryName) || t('ঘরে তৈরি, তাজা পরিবেশিত', 'Homemade, freshly served')
 
   return (
     <Link to={`/products/${p.id}`} className="pcard">

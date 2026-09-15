@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { fetchCategories, fetchProducts } from '../lib/products'
 import { useI18n } from '../context/LanguageContext'
+import { useContentLang } from '../context/TranslationContext'
 import { ProductCard } from '../components/ProductCard'
 import type { Category, Product } from '../types/product'
 import './Products.css'
 
 export function ProductList() {
   const { t } = useI18n()
+  const { l } = useContentLang()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined)
@@ -46,7 +48,7 @@ export function ProductList() {
             className={activeCategory === c.id ? 'chip chip--active' : 'chip'}
             onClick={() => setActiveCategory(c.id)}
           >
-            {c.name}
+            {l(c.name)}
           </button>
         ))}
       </div>

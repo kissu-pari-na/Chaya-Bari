@@ -13,12 +13,16 @@ import { adminAnalyticsRouter } from './modules/analytics/analytics.routes.js'
 import { notificationRouter } from './modules/notifications/notification.routes.js'
 import { adminBusinessRouter, publicBusinessRouter } from './modules/business/business.routes.js'
 import { reviewRouter } from './modules/reviews/review.routes.js'
+import { translateRouter } from './modules/translate/translate.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
 
 apiRouter.use('/health', healthRouter)
 apiRouter.use('/auth', authRouter)
+
+// Public best-effort translation (fallback for single-language content).
+apiRouter.use('/', translateRouter)
 
 // Products: public browsing under /api, admin management under /api/admin.
 apiRouter.use('/', publicProductRouter)

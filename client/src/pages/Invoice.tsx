@@ -1,12 +1,14 @@
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useI18n } from '../context/LanguageContext'
+import { useContentLang } from '../context/TranslationContext'
 import { DocumentHeader } from '../components/DocumentHeader'
 import './Document.css'
 
 export function Invoice() {
   const { profile } = useBusinessProfile()
-  const { t, tc } = useI18n()
-  const bizName = tc(profile.name, profile.nameEnglish)
+  const { t } = useI18n()
+  const { lc } = useContentLang()
+  const bizName = lc(profile.name, profile.nameEnglish)
 
   const sampleInvoice = {
     id: 'INV-100234',

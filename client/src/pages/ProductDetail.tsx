@@ -4,6 +4,7 @@ import { fetchProduct } from '../lib/products'
 import { formatBdt } from '../lib/format'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
+import { useContentLang } from '../context/TranslationContext'
 import { RatingStars } from '../components/RatingStars'
 import { ProductReviews } from '../components/ProductReviews'
 import type { Product } from '../types/product'
@@ -12,7 +13,8 @@ import './Products.css'
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { addItem } = useCart()
-  const { t, tc } = useI18n()
+  const { t } = useI18n()
+  const { lc, l } = useContentLang()
   const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,14 +49,14 @@ export function ProductDetail() {
       <div className="product-detail__layout">
         <div className="product-detail__image">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={tc(product.name, product.nameEnglish)} />
+            <img src={product.imageUrl} alt={lc(product.name, product.nameEnglish)} />
           ) : (
             <span className="product-card__placeholder">🍽️</span>
           )}
         </div>
         <div className="product-detail__info">
-          <h1>{tc(product.name, product.nameEnglish)}</h1>
-          {product.categoryName && <span className="product-card__cat">{product.categoryName}</span>}
+          <h1>{lc(product.name, product.nameEnglish)}</h1>
+          {product.categoryName && <span className="product-card__cat">{l(product.categoryName)}</span>}
           {product.reviewCount > 0 && (
             <div className="product-detail__rating">
               <RatingStars rating={product.avgRating} count={product.reviewCount} />
@@ -70,8 +72,8 @@ export function ProductDetail() {
               formatBdt(product.price)
             )}
           </p>
-          {product.description && <p>{product.description}</p>}
-          {product.prepInfo && <p className="muted">{t('প্রস্তুতি:', 'Prep:')} {product.prepInfo}</p>}
+          {product.description && <p>{l(product.description)}</p>}
+          {product.prepInfo && <p className="muted">{t('প্রস্তুতি:', 'Prep:')} {l(product.prepInfo)}</p>}
           {product.isAvailable ? (
             <div className="product-detail__actions">
               <button

@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { BusinessProfileProvider } from './context/BusinessProfileContext'
 import { CartProvider } from './context/CartContext'
 import { LanguageProvider } from './context/LanguageContext'
+import { TranslationProvider } from './context/TranslationContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { CustomerLayout } from './layouts/CustomerLayout'
@@ -42,10 +43,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AuthProvider>
-          <BusinessProfileProvider>
-            <CartProvider>
-              <Routes>
+        <TranslationProvider>
+          <AuthProvider>
+            <BusinessProfileProvider>
+              <CartProvider>
+                <Routes>
             {/* Auth */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -96,10 +98,11 @@ export default function App() {
                 <Route index element={<KitchenHome />} />
               </Route>
             </Route>
-              </Routes>
-            </CartProvider>
-          </BusinessProfileProvider>
-        </AuthProvider>
+                </Routes>
+              </CartProvider>
+            </BusinessProfileProvider>
+          </AuthProvider>
+        </TranslationProvider>
       </LanguageProvider>
     </ThemeProvider>
   )

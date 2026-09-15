@@ -10,13 +10,15 @@ import {
 import type { Category, Product, ProductInput } from '../../types/product'
 import { formatBdt } from '../../lib/format'
 import { useI18n } from '../../context/LanguageContext'
+import { useContentLang } from '../../context/TranslationContext'
 import { ProductForm } from './ProductForm'
 import './Admin.css'
 
 type Mode = { kind: 'list' } | { kind: 'create' } | { kind: 'edit'; product: Product }
 
 export function ProductsAdmin() {
-  const { t, tc } = useI18n()
+  const { t } = useI18n()
+  const { lc, l } = useContentLang()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
@@ -104,8 +106,8 @@ export function ProductsAdmin() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id}>
-                  <td>{tc(p.name, p.nameEnglish)}</td>
-                  <td>{p.categoryName ?? '—'}</td>
+                  <td>{lc(p.name, p.nameEnglish)}</td>
+                  <td>{p.categoryName ? l(p.categoryName) : '—'}</td>
                   <td>{formatBdt(p.price)}</td>
                   <td>
                     <button

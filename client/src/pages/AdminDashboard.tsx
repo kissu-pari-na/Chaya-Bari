@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useI18n } from '../context/LanguageContext'
+import { useContentLang } from '../context/TranslationContext'
 
 export function AdminDashboard() {
   const { profile } = useBusinessProfile()
-  const { t, tc } = useI18n()
+  const { t } = useI18n()
+  const { lc } = useContentLang()
   const owners = profile.partners.filter((p) => p.applicationRole === 'business_owner_admin')
 
   return (
     <section className="card">
-      <h1>{tc(profile.name, profile.nameEnglish)} — {t('অ্যাডমিন ড্যাশবোর্ড', 'Admin Dashboard')}</h1>
+      <h1>{lc(profile.name, profile.nameEnglish)} — {t('অ্যাডমিন ড্যাশবোর্ড', 'Admin Dashboard')}</h1>
       <p className="muted">{t('এখানে ব্যবসার সার্বিক তথ্য দেখা যাবে।', 'An overview of the business.')}</p>
 
       <div className="stat-row">

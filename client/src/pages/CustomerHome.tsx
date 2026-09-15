@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
+import { useContentLang } from '../context/TranslationContext'
 import { fetchProducts } from '../lib/products'
 import { fetchRatingSummary, fetchTopReviews } from '../lib/reviews'
 import { formatBdt, toBnDigits } from '../lib/format'
@@ -32,9 +33,10 @@ function dishEmoji(p: Product, index: number): string {
 export function CustomerHome() {
   const { profile } = useBusinessProfile()
   const { user } = useAuth()
-  const { t, tc } = useI18n()
-  const bizName = tc(profile.name, profile.nameEnglish)
-  const tagline = tc(profile.tagline, profile.taglineEnglish)
+  const { t } = useI18n()
+  const { lc } = useContentLang()
+  const bizName = lc(profile.name, profile.nameEnglish)
+  const tagline = lc(profile.tagline, profile.taglineEnglish)
   const [products, setProducts] = useState<Product[]>([])
   const [topReviews, setTopReviews] = useState<Review[]>([])
   const [rating, setRating] = useState<RatingSummary | null>(null)
@@ -107,7 +109,7 @@ export function CustomerHome() {
       key={p.id}
       to={`/products/${p.id}`}
       className={className}
-      aria-label={`${tc(p.name, p.nameEnglish)} — ${formatBdt(effectivePrice(p))}`}
+      aria-label={`${lc(p.name, p.nameEnglish)} — ${formatBdt(effectivePrice(p))}`}
     >
       <span className="hero__orb-disc">
         {p.imageUrl ? (
@@ -124,7 +126,7 @@ export function CustomerHome() {
         )}
       </span>
       <span className="hero__orb-cap">
-        <span className="hero__orb-name">{tc(p.name, p.nameEnglish)}</span>
+        <span className="hero__orb-name">{lc(p.name, p.nameEnglish)}</span>
         <span className="hero__orb-price">
           {formatBdt(effectivePrice(p))}
           {p.reviewCount > 0 && (
