@@ -1,5 +1,5 @@
 export type PaymentMethod = 'CASH' | 'BKASH' | 'NAGAD' | 'ROCKET' | 'CARD' | 'BANK' | 'ONLINE'
-export type PaymentTxnStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'
+export type PaymentTxnStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'VOID'
 export type PaymentSource = 'ADMIN' | 'CUSTOMER'
 
 export interface Payment {
@@ -12,6 +12,11 @@ export interface Payment {
   reference: string | null
   note: string | null
   createdAt: string
+  /// Audit trail.
+  recordedByName: string | null
+  voidedByName: string | null
+  voidedAt: string | null
+  voidReason: string | null
 }
 
 export interface RecordPaymentInput {

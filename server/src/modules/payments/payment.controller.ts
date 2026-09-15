@@ -13,14 +13,28 @@ export async function list(req: Request, res: Response) {
 }
 
 export async function record(req: Request, res: Response) {
-  const payment = await paymentService.recordPayment(req.params.id, req.body)
+  const payment = await paymentService.recordPayment(req.params.id, req.body, req.user!.id)
   const order = await getOrder(req.params.id)
   res.status(201).json({ payment, order })
 }
 
-export async function remove(req: Request, res: Response) {
-  await paymentService.deletePayment(req.params.id)
-  res.status(204).send()
+/// Void a payment recorded in error (kept for audit, no longer counts).
+export async function voidPayment(req: Request, res: Response) {
+  const payment = await paymentService.voidPayment(req.params.id, req.user!.id, req.body.reason)
+  const order = await getOrder(payment.orderId)
+  res.json({ payment, order })
+}
+
+/// Refund a successful payment (offsetting REFUNDED row, kept for audit).
+export async function refund(req: Request, res: Response) {
+  const payment = await paymentService.refundPayment(
+    req.params.id,
+    req.user!.id,
+    req.body.amount,
+    req.body.reason,
+  )
+  const order = await getOrder(payment.orderId)
+  res.json({ payment, order })
 }
 
 /// Verify or reject a customer's pending manual payment claim.

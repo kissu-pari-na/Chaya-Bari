@@ -7,7 +7,9 @@ import {
   claimPaymentSchema,
   paymentSettingSchema,
   recordPaymentSchema,
+  refundPaymentSchema,
   verifyPaymentSchema,
+  voidPaymentSchema,
 } from './payment.schemas.js'
 import * as paymentController from './payment.controller.js'
 
@@ -26,7 +28,18 @@ adminPaymentRouter.patch(
   validateBody(verifyPaymentSchema),
   asyncHandler(paymentController.verify),
 )
-adminPaymentRouter.delete('/payments/:id', asyncHandler(paymentController.remove))
+// Payments are never deleted — void (recorded in error) or refund (money
+// returned) instead, both keeping the row for audit.
+adminPaymentRouter.post(
+  '/payments/:id/void',
+  validateBody(voidPaymentSchema),
+  asyncHandler(paymentController.voidPayment),
+)
+adminPaymentRouter.post(
+  '/payments/:id/refund',
+  validateBody(refundPaymentSchema),
+  asyncHandler(paymentController.refund),
+)
 adminPaymentRouter.put(
   '/payment-info',
   validateBody(paymentSettingSchema),

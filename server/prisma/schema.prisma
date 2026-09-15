@@ -393,6 +393,7 @@ enum PaymentTxnStatus {
   SUCCESS
   FAILED
   REFUNDED
+  VOID
 }
 
 /// Who created the payment record. CUSTOMER rows start as PENDING claims that an
@@ -437,6 +438,16 @@ model Payment {
   reference String?
   note      String?
   createdAt DateTime         @default(now())
+
+  // Audit trail (snapshots, so they stay correct even if the user is later
+  // renamed or removed). Payments are never hard-deleted — a mistaken payment
+  // is VOIDed and a returned one gets an offsetting REFUNDED row.
+  recordedById   String?
+  recordedByName String?
+  voidedAt       DateTime?
+  voidedById     String?
+  voidedByName   String?
+  voidReason     String?
 
   @@index([orderId])
 }

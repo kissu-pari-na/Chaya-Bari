@@ -45,9 +45,14 @@ export const txnStatusLabel: Record<PaymentTxnStatus, string> = {
   get REFUNDED() {
     return pick('ফেরত', 'Refunded')
   },
+  get VOID() {
+    return pick('বাতিল (রেকর্ড)', 'Voided')
+  },
 }
 
-export const txnStatuses: PaymentTxnStatus[] = ['SUCCESS', 'PENDING', 'FAILED', 'REFUNDED']
+// Statuses an admin can pick when recording a payment directly. Refunds and
+// voids are dedicated audited actions, not a manual "type" here.
+export const txnStatuses: PaymentTxnStatus[] = ['SUCCESS', 'PENDING']
 
 export const paymentSourceLabel: Record<PaymentSource, string> = {
   get ADMIN() {

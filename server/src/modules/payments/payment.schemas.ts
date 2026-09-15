@@ -3,7 +3,7 @@ import { z } from 'zod'
 /// No cash-on-delivery: customers either pay in advance (cash/transfer) and we
 /// verify it, or pay online via bKash.
 export const paymentMethods = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'CARD', 'BANK', 'ONLINE'] as const
-export const paymentTxnStatuses = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'] as const
+export const paymentTxnStatuses = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED', 'VOID'] as const
 
 /// Methods a customer can pick when submitting a manual payment claim.
 export const claimMethods = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'BANK', 'ONLINE'] as const
@@ -35,6 +35,17 @@ export const claimPaymentSchema = z.object({
 /// Admin verifies or rejects a pending payment.
 export const verifyPaymentSchema = z.object({
   action: z.enum(['verify', 'reject']),
+})
+
+/// Admin voids a payment recorded in error (kept for audit).
+export const voidPaymentSchema = z.object({
+  reason: optionalText(300),
+})
+
+/// Admin refunds a successful payment (partial allowed; defaults to full).
+export const refundPaymentSchema = z.object({
+  amount: z.number().positive('Amount must be greater than 0').max(1_000_000).optional(),
+  reason: optionalText(300),
 })
 
 /// Start a bKash online payment for an order (customer). Amount defaults to the

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { deletePayment, fetchPayments, recordPayment, verifyPayment } from '../../lib/payments'
+import { fetchPayments, recordPayment, refundPayment, verifyPayment, voidPayment } from '../../lib/payments'
 import { paymentMethodLabel, paymentMethods, paymentSourceLabel, txnStatusLabel, txnStatuses } from '../../lib/paymentLabels'
 import { paymentStatusLabel } from '../../lib/orderStatus'
 import { formatBdt } from '../../lib/format'
@@ -68,16 +68,40 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
     }
   }
 
-  async function handleDelete(payment: Payment) {
-    if (!window.confirm(t('এই পেমেন্ট রেকর্ডটি মুছবেন?', 'Delete this payment record?'))) return
-    await deletePayment(payment.id)
-    const refreshed = await fetchPayments(order.id)
-    setPayments(refreshed)
-    const paid = refreshed.reduce(
-      (s, p) => (p.status === 'SUCCESS' ? s + p.amount : p.status === 'REFUNDED' ? s - p.amount : s),
-      0,
-    )
-    onOrderChange({ ...order, amountPaid: paid, amountDue: Math.max(0, order.total - paid) })
+  // Payments are never deleted. A payment recorded in error is VOIDed; money
+  // returned to the customer is a REFUND. Both keep the row for audit and stamp
+  // who did it.
+  async function handleVoid(payment: Payment) {
+    const reason = window.prompt(t('বাতিলের কারণ (ঐচ্ছিক):', 'Reason for voiding (optional):'))
+    if (reason === null) return // cancelled
+    setError(null)
+    try {
+      const { order: refreshed } = await voidPayment(payment.id, reason || undefined)
+      setPayments(await fetchPayments(order.id))
+      onOrderChange(refreshed)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('বাতিল করা যায়নি', 'Could not void the payment'))
+    }
+  }
+
+  async function handleRefund(payment: Payment) {
+    const amtStr = window.prompt(t('ফেরতের পরিমাণ (৳):', 'Refund amount (৳):'), String(payment.amount))
+    if (amtStr === null) return
+    const amt = Number(amtStr)
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setError(t('পরিমাণ ০-এর বেশি হতে হবে', 'Amount must be greater than 0'))
+      return
+    }
+    const reason = window.prompt(t('ফেরতের কারণ (ঐচ্ছিক):', 'Reason for refund (optional):'))
+    if (reason === null) return
+    setError(null)
+    try {
+      const { order: refreshed } = await refundPayment(payment.id, amt, reason || undefined)
+      setPayments(await fetchPayments(order.id))
+      onOrderChange(refreshed)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('ফেরত দেওয়া যায়নি', 'Could not refund the payment'))
+    }
   }
 
   return (
@@ -126,7 +150,21 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
                   <td>{paymentSourceLabel[p.source]}</td>
                   <td>{formatBdt(p.amount)}</td>
                   <td>{txnStatusLabel[p.status]}</td>
-                  <td>{p.reference ?? '—'}</td>
+                  <td>
+                    {p.reference ?? '—'}
+                    {p.status === 'VOID' && p.voidedByName && (
+                      <div className="muted pay-audit">
+                        {t(`বাতিল: ${p.voidedByName}`, `Voided by ${p.voidedByName}`)}
+                        {p.voidReason ? ` — ${p.voidReason}` : ''}
+                      </div>
+                    )}
+                    {p.status === 'REFUNDED' && p.recordedByName && (
+                      <div className="muted pay-audit">
+                        {t(`ফেরত: ${p.recordedByName}`, `Refunded by ${p.recordedByName}`)}
+                        {p.note ? ` — ${p.note}` : ''}
+                      </div>
+                    )}
+                  </td>
                   <td className="admin-table__actions">
                     {p.status === 'PENDING' ? (
                       <>
@@ -137,8 +175,17 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
                           {t('বাতিল', 'Reject')}
                         </button>
                       </>
+                    ) : p.status === 'SUCCESS' ? (
+                      <>
+                        <button className="btn-mini" onClick={() => handleRefund(p)}>
+                          {t('ফেরত', 'Refund')}
+                        </button>
+                        <button className="btn-mini btn-mini--no" onClick={() => handleVoid(p)}>
+                          {t('বাতিল', 'Void')}
+                        </button>
+                      </>
                     ) : (
-                      <button className="btn-danger" onClick={() => handleDelete(p)}>{t('মুছুন', 'Delete')}</button>
+                      <span className="muted">—</span>
                     )}
                   </td>
                 </tr>

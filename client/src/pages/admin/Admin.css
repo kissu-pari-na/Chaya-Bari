@@ -430,6 +430,12 @@
   background: rgba(224, 161, 46, 0.08);
 }
 
+/* Audit sub-line under a voided/refunded payment's reference. */
+.pay-audit {
+  font-size: 0.76rem;
+  margin-top: 2px;
+}
+
 .btn-mini {
   border: none;
   border-radius: 6px;

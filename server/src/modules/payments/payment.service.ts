@@ -20,6 +20,12 @@ export interface PublicPayment {
   reference: string | null
   note: string | null
   createdAt: string
+  /// Audit trail: who recorded this row (admin/refund), and — for a voided
+  /// payment — who voided it, when, and why.
+  recordedByName: string | null
+  voidedByName: string | null
+  voidedAt: string | null
+  voidReason: string | null
 }
 
 export function toPublicPayment(p: Payment): PublicPayment {
@@ -33,7 +39,17 @@ export function toPublicPayment(p: Payment): PublicPayment {
     reference: p.reference,
     note: p.note,
     createdAt: p.createdAt.toISOString(),
+    recordedByName: p.recordedByName,
+    voidedByName: p.voidedByName,
+    voidedAt: p.voidedAt ? p.voidedAt.toISOString() : null,
+    voidReason: p.voidReason,
   }
+}
+
+/// Resolve the acting admin's identity for the audit trail (name snapshot).
+async function actor(adminId: string): Promise<{ id: string; name: string }> {
+  const user = await prisma.user.findUnique({ where: { id: adminId }, select: { id: true, name: true } })
+  return { id: adminId, name: user?.name ?? 'Admin' }
 }
 
 /// Net amount actually collected = successful payments minus refunds. Pending
@@ -105,10 +121,15 @@ export async function listPayments(orderId: string): Promise<PublicPayment[]> {
 
 // ---- Admin: record a confirmed payment directly ----
 
-export async function recordPayment(orderId: string, input: RecordPaymentInput): Promise<PublicPayment> {
+export async function recordPayment(
+  orderId: string,
+  input: RecordPaymentInput,
+  adminId: string,
+): Promise<PublicPayment> {
   const order = await prisma.order.findUnique({ where: { id: orderId } })
   if (!order) throw HttpError.notFound('Order not found')
 
+  const admin = await actor(adminId)
   const payment = await prisma.payment.create({
     data: {
       orderId,
@@ -118,6 +139,8 @@ export async function recordPayment(orderId: string, input: RecordPaymentInput):
       source: 'ADMIN',
       reference: input.reference,
       note: input.note,
+      recordedById: admin.id,
+      recordedByName: admin.name,
     },
   })
   await recomputeOrderPaymentStatus(orderId)
@@ -127,11 +150,70 @@ export async function recordPayment(orderId: string, input: RecordPaymentInput):
   return toPublicPayment(payment)
 }
 
-export async function deletePayment(id: string): Promise<void> {
+/// Void a payment recorded in error. The row is kept (never deleted) and marked
+/// VOID with who/when/why, so it stops counting toward the paid total but stays
+/// on the audit trail. Only a live payment (pending or successful) can be voided.
+export async function voidPayment(id: string, adminId: string, reason?: string): Promise<PublicPayment> {
   const payment = await prisma.payment.findUnique({ where: { id } })
   if (!payment) throw HttpError.notFound('Payment not found')
-  await prisma.payment.delete({ where: { id } })
+  if (payment.status !== 'SUCCESS' && payment.status !== 'PENDING') {
+    throw HttpError.badRequest('Only a pending or successful payment can be voided')
+  }
+  const admin = await actor(adminId)
+  const updated = await prisma.payment.update({
+    where: { id },
+    data: {
+      status: 'VOID',
+      voidedAt: new Date(),
+      voidedById: admin.id,
+      voidedByName: admin.name,
+      voidReason: reason ?? null,
+    },
+  })
   await recomputeOrderPaymentStatus(payment.orderId)
+  return toPublicPayment(updated)
+}
+
+/// Refund a successful payment (money returned to the customer). Recorded as a
+/// new REFUNDED row that offsets the original in the ledger, keeping the whole
+/// history intact and stamping who issued the refund. Defaults to the full
+/// amount; a partial amount is allowed up to what is still net-paid.
+export async function refundPayment(
+  id: string,
+  adminId: string,
+  amount?: number,
+  reason?: string,
+): Promise<PublicPayment> {
+  const original = await prisma.payment.findUnique({ where: { id }, include: { order: true } })
+  if (!original) throw HttpError.notFound('Payment not found')
+  if (original.status !== 'SUCCESS') {
+    throw HttpError.badRequest('Only a successful payment can be refunded')
+  }
+
+  const allPayments = await prisma.payment.findMany({ where: { orderId: original.orderId } })
+  const netPaidNow = netPaid(allPayments)
+  const refundAmount = amount != null ? new Prisma.Decimal(amount) : original.amount
+  if (refundAmount.lte(0)) throw HttpError.badRequest('Refund amount must be greater than 0')
+  if (refundAmount.gt(netPaidNow)) {
+    throw HttpError.badRequest('Refund exceeds the amount currently paid')
+  }
+
+  const admin = await actor(adminId)
+  const refund = await prisma.payment.create({
+    data: {
+      orderId: original.orderId,
+      method: original.method,
+      amount: refundAmount,
+      status: 'REFUNDED',
+      source: 'ADMIN',
+      reference: original.reference,
+      note: reason ?? 'Refund',
+      recordedById: admin.id,
+      recordedByName: admin.name,
+    },
+  })
+  await recomputeOrderPaymentStatus(original.orderId)
+  return toPublicPayment(refund)
 }
 
 // ---- Customer: submit a manual payment claim (awaits verification) ----

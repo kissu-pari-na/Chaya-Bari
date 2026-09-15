@@ -34,8 +34,22 @@ export function recordPayment(orderId: string, input: RecordPaymentInput) {
   })
 }
 
-export function deletePayment(id: string) {
-  return apiRequest<void>(`/admin/payments/${id}`, { method: 'DELETE', auth: true })
+/// Void a payment recorded in error — kept for audit, no longer counts.
+export function voidPayment(id: string, reason?: string) {
+  return apiRequest<{ payment: Payment; order: AdminOrder }>(`/admin/payments/${id}/void`, {
+    method: 'POST',
+    body: { reason },
+    auth: true,
+  })
+}
+
+/// Refund a successful payment (money returned) — records an offsetting entry.
+export function refundPayment(id: string, amount?: number, reason?: string) {
+  return apiRequest<{ payment: Payment; order: AdminOrder }>(`/admin/payments/${id}/refund`, {
+    method: 'POST',
+    body: { amount, reason },
+    auth: true,
+  })
 }
 
 /// Verify or reject a customer's pending manual payment claim.
