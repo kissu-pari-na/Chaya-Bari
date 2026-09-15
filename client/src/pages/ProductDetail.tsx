@@ -12,7 +12,7 @@ import './Products.css'
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const { addItem } = useCart()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
   const navigate = useNavigate()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,13 +47,13 @@ export function ProductDetail() {
       <div className="product-detail__layout">
         <div className="product-detail__image">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} />
+            <img src={product.imageUrl} alt={tc(product.name, product.nameEnglish)} />
           ) : (
             <span className="product-card__placeholder">🍽️</span>
           )}
         </div>
         <div className="product-detail__info">
-          <h1>{product.name}</h1>
+          <h1>{tc(product.name, product.nameEnglish)}</h1>
           {product.categoryName && <span className="product-card__cat">{product.categoryName}</span>}
           {product.reviewCount > 0 && (
             <div className="product-detail__rating">

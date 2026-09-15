@@ -17,10 +17,11 @@ function splitName(name: string): [string, string] {
 
 export function ProductCard({ product: p }: { product: Product }) {
   const { addItem } = useCart()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
   const onSale = p.salePrice != null && p.salePrice < p.price
   const shown = onSale ? p.salePrice! : p.price
-  const [first, rest] = splitName(p.name)
+  const displayName = tc(p.name, p.nameEnglish)
+  const [first, rest] = splitName(displayName)
   const solid = rest || p.categoryName || ''
   const desc = p.description?.trim() || p.categoryName || t('ঘরে তৈরি, তাজা পরিবেশিত', 'Homemade, freshly served')
 
@@ -47,7 +48,7 @@ export function ProductCard({ product: p }: { product: Product }) {
       {/* product image, bursting up over the shape */}
       <div className="pcard__media">
         {p.imageUrl ? (
-          <img src={p.imageUrl} alt={p.name} />
+          <img src={p.imageUrl} alt={displayName} />
         ) : (
           <span className="pcard__glyph">🍽️</span>
         )}

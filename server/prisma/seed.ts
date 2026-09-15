@@ -72,29 +72,33 @@ async function seedCatalog() {
     categoryByName.set(c.name, category.id)
   }
 
-  const products: { name: string; price: number; category: string; description?: string; imageUrl?: string }[] = [
-    { name: 'বিরিয়ানি', price: 220, category: 'ভাত ও বিরিয়ানি', description: 'ঘরে তৈরি কাচ্চি স্টাইল বিরিয়ানি' },
-    { name: 'গরুর কালা ভুনা', price: 260, category: 'ভাত ও বিরিয়ানি' },
-    { name: 'পায়েস', price: 70, category: 'মিষ্টান্ন', description: 'দুধ, গুড় ও বাদাম দিয়ে তৈরি' },
-    { name: 'কলিজা সিঙ্গারা', price: 20, category: 'স্ন্যাকস' },
-    { name: 'স্টাফড বান', price: 50, category: 'স্ন্যাকস' },
-    { name: 'প্লেইন কেক', price: 350, category: 'কেক ও পুডিং' },
-    { name: 'ডাব পুডিং', price: 120, category: 'কেক ও পুডিং', imageUrl: '/products/daab-pudding.png' },
+  const products: { name: string; nameEnglish?: string; price: number; category: string; description?: string; imageUrl?: string }[] = [
+    { name: 'বিরিয়ানি', nameEnglish: 'Biryani', price: 220, category: 'ভাত ও বিরিয়ানি', description: 'ঘরে তৈরি কাচ্চি স্টাইল বিরিয়ানি' },
+    { name: 'গরুর কালা ভুনা', nameEnglish: 'Beef Kala Bhuna', price: 260, category: 'ভাত ও বিরিয়ানি' },
+    { name: 'পায়েস', nameEnglish: 'Payesh', price: 70, category: 'মিষ্টান্ন', description: 'দুধ, গুড় ও বাদাম দিয়ে তৈরি' },
+    { name: 'কলিজা সিঙ্গারা', nameEnglish: 'Liver Singara', price: 20, category: 'স্ন্যাকস' },
+    { name: 'স্টাফড বান', nameEnglish: 'Stuffed Bun', price: 50, category: 'স্ন্যাকস' },
+    { name: 'প্লেইন কেক', nameEnglish: 'Plain Cake', price: 350, category: 'কেক ও পুডিং' },
+    { name: 'ডাব পুডিং', nameEnglish: 'Coconut Pudding', price: 120, category: 'কেক ও পুডিং', imageUrl: '/products/daab-pudding.png' },
   ]
 
   let created = 0
   for (const p of products) {
     const exists = await prisma.product.findFirst({ where: { name: p.name } })
     if (exists) {
-      // Keep an already-seeded product's image in sync when one is defined here.
-      if (p.imageUrl && exists.imageUrl !== p.imageUrl) {
-        await prisma.product.update({ where: { id: exists.id }, data: { imageUrl: p.imageUrl } })
+      // Keep an already-seeded product's image + English name in sync.
+      const patch: { imageUrl?: string; nameEnglish?: string } = {}
+      if (p.imageUrl && exists.imageUrl !== p.imageUrl) patch.imageUrl = p.imageUrl
+      if (p.nameEnglish && !exists.nameEnglish) patch.nameEnglish = p.nameEnglish
+      if (Object.keys(patch).length > 0) {
+        await prisma.product.update({ where: { id: exists.id }, data: patch })
       }
       continue
     }
     await prisma.product.create({
       data: {
         name: p.name,
+        nameEnglish: p.nameEnglish ?? null,
         description: p.description ?? null,
         imageUrl: p.imageUrl ?? null,
         price: p.price,

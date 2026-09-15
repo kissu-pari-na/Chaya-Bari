@@ -74,6 +74,9 @@ model ProductCategory {
 model Product {
   id          String           @id @default(cuid())
   name        String
+  /// Optional English name shown when the app language is English; falls back
+  /// to `name` when empty. Mirrors the business moto's bilingual pattern.
+  nameEnglish String?
   description String?
   imageUrl    String?
   /// Current selling price. Historical orders keep their own captured price.

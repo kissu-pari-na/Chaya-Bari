@@ -8,6 +8,8 @@ export interface Category {
 export interface Product {
   id: string
   name: string
+  /** Optional English name; shown when the app language is English, else falls back to `name`. */
+  nameEnglish: string | null
   description: string | null
   imageUrl: string | null
   price: number
@@ -24,6 +26,7 @@ export interface Product {
 
 export interface ProductInput {
   name: string
+  nameEnglish?: string
   description?: string
   imageUrl?: string
   price: number

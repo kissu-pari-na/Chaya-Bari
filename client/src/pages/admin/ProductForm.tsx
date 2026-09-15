@@ -13,6 +13,7 @@ interface ProductFormProps {
 export function ProductForm({ categories, initial, onSubmit, onCancel }: ProductFormProps) {
   const { t } = useI18n()
   const [name, setName] = useState(initial?.name ?? '')
+  const [nameEnglish, setNameEnglish] = useState(initial?.nameEnglish ?? '')
   const [price, setPrice] = useState(initial ? String(initial.price) : '')
   const [salePrice, setSalePrice] = useState(initial?.salePrice != null ? String(initial.salePrice) : '')
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '')
@@ -41,6 +42,7 @@ export function ProductForm({ categories, initial, onSubmit, onCancel }: Product
     try {
       await onSubmit({
         name,
+        nameEnglish: nameEnglish || undefined,
         price: priceNum,
         salePrice: saleNum,
         categoryId: categoryId || undefined,
@@ -65,10 +67,21 @@ export function ProductForm({ categories, initial, onSubmit, onCancel }: Product
     <form className="admin-form" onSubmit={handleSubmit}>
       <h2>{initial ? t('পণ্য সম্পাদনা', 'Edit product') : t('নতুন পণ্য', 'New product')}</h2>
       {error && <div className="auth-error">{error}</div>}
-      <label>
-        {t('নাম', 'Name')}
-        <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={150} />
-      </label>
+      <div className="admin-form__row">
+        <label>
+          {t('নাম (বাংলা)', 'Name (Bangla)')}
+          <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={150} />
+        </label>
+        <label>
+          {t('নাম (English)', 'Name (English)')}
+          <input
+            value={nameEnglish}
+            onChange={(e) => setNameEnglish(e.target.value)}
+            maxLength={150}
+            placeholder={t('ইংরেজি নাম (ঐচ্ছিক)', 'English name (optional)')}
+          />
+        </label>
+      </div>
       <div className="admin-form__row">
         <label>
           {t('মূল্য (৳)', 'Price (৳)')}

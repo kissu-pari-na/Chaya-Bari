@@ -26,6 +26,7 @@ const imageUrlSchema = z
 
 export const createProductSchema = z.object({
   name: z.string().min(1, 'Name is required').max(150),
+  nameEnglish: z.string().max(150).optional().or(z.literal('').transform(() => undefined)),
   description: nullableText,
   imageUrl: imageUrlSchema,
   price: priceSchema,

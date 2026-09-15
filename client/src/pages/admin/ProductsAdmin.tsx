@@ -16,7 +16,7 @@ import './Admin.css'
 type Mode = { kind: 'list' } | { kind: 'create' } | { kind: 'edit'; product: Product }
 
 export function ProductsAdmin() {
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [mode, setMode] = useState<Mode>({ kind: 'list' })
@@ -104,7 +104,7 @@ export function ProductsAdmin() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id}>
-                  <td>{p.name}</td>
+                  <td>{tc(p.name, p.nameEnglish)}</td>
                   <td>{p.categoryName ?? '—'}</td>
                   <td>{formatBdt(p.price)}</td>
                   <td>

@@ -16,6 +16,7 @@ import type {
 export interface PublicProduct {
   id: string
   name: string
+  nameEnglish: string | null
   description: string | null
   imageUrl: string | null
   price: number
@@ -38,6 +39,7 @@ function toPublicProduct(p: ProductWithCategory, rating: RatingSummary = NO_RATI
   return {
     id: p.id,
     name: p.name,
+    nameEnglish: p.nameEnglish,
     description: p.description,
     imageUrl: p.imageUrl,
     price: Number(p.price),
@@ -131,6 +133,7 @@ export async function createProduct(input: CreateProductInput): Promise<PublicPr
   const product = await prisma.product.create({
     data: {
       name: input.name,
+      nameEnglish: input.nameEnglish,
       description: input.description,
       imageUrl: input.imageUrl,
       price: new Prisma.Decimal(input.price),
@@ -163,6 +166,7 @@ export async function updateProduct(id: string, input: UpdateProductInput): Prom
     where: { id },
     data: {
       name: input.name,
+      nameEnglish: input.nameEnglish,
       description: input.description,
       imageUrl: input.imageUrl,
       price: input.price !== undefined ? new Prisma.Decimal(input.price) : undefined,

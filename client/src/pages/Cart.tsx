@@ -8,7 +8,7 @@ import './Cart.css'
 export function Cart() {
   const { items, subtotal, setQuantity, removeItem } = useCart()
   const { user } = useAuth()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
   const navigate = useNavigate()
 
   if (items.length === 0) {
@@ -37,10 +37,10 @@ export function Cart() {
         {items.map((item) => (
           <li key={item.productId} className="cart-item">
             <div className="cart-item__thumb">
-              {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <span>🍽️</span>}
+              {item.imageUrl ? <img src={item.imageUrl} alt={tc(item.name, item.nameEnglish)} /> : <span>🍽️</span>}
             </div>
             <div className="cart-item__info">
-              <span className="cart-item__name">{item.name}</span>
+              <span className="cart-item__name">{tc(item.name, item.nameEnglish)}</span>
               <span className="muted">{formatBdt(item.price)}</span>
             </div>
             <div className="cart-item__qty">

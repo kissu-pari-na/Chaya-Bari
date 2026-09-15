@@ -4,6 +4,7 @@ import { effectivePrice, type Product } from '../types/product'
 export interface CartItem {
   productId: string
   name: string
+  nameEnglish?: string | null
   price: number
   imageUrl: string | null
   quantity: number
@@ -53,7 +54,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return [
           ...current,
-          { productId: product.id, name: product.name, price: effectivePrice(product), imageUrl: product.imageUrl, quantity },
+          { productId: product.id, name: product.name, nameEnglish: product.nameEnglish, price: effectivePrice(product), imageUrl: product.imageUrl, quantity },
         ]
       })
 

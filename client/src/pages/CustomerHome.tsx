@@ -107,7 +107,7 @@ export function CustomerHome() {
       key={p.id}
       to={`/products/${p.id}`}
       className={className}
-      aria-label={`${p.name} — ${formatBdt(effectivePrice(p))}`}
+      aria-label={`${tc(p.name, p.nameEnglish)} — ${formatBdt(effectivePrice(p))}`}
     >
       <span className="hero__orb-disc">
         {p.imageUrl ? (
@@ -124,7 +124,7 @@ export function CustomerHome() {
         )}
       </span>
       <span className="hero__orb-cap">
-        <span className="hero__orb-name">{p.name}</span>
+        <span className="hero__orb-name">{tc(p.name, p.nameEnglish)}</span>
         <span className="hero__orb-price">
           {formatBdt(effectivePrice(p))}
           {p.reviewCount > 0 && (
