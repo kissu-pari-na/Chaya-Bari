@@ -102,10 +102,10 @@ export async function createUser(input: CreateUserInput, createdById: string): P
     },
     select: selectRow,
   })
-  // Email the new user their account details (including the admin-set password,
-  // which they have no other way to know) plus the confirmation code to
-  // activate the account.
+  // Email the new user their account details + the confirmation code. The
+  // admin-set password is never emailed; once they confirm, the welcome email
+  // gives them a link to set their own password.
   const full = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-  await sendAdminCreatedEmail(full, input.password)
+  await sendAdminCreatedEmail(full)
   return toRow(user)
 }

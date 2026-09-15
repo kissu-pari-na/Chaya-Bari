@@ -174,30 +174,29 @@ export async function sendWelcomeEmail(user: User): Promise<void> {
 /// email-confirmation code needed to activate the account. Only used for
 /// admin-provisioned accounts — self-registered users choose their own password
 /// and never receive it by email.
-export async function sendAdminCreatedEmail(user: User, password: string): Promise<void> {
+export async function sendAdminCreatedEmail(user: User): Promise<void> {
   const code = await issueCode(user.id, 'EMAIL')
   const greeting = user.name ? escapeHtml(user.name) : 'there'
   const inner = `
     <p style="margin:0 0 8px;font-size:16px;">Hi ${greeting},</p>
-    <p style="margin:0 0 18px;font-size:15px;line-height:1.5;color:#555;">An account has been created for you at ${BRAND}. Here are your sign-in details:</p>
+    <p style="margin:0 0 18px;font-size:15px;line-height:1.5;color:#555;">An account has been created for you at ${BRAND}. Here are your account details:</p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 14px;font-size:14px;color:#2b2b2b;">
       <tr><td style="padding:6px 0;color:#888;width:90px;">Name</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(user.name)}</td></tr>
       <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(user.email)}</td></tr>
       <tr><td style="padding:6px 0;color:#888;">Role</td><td style="padding:6px 0;font-weight:600;">${roleLabel(user.role)}</td></tr>
-      <tr><td style="padding:6px 0;color:#888;">Password</td><td style="padding:6px 0;"><span style="display:inline-block;background:#fff7ea;border:1px solid #f0d9a8;border-radius:8px;padding:6px 12px;font-weight:700;font-size:15px;color:#8a1a15;letter-spacing:1px;">${escapeHtml(password)}</span></td></tr>
     </table>
     <p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#555;">First, confirm your email to activate the account — enter this code on the confirmation page:</p>
     <div style="text-align:center;margin:8px 0 16px;">${digitsHtml(code)}</div>
     <div style="text-align:center;margin:0 0 16px;">${buttonHtml(appLink('/verify-email'), 'Confirm email')}</div>
-    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">Once your email is confirmed you'll get a link to <strong>set your own password</strong> — for your security, do that after your first login. If you weren't expecting this account, please ignore this email.</p>`
+    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">Once your email is confirmed, you'll get a link to <strong>set your own password</strong> and can start using your account. If you weren't expecting this account, please ignore this email.</p>`
   await sendEmail({
     to: user.email,
-    subject: `Your ${BRAND} account details`,
+    subject: `${code} is your ${BRAND} confirmation code`,
     text:
       `Hi ${user.name}, an account has been created for you at ${BRAND}.\n` +
-      `Email: ${user.email}\nRole: ${roleLabel(user.role)}\nPassword: ${password}\n\n` +
+      `Email: ${user.email}\nRole: ${roleLabel(user.role)}\n\n` +
       `Confirm your email to activate: ${appLink('/verify-email')} — code ${code} (expires in 10 minutes).\n` +
-      `Please change your password after your first login using "Forgot password".`,
+      `Once confirmed, you'll get a link to set your own password.`,
     html: emailShell(inner),
     attachments: logoAttachment(),
   })

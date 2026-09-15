@@ -10,20 +10,27 @@ function required(name: string, fallback?: string): string {
   return value
 }
 
+const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+// Base URL of the web app for links in outgoing emails. Prefer APP_URL; if it
+// is not set, fall back to the first non-localhost CORS origin (the deployed
+// frontend must be allowed there for the app to work), so email links point at
+// the live site instead of localhost even when APP_URL is forgotten.
+const liveOrigin = corsOrigins.find((o) => !/localhost|127\.0\.0\.1/.test(o))
+const appUrl = process.env.APP_URL || liveOrigin || 'http://localhost:5173'
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 4000),
-  corsOrigins: (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean),
+  corsOrigins,
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
 
-  // Public base URL of the customer web app, used to build absolute links in
-  // outgoing emails (the in-app path is appended to this).
-  appUrl: process.env.APP_URL ?? 'http://localhost:5173',
+  appUrl,
 
   // Shared secret protecting the maintenance endpoint driven by Vercel Cron.
   // Leave unset to disable the endpoint (it then returns 503).
