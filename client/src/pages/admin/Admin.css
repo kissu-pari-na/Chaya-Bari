@@ -449,3 +449,28 @@
   color: #e8837a;
   border: 1px solid rgba(192, 69, 58, 0.5);
 }
+
+/* ---- User role badges (Users admin) ---- */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  padding: 0.15rem 0.65rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+.role-badge--admin {
+  background: rgba(228, 50, 43, 0.16);
+  color: var(--accent);
+}
+.role-badge--kitchen {
+  background: rgba(245, 179, 0, 0.18);
+  color: #8a5a10;
+}
+.role-badge--customer {
+  background: var(--card-2);
+  color: var(--card-muted);
+  border: 1px solid var(--card-border);
+}

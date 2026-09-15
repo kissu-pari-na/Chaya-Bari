@@ -33,6 +33,7 @@ import { RecipeAdmin } from './pages/admin/RecipeAdmin'
 import { ExpensesAdmin } from './pages/admin/ExpensesAdmin'
 import { ReportsAdmin } from './pages/admin/ReportsAdmin'
 import { AnalyticsAdmin } from './pages/admin/AnalyticsAdmin'
+import { UsersAdmin } from './pages/admin/UsersAdmin'
 import { OrderConfirmation } from './pages/OrderConfirmation'
 import { Invoice } from './pages/Invoice'
 import { KitchenHome } from './pages/KitchenHome'
@@ -89,6 +90,7 @@ export default function App() {
                 <Route path="analytics" element={<AnalyticsAdmin />} />
                 <Route path="ordering-settings" element={<OrderingSettingsAdmin />} />
                 <Route path="business-profile" element={<BusinessProfileSettings />} />
+                <Route path="users" element={<UsersAdmin />} />
               </Route>
             </Route>
 

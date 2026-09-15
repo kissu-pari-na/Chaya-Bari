@@ -14,6 +14,7 @@ import { notificationRouter } from './modules/notifications/notification.routes.
 import { adminBusinessRouter, publicBusinessRouter } from './modules/business/business.routes.js'
 import { reviewRouter } from './modules/reviews/review.routes.js'
 import { translateRouter } from './modules/translate/translate.routes.js'
+import { adminUserRouter } from './modules/users/user.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
@@ -72,6 +73,9 @@ apiRouter.use('/admin', adminAnalyticsRouter)
 
 // Business profile management (ADMIN).
 apiRouter.use('/admin', adminBusinessRouter)
+
+// User management (ADMIN): create staff/customer accounts with a creator footprint.
+apiRouter.use('/admin', adminUserRouter)
 
 // Notifications (any authenticated user).
 apiRouter.use('/', notificationRouter)

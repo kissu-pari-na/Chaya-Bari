@@ -76,6 +76,7 @@ export function AdminNav() {
       items: [
         { to: '/admin/ordering-settings', label: t('অর্ডার সেটিংস', 'Ordering') },
         { to: '/admin/business-profile', label: t('বিজনেস প্রোফাইল', 'Business profile') },
+        { to: '/admin/users', label: t('ব্যবহারকারী', 'Users') },
       ],
     },
   ]
