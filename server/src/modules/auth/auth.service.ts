@@ -131,8 +131,12 @@ export async function verifyEmail(input: VerifyEmailInput): Promise<{ user: Publ
       where: { id: user.id },
       data: { emailVerifiedAt: new Date() },
     })
-    // Welcome the user now that the account is confirmed (account + login info).
-    await sendWelcomeEmail(confirmed)
+    // Welcome self-registered users now that the account is confirmed.
+    // Admin-created users (createdById set) already received a full account
+    // email with their password at creation, so don't send a duplicate.
+    if (confirmed.createdById == null) {
+      await sendWelcomeEmail(confirmed)
+    }
   }
   const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
   return { user: toPublicUser(fresh), token: signAuthToken({ sub: fresh.id, role: fresh.role }) }

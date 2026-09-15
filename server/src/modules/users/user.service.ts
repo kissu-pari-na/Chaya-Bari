@@ -1,7 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { hashPassword } from '../../utils/password.js'
 import { HttpError } from '../../utils/httpError.js'
-import { sendEmailCode } from '../auth/verification.service.js'
+import { sendAdminCreatedEmail } from '../auth/verification.service.js'
 import type { CreateUserInput } from './user.schemas.js'
 
 export interface AdminUserRow {
@@ -102,9 +102,10 @@ export async function createUser(input: CreateUserInput, createdById: string): P
     },
     select: selectRow,
   })
-  // Send the email confirmation code; the user confirms, then receives a
-  // welcome email with their account + login info.
+  // Email the new user their account details (including the admin-set password,
+  // which they have no other way to know) plus the confirmation code to
+  // activate the account.
   const full = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
-  await sendEmailCode(full)
+  await sendAdminCreatedEmail(full, input.password)
   return toRow(user)
 }
