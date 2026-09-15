@@ -60,36 +60,6 @@ export function CustomerHome() {
     { icon: '🧼', title: t('স্বাস্থ্যসম্মত', 'Hygienic'), text: t('পরিচ্ছন্ন রান্নাঘর, নিরাপদ প্যাকেজিং।', 'Clean kitchen, safe packaging.') },
   ]
 
-  const REVIEWS = [
-    {
-      name: t('সাদিয়া রহমান', 'Sadia Rahman'),
-      meta: t('নিয়মিত ক্রেতা', 'Regular customer'),
-      stars: 5,
-      text: t(
-        'একদম ঘরের মতো স্বাদ! বিরিয়ানি আর পায়েস দুটোই অসাধারণ ছিল। সময়মতো পৌঁছেছে।',
-        'Tastes just like home! The biryani and payesh were both excellent. Arrived on time.',
-      ),
-    },
-    {
-      name: t('তানভীর হাসান', 'Tanvir Hasan'),
-      meta: t('ঢাকা', 'Dhaka'),
-      stars: 5,
-      text: t(
-        'তাজা, গরম আর পরিমাণে ভালো। পরিবারের সবাই পছন্দ করেছে। আবার অর্ডার করব।',
-        'Fresh, hot and generous portions. The whole family loved it. Will order again.',
-      ),
-    },
-    {
-      name: t('নুসরাত জাহান', 'Nusrat Jahan'),
-      meta: t('কম্বো ক্রেতা', 'Combo buyer'),
-      stars: 4,
-      text: t(
-        'কম্বো ডিলগুলো দারুণ সাশ্রয়ী। খাবারের মান নিয়ে কোনো অভিযোগ নেই।',
-        'The combo deals are great value. No complaints about the food quality.',
-      ),
-    },
-  ]
-
   const available = products.filter((p) => p.isAvailable)
   const featured = available.slice(0, 4)
   // Top 4 by rating (then review count) for the animated hero showcase; the #1
@@ -258,16 +228,17 @@ export function CustomerHome() {
         </Link>
       </section>
 
-      {/* ---------- Reviews ---------- */}
-      <div className="section-head">
-        <div>
-          <span className="eyebrow">{t('ক্রেতাদের কথা', 'What customers say')}</span>
-          <h2 className="section-head__title">{t('সবাই যা বলছেন', 'Everyone is talking')}</h2>
-        </div>
-      </div>
-      <div className="reviews">
-        {showReviews
-          ? topReviews.map((r) => (
+      {/* ---------- Reviews (only real ones; hidden until the shop has any) ---------- */}
+      {showReviews && (
+        <>
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">{t('ক্রেতাদের কথা', 'What customers say')}</span>
+              <h2 className="section-head__title">{t('সবাই যা বলছেন', 'Everyone is talking')}</h2>
+            </div>
+          </div>
+          <div className="reviews">
+            {topReviews.map((r) => (
               <div key={r.id} className="review">
                 <div className="review__stars" aria-label={`${r.rating} star`}>
                   {'★'.repeat(r.rating)}
@@ -284,26 +255,10 @@ export function CustomerHome() {
                   </div>
                 </div>
               </div>
-            ))
-          : REVIEWS.map((r) => (
-              <div key={r.name} className="review">
-                <div className="review__stars" aria-label={`${r.stars} star`}>
-                  {'★'.repeat(r.stars)}
-                  {'☆'.repeat(5 - r.stars)}
-                </div>
-                <p className="review__text">“{r.text}”</p>
-                <div className="review__who">
-                  <span className="review__avatar" aria-hidden="true">
-                    {r.name.charAt(0)}
-                  </span>
-                  <div>
-                    <div className="review__name">{r.name}</div>
-                    <div className="review__meta">{r.meta}</div>
-                  </div>
-                </div>
-              </div>
             ))}
-      </div>
+          </div>
+        </>
+      )}
 
       {/* ---------- Footer ---------- */}
       <footer className="home-footer">
