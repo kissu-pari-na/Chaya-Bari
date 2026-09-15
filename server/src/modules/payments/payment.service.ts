@@ -64,18 +64,23 @@ async function recomputeOrderPaymentStatus(orderId: string): Promise<void> {
   if (!order) return
   const paymentStatus = derivePaymentStatus(order.payments, order.total)
 
-  // Auto-confirm a pending order once it is fully paid, so paid orders reach the
-  // kitchen without a manual admin step. Never touch cancelled or already
-  // progressed orders.
+  // Keep the order status in sync with payment (this is a prepay business — no
+  // cash on delivery). Auto-confirm a pending order once it is fully paid so it
+  // reaches the kitchen without a manual step; and reverse it if a
+  // payment-confirmed order is no longer fully paid (e.g. a payment was deleted
+  // or refunded) and the kitchen hasn't started yet. Orders already progressed
+  // past CONFIRMED, or cancelled, are left alone for an admin to handle.
   const autoConfirm = paymentStatus === 'PAID' && order.status === 'PENDING'
+  const autoRevert = paymentStatus !== 'PAID' && order.status === 'CONFIRMED'
+  const nextStatus = autoConfirm ? 'CONFIRMED' : autoRevert ? 'PENDING' : order.status
 
   await prisma.order.update({
     where: { id: orderId },
-    data: { paymentStatus, ...(autoConfirm ? { status: 'CONFIRMED' } : {}) },
+    data: { paymentStatus, ...(nextStatus !== order.status ? { status: nextStatus } : {}) },
   })
 
-  if (autoConfirm) {
-    await notifyOrderStatus(order.customerId, 'CONFIRMED', order.orderNumber, order.id)
+  if (nextStatus !== order.status) {
+    await notifyOrderStatus(order.customerId, nextStatus, order.orderNumber, order.id)
   }
 }
 

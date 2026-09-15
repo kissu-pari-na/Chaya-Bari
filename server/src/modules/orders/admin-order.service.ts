@@ -129,6 +129,10 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   if (order.status !== status && !transitions[order.status].includes(status)) {
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
+  // Prepay business: an order can't be confirmed until it is fully paid.
+  if (status === 'CONFIRMED' && order.paymentStatus !== 'PAID') {
+    throw HttpError.badRequest('Cannot confirm this order until payment is completed in full')
+  }
   // Stamp the delivery time on first transition to DELIVERED; it drives the
   // day-after review invite.
   const markDelivered = status === 'DELIVERED' && !order.deliveredAt

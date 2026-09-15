@@ -2,19 +2,21 @@ import type { CSSProperties } from 'react'
 import { orderTrackerView } from '../lib/orderTracking'
 import { orderStatusLabel } from '../lib/orderStatus'
 import { useI18n } from '../context/LanguageContext'
-import type { OrderStatus } from '../types/order'
+import type { OrderStatus, PaymentStatus } from '../types/order'
 import './OrderTracker.css'
 
 interface OrderTrackerProps {
   status: OrderStatus
+  paymentStatus: PaymentStatus
 }
 
 /// A visual progress timeline that lets a customer track where their order is
-/// in the fulfillment flow. Derives its state entirely from the order status,
-/// so it stays in sync whenever the order is refetched.
-export function OrderTracker({ status }: OrderTrackerProps) {
+/// in the fulfillment flow. Derives its state from the order + payment status,
+/// so it stays in sync whenever the order is refetched (including the dedicated
+/// payment milestone).
+export function OrderTracker({ status, paymentStatus }: OrderTrackerProps) {
   const { t } = useI18n()
-  const view = orderTrackerView(status)
+  const view = orderTrackerView(status, paymentStatus)
 
   if (view.cancelled) {
     return (
@@ -46,7 +48,7 @@ export function OrderTracker({ status }: OrderTrackerProps) {
       <ol className="order-tracker__steps">
         {view.steps.map((step) => (
           <li
-            key={step.status}
+            key={step.key}
             role="listitem"
             className={`order-tracker__step order-tracker__step--${step.state}`}
             aria-current={step.state === 'current' ? 'step' : undefined}

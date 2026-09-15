@@ -53,7 +53,7 @@ export function OrderDetail() {
         </div>
       </div>
 
-      <OrderTracker status={order.status} />
+      <OrderTracker status={order.status} paymentStatus={order.paymentStatus} />
 
       {order.status === 'DELIVERED' && (
         <Link to={`/orders/${order.id}/review`} className="order-detail__review-cta">
