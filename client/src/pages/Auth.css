@@ -16,8 +16,9 @@
   overflow: hidden;
   width: 100%;
   max-width: 400px;
-  background: var(--glass-bg), var(--bg-800);
-  border: 1px solid var(--glass-border);
+  /* Fixed dark card to match the always-dark auth scene (not theme-flipping). */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.014)), var(--bg-800);
+  border: 1px solid rgba(245, 224, 184, 0.14);
   border-radius: var(--radius-lg);
   padding: 2.25rem 2rem;
   display: flex;

@@ -7,6 +7,12 @@ interface LanguageValue {
   toggle: () => void
   /** Return the Bangla or English variant for the active language. */
   t: (bn: string, en: string) => string
+  /**
+   * Localize admin-provided content: shows the active language's value when
+   * present, otherwise falls back to whichever value exists (so single-language
+   * content renders as entered regardless of the toggle).
+   */
+  tc: (bangla?: string | null, english?: string | null) => string
 }
 
 const LanguageContext = createContext<LanguageValue | undefined>(undefined)
@@ -49,6 +55,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLang: setLangState,
     toggle: () => setLangState((prev) => (prev === 'bn' ? 'en' : 'bn')),
     t: (bn, en) => (lang === 'bn' ? bn : en),
+    tc: (bangla, english) => {
+      const bn = bangla && bangla.trim() ? bangla : undefined
+      const en = english && english.trim() ? english : undefined
+      return lang === 'en' ? en ?? bn ?? '' : bn ?? en ?? ''
+    },
   }
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>

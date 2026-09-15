@@ -51,7 +51,7 @@ interface Picker {
 
 export function KitchenHome() {
   const { profile } = useBusinessProfile()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
   const [dates, setDates] = useState<ProductionDate[]>([])
   const [activeDate, setActiveDate] = useState<string | null>(null)
   const [day, setDay] = useState<ProductionDay | null>(null)
@@ -116,7 +116,7 @@ export function KitchenHome() {
 
   return (
     <section className="kitchen">
-      <h1>{profile.name} — {t('কিচেন', 'Kitchen')}</h1>
+      <h1>{tc(profile.name, profile.nameEnglish)} — {t('কিচেন', 'Kitchen')}</h1>
 
       {dates.length > 0 && (
         <div className="kitchen-dates">

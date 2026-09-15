@@ -111,12 +111,22 @@ export function BusinessProfileSettings() {
         <p className="hint">{t('লোগো কনফিগারযোগ্য — নতুন ছবি আপলোড করে কোড পরিবর্তন ছাড়াই বদলানো যাবে।', 'The logo is configurable — upload a new image to change it without code changes.')}</p>
 
         <label>
-          {t('ট্যাগলাইন', 'Tagline')}
+          {t('মোটো (বাংলা)', 'Motto (Bangla)')}
           <input
             value={draft.tagline ?? ''}
             onChange={(e) => setDraft((d) => ({ ...d, tagline: e.target.value }))}
+            placeholder="আস্থার ছায়ায় ঘেরা…"
           />
         </label>
+        <label>
+          {t('মোটো (English)', 'Motto (English)')}
+          <input
+            value={draft.taglineEnglish ?? ''}
+            onChange={(e) => setDraft((d) => ({ ...d, taglineEnglish: e.target.value }))}
+            placeholder="A home of trust, quality and care"
+          />
+        </label>
+        <p className="hint">{t('ভাষা টগল অনুযায়ী বাংলা বা ইংরেজি মোটো দেখানো হবে।', 'The Bangla or English motto is shown based on the language toggle.')}</p>
       </fieldset>
 
       <fieldset>

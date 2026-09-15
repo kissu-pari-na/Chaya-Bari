@@ -51,8 +51,8 @@
   border-radius: 50%;
   font-size: 1.05rem;
   background: var(--card, #2a1512);
-  border: 2px solid var(--glass-border);
-  color: var(--muted-cream);
+  border: 2px solid var(--card-border);
+  color: var(--card-muted);
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
@@ -61,7 +61,7 @@
   margin-top: 0.5rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--muted-cream);
+  color: var(--card-muted);
   font-family: var(--font-display);
   line-height: 1.15;
 }
@@ -69,8 +69,8 @@
 .order-tracker__desc {
   margin-top: 0.15rem;
   font-size: 0.68rem;
-  color: var(--muted-cream);
-  opacity: 0.75;
+  color: var(--card-muted);
+  opacity: 0.85;
   line-height: 1.2;
 }
 
@@ -81,7 +81,7 @@
   color: #fff;
 }
 .order-tracker__step--done .order-tracker__label {
-  color: var(--cream);
+  color: var(--card-text);
 }
 
 /* Current */
@@ -98,7 +98,7 @@
 }
 .order-tracker__step--current .order-tracker__desc {
   opacity: 1;
-  color: var(--cream);
+  color: var(--card-text);
 }
 
 @keyframes order-tracker-pulse {

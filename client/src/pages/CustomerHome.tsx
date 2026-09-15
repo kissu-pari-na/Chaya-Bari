@@ -32,7 +32,9 @@ function dishEmoji(p: Product, index: number): string {
 export function CustomerHome() {
   const { profile } = useBusinessProfile()
   const { user } = useAuth()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
+  const bizName = tc(profile.name, profile.nameEnglish)
+  const tagline = tc(profile.tagline, profile.taglineEnglish)
   const [products, setProducts] = useState<Product[]>([])
   const [topReviews, setTopReviews] = useState<Review[]>([])
   const [rating, setRating] = useState<RatingSummary | null>(null)
@@ -142,11 +144,11 @@ export function CustomerHome() {
           <h1 className="hero__title">
             {t('খাঁটি', 'Authentic')} <span>{t('ঘরোয়া', 'Home-style')}</span> {t('খাবার', 'Food')}
           </h1>
-          <p className="hero__sub">{profile.tagline}</p>
+          <p className="hero__sub">{tagline}</p>
           <p className="hero__lede">
             {t(
-              `${profile.name} থেকে ঘরের মমতায় তৈরি খাবার আগাম অর্ডার করুন — ${profile.address.city}, ${profile.address.country}-জুড়ে আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।`,
-              `Pre-order lovingly home-cooked food from ${profile.name} — across ${profile.address.city}, ${profile.address.country} we deliver freshly cooked meals to your door.`,
+              `${bizName} থেকে ঘরের মমতায় তৈরি খাবার আগাম অর্ডার করুন — ${profile.address.city}, ${profile.address.country}-জুড়ে আমরা তাজা রান্না পৌঁছে দিই আপনার দুয়ারে।`,
+              `Pre-order lovingly home-cooked food from ${bizName} — across ${profile.address.city}, ${profile.address.country} we deliver freshly cooked meals to your door.`,
             )}
           </p>
           <div className="hero__cta">
@@ -304,8 +306,8 @@ export function CustomerHome() {
       {/* ---------- Footer ---------- */}
       <footer className="home-footer">
         <div>
-          <div className="home-footer__brand">{profile.name}</div>
-          <div>{profile.tagline}</div>
+          <div className="home-footer__brand">{bizName}</div>
+          <div>{tagline}</div>
         </div>
         <div>
           {profile.contact.phone} · {profile.contact.email}

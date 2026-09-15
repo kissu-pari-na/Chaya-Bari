@@ -19,7 +19,7 @@
   font-size: 0.9rem;
   margin-bottom: 0.85rem;
   max-width: 420px;
-  color: var(--muted-cream);
+  color: var(--card-muted);
 }
 
 .profile-form input,
@@ -29,7 +29,7 @@
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
   background: rgba(255, 255, 255, 0.05);
-  color: var(--cream);
+  color: var(--card-text);
 }
 
 .hint {
@@ -56,7 +56,7 @@
 .partner-table th {
   text-align: left;
   font-size: 0.8rem;
-  color: var(--muted-cream);
+  color: var(--card-muted);
   padding: 0.4rem;
 }
 

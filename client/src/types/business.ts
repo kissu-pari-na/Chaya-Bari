@@ -50,7 +50,9 @@ export interface BusinessProfile {
   nameEnglish?: string
   /** Path/URL to the current logo asset. Configurable, not hard-coded. */
   logoUrl: string
+  /** Motto/tagline shown to customers; Bangla and English variants toggle with the app language. */
   tagline?: string
+  taglineEnglish?: string
   contact: BusinessContact
   address: BusinessAddress
   /** Areas/zones the business currently delivers/serves. */

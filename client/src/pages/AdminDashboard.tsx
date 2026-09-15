@@ -4,12 +4,12 @@ import { useI18n } from '../context/LanguageContext'
 
 export function AdminDashboard() {
   const { profile } = useBusinessProfile()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
   const owners = profile.partners.filter((p) => p.applicationRole === 'business_owner_admin')
 
   return (
     <section className="card">
-      <h1>{profile.name} — {t('অ্যাডমিন ড্যাশবোর্ড', 'Admin Dashboard')}</h1>
+      <h1>{tc(profile.name, profile.nameEnglish)} — {t('অ্যাডমিন ড্যাশবোর্ড', 'Admin Dashboard')}</h1>
       <p className="muted">{t('এখানে ব্যবসার সার্বিক তথ্য দেখা যাবে।', 'An overview of the business.')}</p>
 
       <div className="stat-row">

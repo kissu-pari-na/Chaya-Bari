@@ -5,7 +5,8 @@ import './Document.css'
 
 export function Invoice() {
   const { profile } = useBusinessProfile()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
+  const bizName = tc(profile.name, profile.nameEnglish)
 
   const sampleInvoice = {
     id: 'INV-100234',
@@ -74,7 +75,7 @@ export function Invoice() {
         </tfoot>
       </table>
       <p className="muted small">
-        {t(`এই ইনভয়েসটি ${profile.name} কর্তৃক প্রদত্ত। কোনো প্রশ্ন থাকলে ${profile.contact.phone} নম্বরে যোগাযোগ করুন।`, `This invoice is issued by ${profile.name}. For any questions, contact ${profile.contact.phone}.`)}
+        {t(`এই ইনভয়েসটি ${bizName} কর্তৃক প্রদত্ত। কোনো প্রশ্ন থাকলে ${profile.contact.phone} নম্বরে যোগাযোগ করুন।`, `This invoice is issued by ${bizName}. For any questions, contact ${profile.contact.phone}.`)}
       </p>
     </section>
   )

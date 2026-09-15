@@ -5,7 +5,8 @@ import './Document.css'
 
 export function OrderConfirmation() {
   const { profile } = useBusinessProfile()
-  const { t } = useI18n()
+  const { t, tc } = useI18n()
+  const bizName = tc(profile.name, profile.nameEnglish)
 
   const sampleOrder = {
     id: 'CB-100234',
@@ -24,7 +25,7 @@ export function OrderConfirmation() {
       <h1>{t('অর্ডার কনফার্মেশন', 'Order Confirmation')}</h1>
       <p>
         {t('ধন্যবাদ,', 'Thank you,')} {sampleOrder.customerName}!{' '}
-        {t(`${profile.name}-এ আপনার অর্ডারটি নিশ্চিত হয়েছে।`, `Your order at ${profile.name} has been confirmed.`)}
+        {t(`${bizName}-এ আপনার অর্ডারটি নিশ্চিত হয়েছে।`, `Your order at ${bizName} has been confirmed.`)}
       </p>
       <table className="document-table">
         <thead>

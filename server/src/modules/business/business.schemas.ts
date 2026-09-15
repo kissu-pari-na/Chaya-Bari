@@ -7,6 +7,7 @@ export const businessProfileSchema = z.object({
   nameEnglish: z.string().max(120).optional(),
   logoUrl: z.string().max(500),
   tagline: z.string().max(200).optional(),
+  taglineEnglish: z.string().max(200).optional(),
   contact: z.object({
     phone: z.string().max(60),
     email: z.string().max(160),

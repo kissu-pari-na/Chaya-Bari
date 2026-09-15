@@ -387,8 +387,8 @@
 }
 
 .trust__tile {
-  background: var(--bg-800);
-  border: 1px solid var(--border-dark);
+  background: var(--card-2);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
   padding: 1.2rem 1.25rem;
   display: flex;
@@ -406,19 +406,19 @@
   margin: 0 0 0.2rem;
   font-size: 1.02rem;
   font-weight: 700;
-  color: var(--cream);
+  color: var(--card-text);
   font-family: var(--font-display);
 }
 
 .trust__text {
   margin: 0;
   font-size: 0.86rem;
-  color: var(--muted-cream);
+  color: var(--card-muted);
 }
 
 /* ---------- Featured (cream cards on dark) ---------- */
 .home__featured-empty {
-  color: var(--muted-cream);
+  color: var(--on-page-muted);
 }
 
 /* ---------- Promo / combo band (deep ember red, gilded) ---------- */
@@ -512,7 +512,7 @@
 
 .review__text {
   margin: 0 0 1rem;
-  color: var(--cream);
+  color: var(--card-text);
   font-size: 0.95rem;
   line-height: 1.6;
 }
@@ -539,32 +539,32 @@
 
 .review__name {
   font-weight: 600;
-  color: var(--cream);
+  color: var(--card-text);
   font-size: 0.9rem;
 }
 
 .review__meta {
-  color: var(--muted-cream);
+  color: var(--card-muted);
   font-size: 0.78rem;
 }
 
 /* ---------- Footer ---------- */
 .home-footer {
   margin-top: 3rem;
-  border-top: 1px solid var(--border-dark);
+  border-top: 1px solid var(--card-border);
   padding-top: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  color: var(--muted-cream);
+  color: var(--on-page-muted);
   font-size: 0.88rem;
 }
 
 .home-footer__brand {
   font-family: var(--font-display);
   font-weight: 700;
-  color: var(--cream);
+  color: var(--heading);
   font-size: 1.05rem;
 }

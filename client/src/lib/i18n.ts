@@ -35,6 +35,18 @@ export function pick(bn: string, en: string): string {
   return _lang === 'bn' ? bn : en
 }
 
+/**
+ * Localize admin-provided content where a Bangla and/or English value may
+ * exist. Shows the value for the active language when present, and otherwise
+ * falls back to whichever value was provided (so content entered in only one
+ * language still renders, in that language, regardless of the toggle).
+ */
+export function pickContent(bangla?: string | null, english?: string | null): string {
+  const bn = bangla && bangla.trim() ? bangla : undefined
+  const en = english && english.trim() ? english : undefined
+  return _lang === 'en' ? (en ?? bn ?? '') : (bn ?? en ?? '')
+}
+
 const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
 
 /**

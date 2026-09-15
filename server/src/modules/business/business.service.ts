@@ -10,6 +10,7 @@ export const defaultBusinessProfile: BusinessProfileInput = {
   nameEnglish: 'Chaya Bari',
   logoUrl: '/logo.png',
   tagline: 'আস্থার ছায়ায় ঘেরা, গুণ ও মানের বসত বাড়ি',
+  taglineEnglish: 'A home of trust, quality and care',
   contact: {
     phone: '+880 1XXXXXXXXX',
     email: 'hello@chayabari.example',
