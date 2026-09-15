@@ -6,20 +6,31 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.5rem;
-  background: color-mix(in srgb, var(--bg-900) 82%, transparent);
+  background: var(--header-bg);
   backdrop-filter: saturate(140%) blur(10px);
-  border-bottom: 1px solid var(--border-dark);
-  flex-wrap: wrap;
+  border-bottom: 1px solid var(--header-border);
   gap: 0.75rem;
 }
 
-/* Logo always reads on the dark nav */
-.app-header .logo__name {
-  color: var(--cream);
+/* Logo + hamburger row (the hamburger only shows on small screens) */
+.app-header__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.app-header .logo__name-en {
-  color: var(--muted-cream);
+.app-header__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--header-border);
+  background: transparent;
+  color: var(--header-fg);
+  font-size: 1.2rem;
+  cursor: pointer;
 }
 
 .app-header__nav {
@@ -63,20 +74,24 @@
   opacity: 0.8;
 }
 
+/* Dropdown menu: hidden until its --open modifier is present (desktop). */
 .nav-group__menu {
+  display: none;
   position: absolute;
   top: calc(100% + 0.6rem);
   left: 0;
   z-index: 60;
   min-width: 190px;
-  display: flex;
   flex-direction: column;
   padding: 0.35rem;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--bg-800) 96%, transparent);
-  border: 1px solid var(--border-dark);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-  backdrop-filter: saturate(140%) blur(12px);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.nav-group__menu--open {
+  display: flex;
 }
 
 /* little pointer so the menu reads as attached to its button */
@@ -88,15 +103,15 @@
   width: 9px;
   height: 9px;
   transform: rotate(45deg);
-  background: var(--bg-800);
-  border-left: 1px solid var(--border-dark);
-  border-top: 1px solid var(--border-dark);
+  background: var(--popover-bg);
+  border-left: 1px solid var(--popover-border);
+  border-top: 1px solid var(--popover-border);
 }
 
 .nav-group__item {
   padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
-  color: var(--cream);
+  color: var(--header-fg);
   font-size: 0.9rem;
   text-decoration: none;
   white-space: nowrap;
@@ -112,20 +127,20 @@
 .nav-group__item--active {
   color: var(--accent-bright);
   font-weight: 600;
-  background: rgba(245, 179, 0, 0.1);
+  background: rgba(245, 179, 0, 0.12);
 }
 
 .app-header__link {
   position: relative;
   text-decoration: none;
-  color: var(--muted-cream);
+  color: var(--header-fg-muted);
   font-weight: 500;
   padding: 0.4rem 0.1rem;
   transition: color 0.14s ease;
 }
 
 .app-header__link:hover {
-  color: var(--cream);
+  color: var(--header-fg);
   text-decoration: none;
 }
 
@@ -148,7 +163,7 @@
 .app-header__cart {
   position: relative;
   text-decoration: none;
-  color: var(--cream);
+  color: var(--header-fg);
   font-weight: 600;
   padding: 0.4rem 0.1rem;
 }
@@ -176,7 +191,7 @@
 
 .app-header__name {
   font-size: 0.88rem;
-  color: var(--muted-cream);
+  color: var(--header-fg-muted);
   font-weight: 500;
 }
 
@@ -187,8 +202,8 @@
 
 .app-header__logout {
   background: transparent;
-  border: 1px solid var(--border-dark);
-  color: var(--cream);
+  border: 1px solid var(--header-border);
+  color: var(--header-fg);
   padding: 0.4rem 0.85rem;
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
@@ -203,13 +218,90 @@
   border-color: var(--accent);
 }
 
-@media (max-width: 640px) {
+/* ---- Small screens: collapse the nav behind a hamburger ---- */
+@media (max-width: 900px) {
   .app-header {
+    flex-direction: column;
+    align-items: stretch;
     padding: 0.65rem 1rem;
+    gap: 0;
   }
+
+  .app-header__bar {
+    justify-content: space-between;
+  }
+
+  .app-header__toggle {
+    display: inline-flex;
+  }
+
+  /* Nav becomes a vertical panel that opens under the bar. */
   .app-header__nav {
-    gap: 0.85rem;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.35rem;
+    padding-top: 0.75rem;
+    margin-top: 0.65rem;
+    border-top: 1px solid var(--header-border);
+  }
+
+  .app-header__nav[data-open='true'] {
+    display: flex;
+  }
+
+  .app-header__link {
+    padding: 0.6rem 0.2rem;
+  }
+  .app-header__link--active::after {
+    display: none;
+  }
+
+  /* Admin groups expand inline (no floating dropdown) when the menu is open. */
+  .admin-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+    width: 100%;
+  }
+
+  .nav-group__btn {
     width: 100%;
     justify-content: space-between;
+    padding: 0.6rem 0.2rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--header-fg-muted);
+  }
+  .nav-group__caret {
+    display: none;
+  }
+
+  .nav-group__menu,
+  .nav-group__menu--open {
+    display: flex;
+    position: static;
+    min-width: 0;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding: 0 0 0.4rem 0.75rem;
+  }
+  .nav-group__menu::before {
+    display: none;
+  }
+
+  .app-header__user {
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--header-border);
+    margin-top: 0.35rem;
+  }
+
+  .app-header__cart {
+    padding: 0.6rem 0.2rem;
   }
 }

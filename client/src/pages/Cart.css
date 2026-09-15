@@ -6,11 +6,11 @@
   padding: 1.75rem;
   backdrop-filter: blur(12px);
   box-shadow: var(--glass-shadow);
-  color: var(--cream);
+  color: var(--card-text);
 }
 
 .cart-shell h1 {
-  color: var(--cream);
+  color: var(--card-heading);
 }
 
 .cart-shell--empty {
@@ -23,7 +23,7 @@
 }
 
 .cart-shell .muted {
-  color: var(--muted-cream);
+  color: var(--card-muted);
 }
 
 .cart-list {
@@ -71,7 +71,7 @@
 
 .cart-item__name {
   font-weight: 600;
-  color: var(--cream);
+  color: var(--card-text);
 }
 
 .cart-item__qty {
@@ -84,8 +84,8 @@
   width: 30px;
   height: 30px;
   border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--cream);
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--card-text);
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
@@ -129,7 +129,7 @@
   justify-content: space-between;
   font-size: 1.1rem;
   margin-bottom: 0.35rem;
-  color: var(--cream);
+  color: var(--card-text);
 }
 
 .cart-summary__row strong {

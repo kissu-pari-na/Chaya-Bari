@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Logo } from './Logo'
 import { AdminNav } from './AdminNav'
 import { NotificationBell } from './NotificationBell'
@@ -18,6 +19,13 @@ export function Header({ variant }: HeaderProps) {
   const { count } = useCart()
   const { t } = useI18n()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // Close the mobile menu after navigating.
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   const flatLinks: Record<'customer' | 'kitchen', { to: string; label: string; end?: boolean }[]> = {
     customer: [
@@ -37,8 +45,20 @@ export function Header({ variant }: HeaderProps) {
 
   return (
     <header className="app-header">
-      <Logo />
-      <nav className="app-header__nav">
+      <div className="app-header__bar">
+        <Logo />
+        <button
+          type="button"
+          className="app-header__toggle"
+          aria-label={t('মেনু', 'Menu')}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          {menuOpen ? '✕' : '☰'}
+        </button>
+      </div>
+
+      <nav className="app-header__nav" data-open={menuOpen}>
         {variant === 'admin' ? (
           <AdminNav />
         ) : (

@@ -109,22 +109,22 @@ export function AdminNav() {
                 ▾
               </span>
             </button>
-            {isOpen && (
-              <div className="nav-group__menu" role="menu">
-                {group.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={({ isActive }) =>
-                      isActive ? 'nav-group__item nav-group__item--active' : 'nav-group__item'
-                    }
-                    role="menuitem"
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-              </div>
-            )}
+            {/* Always rendered so small screens can show it inline via CSS; on
+                desktop the --open modifier controls visibility. */}
+            <div className={isOpen ? 'nav-group__menu nav-group__menu--open' : 'nav-group__menu'} role="menu">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    isActive ? 'nav-group__item nav-group__item--active' : 'nav-group__item'
+                  }
+                  role="menuitem"
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
           </div>
         )
       })}

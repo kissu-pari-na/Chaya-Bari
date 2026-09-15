@@ -96,6 +96,13 @@
   --ghost-border: rgba(245, 241, 231, 0.32);
   --ghost-fg: var(--cream);
   --link: var(--accent-bright);
+  /* App bar + floating menus (theme-aware chrome). */
+  --header-bg: color-mix(in srgb, var(--bg-900) 82%, transparent);
+  --header-border: var(--border-dark);
+  --header-fg: var(--cream);
+  --header-fg-muted: var(--muted-cream);
+  --popover-bg: #17131a;
+  --popover-border: var(--border-dark);
   color-scheme: dark;
 }
 
@@ -125,6 +132,14 @@
   --glass-border: #e7deca;
   --glass-shadow: 0 16px 38px rgba(60, 40, 20, 0.12);
   --shadow-card: 0 8px 22px rgba(60, 40, 20, 0.1);
+
+  /* App bar + floating menus flip to light chrome. */
+  --header-bg: color-mix(in srgb, #ffffff 90%, transparent);
+  --header-border: var(--card-border);
+  --header-fg: #23201f;
+  --header-fg-muted: #6a6459;
+  --popover-bg: #ffffff;
+  --popover-border: var(--card-border);
 }
 
 /* Light-theme form controls (the global inputs below are dark by default). */
