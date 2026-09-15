@@ -1,21 +1,27 @@
--- Account confirmation (phone mandatory, email optional).
+-- Account confirmation (email-based). Written idempotently so it can be safely
+-- re-run after a partially-applied/failed deploy (each step is guarded).
 
 -- Verification channel enum.
-CREATE TYPE "VerificationChannel" AS ENUM ('PHONE', 'EMAIL');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'VerificationChannel') THEN
+    CREATE TYPE "VerificationChannel" AS ENUM ('PHONE', 'EMAIL');
+  END IF;
+END $$;
 
 -- Confirmation timestamps on the user.
-ALTER TABLE "User" ADD COLUMN "phoneVerifiedAt" TIMESTAMP(3);
-ALTER TABLE "User" ADD COLUMN "emailVerifiedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "phoneVerifiedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emailVerifiedAt" TIMESTAMP(3);
 
--- Grandfather existing accounts as fully confirmed so current logins keep
--- working (they predate this feature).
-UPDATE "User" SET "phoneVerifiedAt" = now(), "emailVerifiedAt" = now();
+-- Grandfather existing accounts as confirmed so current logins keep working
+-- (they predate this feature). Only touch rows not already stamped.
+UPDATE "User" SET "phoneVerifiedAt" = now() WHERE "phoneVerifiedAt" IS NULL;
+UPDATE "User" SET "emailVerifiedAt" = now() WHERE "emailVerifiedAt" IS NULL;
 
 -- One phone number per account (nulls allowed for phone-less staff).
-CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone") WHERE "phone" IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS "User_phone_key" ON "User"("phone") WHERE "phone" IS NOT NULL;
 
 -- One-time confirmation codes.
-CREATE TABLE "VerificationCode" (
+CREATE TABLE IF NOT EXISTS "VerificationCode" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "channel" "VerificationChannel" NOT NULL,
@@ -26,6 +32,11 @@ CREATE TABLE "VerificationCode" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "VerificationCode_pkey" PRIMARY KEY ("id")
 );
-CREATE INDEX "VerificationCode_userId_channel_idx" ON "VerificationCode"("userId", "channel");
-ALTER TABLE "VerificationCode" ADD CONSTRAINT "VerificationCode_userId_fkey"
-  FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE INDEX IF NOT EXISTS "VerificationCode_userId_channel_idx" ON "VerificationCode"("userId", "channel");
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'VerificationCode_userId_fkey') THEN
+    ALTER TABLE "VerificationCode" ADD CONSTRAINT "VerificationCode_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
