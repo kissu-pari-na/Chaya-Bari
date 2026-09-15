@@ -3,12 +3,16 @@
 export class HttpError extends Error {
   status: number
   details?: unknown
+  /// Optional machine-readable code (e.g. 'PHONE_UNVERIFIED') for clients that
+  /// need to branch on the specific error, not just the status.
+  code?: string
 
-  constructor(status: number, message: string, details?: unknown) {
+  constructor(status: number, message: string, details?: unknown, code?: string) {
     super(message)
     this.name = 'HttpError'
     this.status = status
     this.details = details
+    this.code = code
   }
 
   static badRequest(message = 'Bad request', details?: unknown) {

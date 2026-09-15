@@ -11,6 +11,26 @@ export async function login(req: Request, res: Response) {
   res.status(200).json(result)
 }
 
+export async function verifyPhone(req: Request, res: Response) {
+  const result = await authService.verifyPhone(req.body)
+  res.status(200).json(result)
+}
+
+export async function resendPhone(req: Request, res: Response) {
+  await authService.resendPhone(req.body)
+  res.status(202).json({ ok: true })
+}
+
+export async function sendEmailCode(req: Request, res: Response) {
+  await authService.sendEmailVerification(req.user!.id)
+  res.status(202).json({ ok: true })
+}
+
+export async function verifyEmail(req: Request, res: Response) {
+  const user = await authService.verifyEmail(req.user!.id, req.body)
+  res.status(200).json({ user })
+}
+
 export async function me(req: Request, res: Response) {
   const user = await authService.getCurrentUser(req.user!.id)
   res.status(200).json({ user })

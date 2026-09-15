@@ -15,7 +15,7 @@ export interface AdminUser {
 export interface CreateUserInput {
   name: string
   email: string
-  phone?: string
+  phone: string
   password: string
   role: Role
 }

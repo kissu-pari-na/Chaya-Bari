@@ -65,8 +65,13 @@ export async function createUser(input: CreateUserInput, createdById: string): P
   if (existing) {
     throw HttpError.conflict('An account with this email already exists')
   }
+  const existingPhone = await prisma.user.findFirst({ where: { phone: input.phone } })
+  if (existingPhone) {
+    throw HttpError.conflict('An account with this phone number already exists')
+  }
 
   const passwordHash = await hashPassword(input.password)
+  const now = new Date()
   const user = await prisma.user.create({
     data: {
       name: input.name,
@@ -75,6 +80,10 @@ export async function createUser(input: CreateUserInput, createdById: string): P
       passwordHash,
       role: input.role,
       createdById,
+      // Admin-created accounts are trusted, so they are pre-confirmed and can
+      // log in immediately by phone or email.
+      phoneVerifiedAt: now,
+      emailVerifiedAt: now,
       // A CUSTOMER account gets a linked profile, matching self-registration.
       ...(input.role === 'CUSTOMER' ? { customer: { create: {} } } : {}),
     },

@@ -12,7 +12,7 @@ export function notFoundHandler(_req: Request, _res: Response, next: NextFunctio
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof HttpError) {
-    return res.status(err.status).json({ error: err.message, details: err.details })
+    return res.status(err.status).json({ error: err.message, details: err.details, code: err.code })
   }
 
   if (err instanceof ZodError) {

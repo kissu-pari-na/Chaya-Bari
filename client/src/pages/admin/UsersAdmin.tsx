@@ -48,7 +48,7 @@ export function UsersAdmin() {
       const created = await createUser({
         name: form.name,
         email: form.email,
-        phone: form.phone || undefined,
+        phone: form.phone,
         password: form.password,
         role: form.role,
       })
@@ -97,8 +97,13 @@ export function UsersAdmin() {
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
           </label>
           <label>
-            {t('ফোন (ঐচ্ছিক)', 'Phone (optional)')}
-            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            {t('মোবাইল নম্বর', 'Mobile number')}
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              required
+            />
           </label>
         </div>
         <label>

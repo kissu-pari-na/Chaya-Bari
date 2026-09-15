@@ -1,12 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiRequest, getToken, setToken } from '../lib/apiClient'
-import type { AuthResponse, AuthUser, LoginPayload, RegisterPayload } from '../types/auth'
+import type { AuthResponse, AuthUser, LoginPayload, RegisterPayload, RegisterResult } from '../types/auth'
 
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
   login: (payload: LoginPayload) => Promise<AuthUser>
-  register: (payload: RegisterPayload) => Promise<AuthUser>
+  /// Registers the account and sends confirmation codes; does NOT log in — the
+  /// mobile number must be confirmed first (see verifyPhone).
+  register: (payload: RegisterPayload) => Promise<RegisterResult>
+  /// Confirm the mobile number with the code; on success the user is logged in.
+  verifyPhone: (phone: string, code: string) => Promise<AuthUser>
+  /// Replace the current user (e.g. after confirming email).
+  updateUser: (user: AuthUser) => void
   logout: () => void
 }
 
@@ -53,13 +59,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [handleAuth],
   )
 
-  const register = useCallback(
-    async (payload: RegisterPayload) => {
-      const res = await apiRequest<AuthResponse>('/auth/register', { method: 'POST', body: payload })
+  // Registration no longer logs the user in — it creates the account and sends
+  // confirmation codes. The caller sends the user to the phone-confirmation
+  // screen, which logs them in once the mobile number is confirmed.
+  const register = useCallback(async (payload: RegisterPayload) => {
+    return apiRequest<RegisterResult>('/auth/register', { method: 'POST', body: payload })
+  }, [])
+
+  const verifyPhone = useCallback(
+    async (phone: string, code: string) => {
+      const res = await apiRequest<AuthResponse>('/auth/verify-phone', {
+        method: 'POST',
+        body: { phone, code },
+      })
       return handleAuth(res)
     },
     [handleAuth],
   )
+
+  const updateUser = useCallback((next: AuthUser) => {
+    setUser(next)
+  }, [])
 
   const logout = useCallback(() => {
     setToken(null)
@@ -67,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
-    [user, loading, login, register, logout],
+    () => ({ user, loading, login, register, verifyPhone, updateUser, logout }),
+    [user, loading, login, register, verifyPhone, updateUser, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

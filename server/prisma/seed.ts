@@ -21,6 +21,8 @@ async function main() {
       phone: null,
       role: 'ADMIN',
       passwordHash: await bcrypt.hash(adminPassword, 10),
+      phoneVerifiedAt: new Date(),
+      emailVerifiedAt: new Date(),
     },
   })
 
@@ -33,6 +35,8 @@ async function main() {
       phone: null,
       role: 'KITCHEN',
       passwordHash: await bcrypt.hash(kitchenPassword, 10),
+      phoneVerifiedAt: new Date(),
+      emailVerifiedAt: new Date(),
     },
   })
 
@@ -135,6 +139,8 @@ async function seedReviews() {
         email: d.email,
         role: 'CUSTOMER',
         passwordHash: await bcrypt.hash('demo12345', 10),
+        phoneVerifiedAt: new Date(),
+        emailVerifiedAt: new Date(),
         customer: { create: {} },
       },
       include: { customer: true },

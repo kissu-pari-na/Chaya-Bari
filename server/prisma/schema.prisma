@@ -30,6 +30,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Account confirmation. Phone confirmation is mandatory to use the account;
+  // email confirmation is optional and only required to log in by email.
+  phoneVerifiedAt DateTime?
+  emailVerifiedAt DateTime?
+
   // Footprint: which admin created this account (null for self-registered
   // customers and the seeded owners).
   createdById  String?
@@ -37,11 +42,34 @@ model User {
   createdUsers User[]  @relation("UserCreatedBy")
 
   // A user with the CUSTOMER role has a linked customer profile.
-  customer      Customer?
-  notifications Notification[]
+  customer          Customer?
+  notifications     Notification[]
+  verificationCodes VerificationCode[]
 
   @@index([role])
   @@index([createdById])
+}
+
+/// Which contact channel a confirmation code targets.
+enum VerificationChannel {
+  PHONE
+  EMAIL
+}
+
+/// A one-time confirmation code sent to a user's phone or email. The code is
+/// stored hashed; it expires and has an attempt cap.
+model VerificationCode {
+  id         String              @id @default(cuid())
+  userId     String
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel    VerificationChannel
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int                 @default(0)
+  createdAt  DateTime            @default(now())
+
+  @@index([userId, channel])
 }
 
 // (Review model is defined in Phase 12 near the bottom of this schema.)

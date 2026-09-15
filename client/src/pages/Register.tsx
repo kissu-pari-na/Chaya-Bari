@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
-import { roleHome } from '../components/ProtectedRoute'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
 import './Auth.css'
@@ -23,8 +22,10 @@ export function Register() {
     setError(null)
     setSubmitting(true)
     try {
-      const user = await register({ name, email, phone: phone || undefined, password })
-      navigate(roleHome[user.role], { replace: true })
+      await register({ name, email, phone, password })
+      // Registration does not log in — the mobile number must be confirmed
+      // first. Send the user to the confirmation screen with the phone prefilled.
+      navigate('/verify-phone', { replace: true, state: { phone } })
     } catch (err) {
       if (err instanceof ApiError && err.details?.length) {
         setError(err.details.map((d) => d.message).join(' · '))
@@ -53,8 +54,21 @@ export function Register() {
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
         </label>
         <label>
-          {t('ফোন (ঐচ্ছিক)', 'Phone (optional)')}
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
+          {t('মোবাইল নম্বর', 'Mobile number')}
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+            autoComplete="tel"
+            placeholder="01XXXXXXXXX"
+          />
+          <span className="auth-hint">
+            {t(
+              'অ্যাকাউন্ট নিশ্চিত করতে আমরা এই নম্বরে একটি কোড পাঠাব।',
+              "We'll send a code to this number to confirm your account.",
+            )}
+          </span>
         </label>
         <label>
           {t('পাসওয়ার্ড', 'Password')}

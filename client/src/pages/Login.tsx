@@ -12,21 +12,35 @@ export function Login() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // When the account exists but the mobile number isn't confirmed yet, offer a
+  // link to the confirmation screen instead of a dead-end error.
+  const [needsPhone, setNeedsPhone] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
+    setNeedsPhone(false)
     setSubmitting(true)
     try {
-      const user = await login({ email, password })
+      const user = await login({ identifier, password })
       const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
       navigate(from ?? roleHome[user.role], { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
+      if (err instanceof ApiError && err.code === 'PHONE_UNVERIFIED') {
+        setNeedsPhone(true)
+        setError(
+          t(
+            'আপনার মোবাইল নম্বর এখনও নিশ্চিত করা হয়নি।',
+            'Your mobile number has not been confirmed yet.',
+          ),
+        )
+      } else {
+        setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
+      }
     } finally {
       setSubmitting(false)
     }
@@ -40,9 +54,21 @@ export function Login() {
         </div>
         <h1>{t('লগইন', 'Log in')}</h1>
         {error && <div className="auth-error">{error}</div>}
+        {needsPhone && (
+          <p className="auth-alt">
+            <Link to="/verify-phone" state={{ phone: identifier }}>
+              {t('মোবাইল নম্বর নিশ্চিত করুন', 'Confirm your mobile number')}
+            </Link>
+          </p>
+        )}
         <label>
-          {t('ইমেইল', 'Email')}
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+          {t('ইমেইল বা মোবাইল নম্বর', 'Email or mobile number')}
+          <input
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            required
+            autoComplete="username"
+          />
         </label>
         <label>
           {t('পাসওয়ার্ড', 'Password')}

@@ -27,12 +27,15 @@ export interface ApiErrorDetail {
 export class ApiError extends Error {
   status: number
   details?: ApiErrorDetail[]
+  /// Optional machine-readable code from the server (e.g. 'PHONE_UNVERIFIED').
+  code?: string
 
-  constructor(status: number, message: string, details?: ApiErrorDetail[]) {
+  constructor(status: number, message: string, details?: ApiErrorDetail[], code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.details = details
+    this.code = code
   }
 }
 
@@ -67,7 +70,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!res.ok) {
     const message = (data && (data.error as string)) || `Request failed (${res.status})`
-    throw new ApiError(res.status, message, data?.details)
+    const details = Array.isArray(data?.details) ? (data.details as ApiErrorDetail[]) : undefined
+    throw new ApiError(res.status, message, details, data?.code as string | undefined)
   }
 
   return data as T

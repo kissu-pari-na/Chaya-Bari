@@ -127,3 +127,39 @@
 .auth-alt a {
   color: var(--accent-bright);
 }
+
+.auth-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--muted-cream);
+}
+
+.auth-notice {
+  background: rgba(76, 175, 80, 0.12);
+  color: #9bd39e;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* A secondary, text-style action (resend / send code) that doesn't compete
+   with the primary submit button. */
+.auth-card button.auth-link-btn {
+  margin-top: 0;
+  background: none;
+  color: var(--accent-bright);
+  border: none;
+  box-shadow: none;
+  padding: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.auth-card button.auth-link-btn:hover:not(:disabled) {
+  background: none;
+  box-shadow: none;
+  transform: none;
+  text-decoration: underline;
+}
