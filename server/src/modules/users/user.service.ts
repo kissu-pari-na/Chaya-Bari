@@ -61,14 +61,29 @@ export async function listUsers(): Promise<AdminUserRow[]> {
 
 /// Create a user with an explicit role and record which admin created it.
 export async function createUser(input: CreateUserInput, createdById: string): Promise<AdminUserRow> {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } })
-  if (existing) {
+  // Only a *confirmed* account reserves an email/phone; an unconfirmed account
+  // has never proven ownership, so it must not block admin creation either.
+  const verifiedEmail = await prisma.user.findFirst({
+    where: { email: input.email, emailVerifiedAt: { not: null } },
+  })
+  if (verifiedEmail) {
     throw HttpError.conflict('An account with this email already exists')
   }
-  const existingPhone = await prisma.user.findFirst({ where: { phone: input.phone } })
-  if (existingPhone) {
+  const verifiedPhone = await prisma.user.findFirst({
+    where: { phone: input.phone, emailVerifiedAt: { not: null } },
+  })
+  if (verifiedPhone) {
     throw HttpError.conflict('An account with this phone number already exists')
   }
+
+  // Clear any unconfirmed accounts squatting on this email/phone (cascades
+  // remove their pending codes and empty customer profile).
+  await prisma.user.deleteMany({
+    where: {
+      emailVerifiedAt: null,
+      OR: [{ email: input.email }, { phone: input.phone }],
+    },
+  })
 
   const passwordHash = await hashPassword(input.password)
   const now = new Date()

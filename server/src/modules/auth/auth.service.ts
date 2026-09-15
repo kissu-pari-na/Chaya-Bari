@@ -38,17 +38,38 @@ function looksLikeEmail(identifier: string): boolean {
 /// Public self-registration: always a CUSTOMER, created unconfirmed. A phone
 /// number is required for delivery/contact but is not verified. The account is
 /// confirmed by email, so an email code is sent and no token is returned here.
+///
+/// Only a *confirmed* account reserves an email or phone. An unconfirmed
+/// account never proves ownership of its email, so it must not permanently
+/// block anyone: if the email or phone is currently held only by unconfirmed
+/// accounts, those are cleared and this registration takes over. This prevents
+/// "squatting", where someone registers with a stranger's email, never
+/// confirms, and locks the real owner out forever.
 export async function register(
   input: RegisterInput,
 ): Promise<{ user: PublicUser; requiresEmailVerification: true }> {
-  const existingEmail = await prisma.user.findUnique({ where: { email: input.email } })
-  if (existingEmail) {
+  const verifiedEmail = await prisma.user.findFirst({
+    where: { email: input.email, emailVerifiedAt: { not: null } },
+  })
+  if (verifiedEmail) {
     throw HttpError.conflict('An account with this email already exists')
   }
-  const existingPhone = await prisma.user.findFirst({ where: { phone: input.phone } })
-  if (existingPhone) {
+  const verifiedPhone = await prisma.user.findFirst({
+    where: { phone: input.phone, emailVerifiedAt: { not: null } },
+  })
+  if (verifiedPhone) {
     throw HttpError.conflict('An account with this phone number already exists')
   }
+
+  // Release the email/phone from any unconfirmed accounts holding them. These
+  // have never been confirmed, so no real owner loses anything; cascades remove
+  // their pending codes and empty customer profile.
+  await prisma.user.deleteMany({
+    where: {
+      emailVerifiedAt: null,
+      OR: [{ email: input.email }, { phone: input.phone }],
+    },
+  })
 
   const passwordHash = await hashPassword(input.password)
   const user = await prisma.user.create({
