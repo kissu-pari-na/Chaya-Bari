@@ -1,3 +1,4 @@
+import nodemailer, { type Transporter } from 'nodemailer'
 import { env } from '../config/env.js'
 import { logger } from './logger.js'
 
@@ -14,10 +15,25 @@ export interface MailMessage {
 /// log-only mode (it records the message instead of sending it).
 export const isMailLive = !!env.smtp.host && !!env.smtp.user && !!env.smtp.pass
 
+// A single reused SMTP transport (created lazily on first send). Port 465 is
+// implicit TLS; anything else (typically 587) uses STARTTLS.
+let transporter: Transporter | null = null
+function getTransport(): Transporter {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: env.smtp.host,
+      port: env.smtp.port,
+      secure: env.smtp.port === 465,
+      auth: { user: env.smtp.user, pass: env.smtp.pass },
+    })
+  }
+  return transporter
+}
+
 /// Sends an email. In log-only mode (no SMTP configured) it records the message
-/// via the logger so the flow is observable in development without a real
-/// mail server. A real SMTP transport (e.g. nodemailer) can be dropped in here
-/// behind `isMailLive` without changing callers. Never throws into the caller.
+/// via the logger so the flow is observable in development without a real mail
+/// server. With SMTP configured it sends over a reused nodemailer transport.
+/// Errors are logged, not thrown into the caller.
 export async function sendEmail(msg: MailMessage): Promise<void> {
   try {
     if (!isMailLive) {
@@ -28,8 +44,13 @@ export async function sendEmail(msg: MailMessage): Promise<void> {
       })
       return
     }
-    // With SMTP configured a real transport would send here. Kept as a log to
-    // avoid a hard dependency until credentials/network are available.
+    await getTransport().sendMail({
+      from: env.smtp.from,
+      to: msg.to,
+      subject: msg.subject,
+      text: msg.text,
+      html: msg.html,
+    })
     logger.info('Email dispatched', { to: msg.to, subject: msg.subject, from: env.smtp.from })
   } catch (err) {
     logger.error('Failed to send email', { message: err instanceof Error ? err.message : String(err) })

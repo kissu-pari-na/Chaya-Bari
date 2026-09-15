@@ -23,9 +23,9 @@ export function Register() {
     setSubmitting(true)
     try {
       await register({ name, email, phone, password })
-      // Registration does not log in — the mobile number must be confirmed
-      // first. Send the user to the confirmation screen with the phone prefilled.
-      navigate('/verify-phone', { replace: true, state: { phone } })
+      // Registration does not log in — the email must be confirmed first. Send
+      // the user to the confirmation screen with the email prefilled.
+      navigate('/verify-email', { replace: true, state: { email } })
     } catch (err) {
       if (err instanceof ApiError && err.details?.length) {
         setError(err.details.map((d) => d.message).join(' · '))
@@ -65,8 +65,8 @@ export function Register() {
           />
           <span className="auth-hint">
             {t(
-              'অ্যাকাউন্ট নিশ্চিত করতে আমরা এই নম্বরে একটি কোড পাঠাব।',
-              "We'll send a code to this number to confirm your account.",
+              'ডেলিভারি ও যোগাযোগের জন্য প্রয়োজন।',
+              'Used for delivery and contact.',
             )}
           </span>
         </label>

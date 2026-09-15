@@ -39,7 +39,6 @@ import { Invoice } from './pages/Invoice'
 import { KitchenHome } from './pages/KitchenHome'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
-import { VerifyPhone } from './pages/VerifyPhone'
 import { VerifyEmail } from './pages/VerifyEmail'
 
 export default function App() {
@@ -54,7 +53,7 @@ export default function App() {
             {/* Auth */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/verify-phone" element={<VerifyPhone />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Customer (public browsing) */}
             <Route element={<CustomerLayout />}>
@@ -64,11 +63,6 @@ export default function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/invoice" element={<Invoice />} />
-
-              {/* Any signed-in user can confirm their email at any time. */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/verify-email" element={<VerifyEmail />} />
-              </Route>
 
               {/* Customer, auth required */}
               <Route element={<ProtectedRoute roles={['CUSTOMER']} />}>

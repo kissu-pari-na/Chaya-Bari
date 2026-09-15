@@ -256,27 +256,6 @@ a:hover {
   margin: 0 auto;
 }
 
-/* Reminder shown to signed-in users whose email isn't confirmed yet. */
-.verify-banner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem 1rem;
-  padding: 0.65rem 1.25rem;
-  background: rgba(245, 179, 0, 0.14);
-  border-bottom: 1px solid rgba(245, 179, 0, 0.35);
-  color: var(--text-strong, inherit);
-  font-size: 0.88rem;
-  text-align: center;
-}
-
-.verify-banner a {
-  color: var(--accent-bright);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 /* ---------- Cards: premium glass panels ---------- */
 .card {
   position: relative;

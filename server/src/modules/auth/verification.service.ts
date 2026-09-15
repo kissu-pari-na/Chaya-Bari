@@ -3,7 +3,6 @@ import type { User, VerificationChannel } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { sendEmail } from '../../lib/mailer.js'
-import { sendSms } from '../../lib/sms.js'
 import { HttpError } from '../../utils/httpError.js'
 
 const CODE_TTL_MS = 10 * 60 * 1000 // 10 minutes
@@ -33,12 +32,6 @@ async function issueCode(userId: string, channel: VerificationChannel): Promise<
     },
   })
   return code
-}
-
-export async function sendPhoneCode(user: User): Promise<void> {
-  if (!user.phone) throw HttpError.badRequest('No phone number on file')
-  const code = await issueCode(user.id, 'PHONE')
-  await sendSms(user.phone, `Your ${brand()} verification code is ${code}. It expires in 10 minutes.`)
 }
 
 export async function sendEmailCode(user: User): Promise<void> {

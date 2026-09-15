@@ -15,27 +15,27 @@ export function Login() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  // When the account exists but the mobile number isn't confirmed yet, offer a
-  // link to the confirmation screen instead of a dead-end error.
-  const [needsPhone, setNeedsPhone] = useState(false)
+  // When the account exists but the email isn't confirmed yet, offer a link to
+  // the confirmation screen instead of a dead-end error.
+  const [needsEmail, setNeedsEmail] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    setNeedsPhone(false)
+    setNeedsEmail(false)
     setSubmitting(true)
     try {
       const user = await login({ identifier, password })
       const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
       navigate(from ?? roleHome[user.role], { replace: true })
     } catch (err) {
-      if (err instanceof ApiError && err.code === 'PHONE_UNVERIFIED') {
-        setNeedsPhone(true)
+      if (err instanceof ApiError && err.code === 'EMAIL_UNVERIFIED') {
+        setNeedsEmail(true)
         setError(
           t(
-            'আপনার মোবাইল নম্বর এখনও নিশ্চিত করা হয়নি।',
-            'Your mobile number has not been confirmed yet.',
+            'আপনার ইমেইল এখনও নিশ্চিত করা হয়নি।',
+            'Your email has not been confirmed yet.',
           ),
         )
       } else {
@@ -54,10 +54,10 @@ export function Login() {
         </div>
         <h1>{t('লগইন', 'Log in')}</h1>
         {error && <div className="auth-error">{error}</div>}
-        {needsPhone && (
+        {needsEmail && (
           <p className="auth-alt">
-            <Link to="/verify-phone" state={{ phone: identifier }}>
-              {t('মোবাইল নম্বর নিশ্চিত করুন', 'Confirm your mobile number')}
+            <Link to="/verify-email" state={{ email: identifier }}>
+              {t('ইমেইল নিশ্চিত করুন', 'Confirm your email')}
             </Link>
           </p>
         )}

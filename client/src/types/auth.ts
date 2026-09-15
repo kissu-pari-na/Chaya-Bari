@@ -6,7 +6,6 @@ export interface AuthUser {
   email: string
   phone: string | null
   role: Role
-  phoneVerified: boolean
   emailVerified: boolean
 }
 
@@ -22,11 +21,11 @@ export interface RegisterPayload {
   password: string
 }
 
-/// Registration no longer logs the user in — the mobile number must be
+/// Registration no longer logs the user in — the email address must be
 /// confirmed first.
 export interface RegisterResult {
   user: AuthUser
-  requiresPhoneVerification: boolean
+  requiresEmailVerification: boolean
 }
 
 export interface LoginPayload {
