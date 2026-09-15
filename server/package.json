@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "vercel-build": "prisma generate && (prisma migrate resolve --rolled-back 20260915140000_account_verification || true) && prisma migrate deploy && tsc -p tsconfig.json",
+    "vercel-build": "prisma generate && prisma migrate deploy && tsc -p tsconfig.json",
     "postinstall": "prisma generate",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
