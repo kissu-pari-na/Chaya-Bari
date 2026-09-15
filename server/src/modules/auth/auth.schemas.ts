@@ -29,7 +29,20 @@ export const resendEmailSchema = z.object({
   email: z.string().email('A valid email is required').toLowerCase(),
 })
 
+// Password reset (public): request a code, then set a new password with it.
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('A valid email is required').toLowerCase(),
+})
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email('A valid email is required').toLowerCase(),
+  code: codeField,
+  password: z.string().min(8, 'Password must be at least 8 characters').max(200),
+})
+
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>
 export type ResendEmailInput = z.infer<typeof resendEmailSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>

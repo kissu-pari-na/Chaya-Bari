@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js'
 import { hashPassword } from '../../utils/password.js'
 import { HttpError } from '../../utils/httpError.js'
+import { sendEmailCode } from '../auth/verification.service.js'
 import type { CreateUserInput } from './user.schemas.js'
 
 export interface AdminUserRow {
@@ -86,7 +87,6 @@ export async function createUser(input: CreateUserInput, createdById: string): P
   })
 
   const passwordHash = await hashPassword(input.password)
-  const now = new Date()
   const user = await prisma.user.create({
     data: {
       name: input.name,
@@ -95,14 +95,16 @@ export async function createUser(input: CreateUserInput, createdById: string): P
       passwordHash,
       role: input.role,
       createdById,
-      // Admin-created accounts are trusted, so they are pre-confirmed and can
-      // log in immediately by phone or email.
-      phoneVerifiedAt: now,
-      emailVerifiedAt: now,
+      // Like self-registration, an admin-created account must confirm its email
+      // before it can log in — so a confirmation code is sent below.
       // A CUSTOMER account gets a linked profile, matching self-registration.
       ...(input.role === 'CUSTOMER' ? { customer: { create: {} } } : {}),
     },
     select: selectRow,
   })
+  // Send the email confirmation code; the user confirms, then receives a
+  // welcome email with their account + login info.
+  const full = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
+  await sendEmailCode(full)
   return toRow(user)
 }

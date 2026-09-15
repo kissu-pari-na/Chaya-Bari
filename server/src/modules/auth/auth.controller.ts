@@ -21,6 +21,16 @@ export async function resendEmail(req: Request, res: Response) {
   res.status(202).json({ ok: true })
 }
 
+export async function forgotPassword(req: Request, res: Response) {
+  await authService.forgotPassword(req.body)
+  res.status(202).json({ ok: true })
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  await authService.resetPassword(req.body)
+  res.status(200).json({ ok: true })
+}
+
 export async function me(req: Request, res: Response) {
   const user = await authService.getCurrentUser(req.user!.id)
   res.status(200).json({ user })

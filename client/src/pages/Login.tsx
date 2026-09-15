@@ -15,6 +15,8 @@ export function Login() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // One-off notice passed from another screen (e.g. after a password reset).
+  const notice = (location.state as { notice?: string } | null)?.notice ?? null
   // When the account exists but the email isn't confirmed yet, offer a link to
   // the confirmation screen instead of a dead-end error.
   const [needsEmail, setNeedsEmail] = useState(false)
@@ -53,6 +55,7 @@ export function Login() {
           <Logo size={48} />
         </div>
         <h1>{t('লগইন', 'Log in')}</h1>
+        {notice && <div className="auth-notice">{notice}</div>}
         {error && <div className="auth-error">{error}</div>}
         {needsEmail && (
           <p className="auth-alt">
@@ -80,6 +83,11 @@ export function Login() {
             autoComplete="current-password"
           />
         </label>
+        <p className="auth-alt" style={{ textAlign: 'right', marginTop: 0 }}>
+          <Link to="/forgot-password" state={{ email: identifier }}>
+            {t('পাসওয়ার্ড ভুলে গেছেন?', 'Forgot password?')}
+          </Link>
+        </p>
         <button type="submit" disabled={submitting}>
           {submitting ? t('অপেক্ষা করুন…', 'Please wait…') : t('লগইন', 'Log in')}
         </button>

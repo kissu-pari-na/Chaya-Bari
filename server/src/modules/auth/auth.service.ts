@@ -4,12 +4,14 @@ import { hashPassword, verifyPassword } from '../../utils/password.js'
 import { signAuthToken } from '../../utils/jwt.js'
 import { HttpError } from '../../utils/httpError.js'
 import type {
+  ForgotPasswordInput,
   LoginInput,
   RegisterInput,
   ResendEmailInput,
+  ResetPasswordInput,
   VerifyEmailInput,
 } from './auth.schemas.js'
-import { consumeCode, sendEmailCode } from './verification.service.js'
+import { consumeCode, sendEmailCode, sendPasswordResetCode, sendWelcomeEmail } from './verification.service.js'
 import { consumeRateLimit } from '../../lib/rateLimit.js'
 
 // Throttle how often a confirmation email may be sent to one address, so nobody
@@ -125,7 +127,12 @@ export async function verifyEmail(input: VerifyEmailInput): Promise<{ user: Publ
   if (!user) throw HttpError.badRequest('No account found for this email')
   if (user.emailVerifiedAt == null) {
     await consumeCode(user.id, 'EMAIL', input.code)
-    await prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } })
+    const confirmed = await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: new Date() },
+    })
+    // Welcome the user now that the account is confirmed (account + login info).
+    await sendWelcomeEmail(confirmed)
   }
   const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
   return { user: toPublicUser(fresh), token: signAuthToken({ sub: fresh.id, role: fresh.role }) }
@@ -141,6 +148,36 @@ export async function resendEmail(input: ResendEmailInput): Promise<void> {
   if (user && user.emailVerifiedAt == null) {
     await sendEmailCode(user)
   }
+}
+
+/// Request a password-reset code. Only a confirmed account can reset (an
+/// unconfirmed one is handled by the registration reclaim flow). Silent about
+/// whether the account exists, and hard-capped so it can't be used to spam an
+/// inbox: at most 2 requests per email in any 2-day window.
+export async function forgotPassword(input: ForgotPasswordInput): Promise<void> {
+  const email = input.email.toLowerCase()
+  const limit = await consumeRateLimit(`pwreset:${email}`, 2, 2 * 24 * 60 * 60_000)
+  if (!limit.allowed) {
+    throw new HttpError(
+      429,
+      'Too many password reset requests. Please try again in a couple of days.',
+      undefined,
+      'RATE_LIMITED',
+    )
+  }
+  const user = await prisma.user.findUnique({ where: { email } })
+  if (user && user.emailVerifiedAt != null && user.isActive) {
+    await sendPasswordResetCode(user)
+  }
+}
+
+/// Complete a password reset with the emailed code.
+export async function resetPassword(input: ResetPasswordInput): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email: input.email.toLowerCase() } })
+  if (!user) throw HttpError.badRequest('No account found for this email')
+  await consumeCode(user.id, 'PASSWORD_RESET', input.code)
+  const passwordHash = await hashPassword(input.password)
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } })
 }
 
 export async function login(input: LoginInput): Promise<{ user: PublicUser; token: string }> {

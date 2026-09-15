@@ -54,6 +54,7 @@ model User {
 enum VerificationChannel {
   PHONE
   EMAIL
+  PASSWORD_RESET
 }
 
 /// A one-time confirmation code sent to a user's phone or email. The code is

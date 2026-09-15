@@ -53,7 +53,12 @@ export function UsersAdmin() {
         role: form.role,
       })
       setForm({ ...emptyForm, role: form.role })
-      setNotice(t(`${created.name} তৈরি হয়েছে`, `${created.name} created`))
+      setNotice(
+        t(
+          `${created.name} তৈরি হয়েছে — নিশ্চিতকরণের জন্য ইমেইল পাঠানো হয়েছে।`,
+          `${created.name} created — a confirmation email has been sent to them.`,
+        ),
+      )
       await reload()
     } catch (err) {
       if (err instanceof ApiError && err.details?.length) setError(err.details.map((d) => d.message).join(' · '))

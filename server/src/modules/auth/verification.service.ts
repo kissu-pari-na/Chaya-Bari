@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import type { User, VerificationChannel } from '@prisma/client'
+import type { Role, User, VerificationChannel } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { sendEmail } from '../../lib/mailer.js'
@@ -8,6 +8,7 @@ import { HttpError } from '../../utils/httpError.js'
 
 const CODE_TTL_MS = 10 * 60 * 1000 // 10 minutes
 const MAX_ATTEMPTS = 5
+const BRAND = 'Chaya Bari'
 
 function generateCode(): string {
   // 6-digit numeric, zero-padded.
@@ -35,36 +36,22 @@ async function issueCode(userId: string, channel: VerificationChannel): Promise<
   return code
 }
 
-export async function sendEmailCode(user: User): Promise<void> {
-  const code = await issueCode(user.id, 'EMAIL')
-  await sendEmail({
-    to: user.email,
-    subject: `${code} is your ${brand()} confirmation code`,
-    text:
-      `Your ${brand()} email confirmation code is ${code}.\n` +
-      `It expires in 10 minutes. If you didn't create an account, you can ignore this email.`,
-    html: codeEmailHtml(user.name, code),
-    // Inline logo referenced as `cid:logo` from the HTML header.
-    attachments: [{ filename: 'chaya-bari.png', content: Buffer.from(emailLogoBase64, 'base64'), cid: 'logo' }],
-  })
+// ---- Emails ----
+
+function appLink(path: string): string {
+  const base = env.appUrl.replace(/\/$/, '')
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
 
-function brand(): string {
-  return 'Chaya Bari'
+function logoAttachment() {
+  return [{ filename: 'chaya-bari.png', content: Buffer.from(emailLogoBase64, 'base64'), cid: 'logo' }]
 }
 
-// Brand palette (matches the app): red gradient + gold accent on a cream card.
-// Email clients need table layout + inline styles, so this is deliberately
-// verbose rather than using the app's CSS.
-function codeEmailHtml(name: string, code: string): string {
-  const greeting = name ? escapeHtml(name) : 'there'
-  const digits = code
-    .split('')
-    .map(
-      (d) =>
-        `<span style="display:inline-block;min-width:34px;margin:0 4px;padding:12px 0;background:#fff7ea;border:1px solid #f0d9a8;border-radius:10px;font-size:28px;font-weight:700;letter-spacing:2px;color:#8a1a15;font-family:'Segoe UI',Arial,sans-serif;">${d}</span>`,
-    )
-    .join('')
+const font = "font-family:'Segoe UI',Arial,sans-serif"
+
+/// Branded card wrapper shared by every transactional email. `inner` is the
+/// body cell HTML. Email clients need table layout + inline styles.
+function emailShell(inner: string): string {
   return `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#f4f1ea;">
@@ -75,22 +62,16 @@ function codeEmailHtml(name: string, code: string): string {
             <tr>
               <td style="background:linear-gradient(135deg,#ea342c,#d0241d);padding:26px 24px;text-align:center;">
                 <img src="cid:logo" alt="ছায়া বাড়ি — Chaya Bari" height="56" style="height:56px;width:auto;display:inline-block;border:0;outline:none;text-decoration:none;" />
-                <div style="font-size:12px;color:#ffe6b8;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;margin-top:8px;">Chaya Bari</div>
+                <div style="font-size:12px;color:#ffe6b8;${font};letter-spacing:3px;text-transform:uppercase;margin-top:8px;">Chaya Bari</div>
               </td>
             </tr>
             <tr>
-              <td style="padding:32px 28px 8px;font-family:'Segoe UI',Arial,sans-serif;color:#2b2b2b;">
-                <p style="margin:0 0 8px;font-size:16px;">Hi ${greeting},</p>
-                <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#555;">Use the code below to confirm your email and finish setting up your account.</p>
-                <div style="text-align:center;margin:8px 0 18px;">${digits}</div>
-                <p style="margin:0 0 4px;font-size:13px;color:#888;text-align:center;">This code expires in <strong style="color:#d0241d;">10 minutes</strong>.</p>
-              </td>
+              <td style="padding:32px 28px 8px;${font};color:#2b2b2b;">${inner}</td>
             </tr>
             <tr>
-              <td style="padding:12px 28px 28px;font-family:'Segoe UI',Arial,sans-serif;">
+              <td style="padding:12px 28px 28px;${font};">
                 <hr style="border:none;border-top:1px solid #eee;margin:0 0 16px;" />
-                <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">If you didn't create a Chaya Bari account, you can safely ignore this email — no changes will be made.</p>
-                <p style="margin:12px 0 0;font-size:12px;color:#bbb;">© ছায়া বাড়ি · Homemade with care</p>
+                <p style="margin:0;font-size:12px;color:#bbb;">© ছায়া বাড়ি · Homemade with care</p>
               </td>
             </tr>
           </table>
@@ -101,6 +82,20 @@ function codeEmailHtml(name: string, code: string): string {
 </html>`
 }
 
+function digitsHtml(code: string): string {
+  return code
+    .split('')
+    .map(
+      (d) =>
+        `<span style="display:inline-block;min-width:34px;margin:0 4px;padding:12px 0;background:#fff7ea;border:1px solid #f0d9a8;border-radius:10px;font-size:28px;font-weight:700;letter-spacing:2px;color:#8a1a15;${font};">${d}</span>`,
+    )
+    .join('')
+}
+
+function buttonHtml(url: string, label: string): string {
+  return `<a href="${url}" style="display:inline-block;background:#ea342c;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:15px;${font};">${label}</a>`
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -108,6 +103,83 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+function roleLabel(role: Role): string {
+  if (role === 'ADMIN') return 'Administrator'
+  if (role === 'KITCHEN') return 'Kitchen staff'
+  return 'Customer'
+}
+
+export async function sendEmailCode(user: User): Promise<void> {
+  const code = await issueCode(user.id, 'EMAIL')
+  const greeting = user.name ? escapeHtml(user.name) : 'there'
+  const inner = `
+    <p style="margin:0 0 8px;font-size:16px;">Hi ${greeting},</p>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#555;">Use the code below to confirm your email and finish setting up your ${BRAND} account.</p>
+    <div style="text-align:center;margin:8px 0 18px;">${digitsHtml(code)}</div>
+    <p style="margin:0 0 18px;font-size:13px;color:#888;text-align:center;">This code expires in <strong style="color:#d0241d;">10 minutes</strong>.</p>
+    <div style="text-align:center;margin:0 0 14px;">${buttonHtml(appLink('/verify-email'), 'Confirm email')}</div>
+    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">Open the confirmation page, enter your email (<strong>${escapeHtml(user.email)}</strong>) and the code above. If you didn't expect this email, you can safely ignore it.</p>`
+  await sendEmail({
+    to: user.email,
+    subject: `${code} is your ${BRAND} confirmation code`,
+    text:
+      `Your ${BRAND} email confirmation code is ${code}.\n` +
+      `Confirm at ${appLink('/verify-email')} (email: ${user.email}).\n` +
+      `It expires in 10 minutes. If you didn't expect this, you can ignore this email.`,
+    html: emailShell(inner),
+    attachments: logoAttachment(),
+  })
+}
+
+/// Sent once an account's email is confirmed: a welcome with account + login
+/// details (never the password).
+export async function sendWelcomeEmail(user: User): Promise<void> {
+  const greeting = user.name ? escapeHtml(user.name) : 'there'
+  const inner = `
+    <p style="margin:0 0 8px;font-size:16px;">Hi ${greeting},</p>
+    <p style="margin:0 0 18px;font-size:15px;line-height:1.5;color:#555;">Your ${BRAND} account is confirmed and ready to use. Here are your account details:</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;font-size:14px;color:#2b2b2b;">
+      <tr><td style="padding:6px 0;color:#888;width:90px;">Name</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(user.name)}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(user.email)}</td></tr>
+      <tr><td style="padding:6px 0;color:#888;">Role</td><td style="padding:6px 0;font-weight:600;">${roleLabel(user.role)}</td></tr>
+    </table>
+    <div style="text-align:center;margin:0 0 16px;">${buttonHtml(appLink('/login'), 'Log in')}</div>
+    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">If you don't have your password (for example, an account created for you by our team), use <strong>“Forgot password”</strong> on the login page to set one.</p>`
+  await sendEmail({
+    to: user.email,
+    subject: `Welcome to ${BRAND} — your account is ready`,
+    text:
+      `Hi ${user.name}, your ${BRAND} account is confirmed.\n` +
+      `Email: ${user.email}\nRole: ${roleLabel(user.role)}\n` +
+      `Log in at ${appLink('/login')}. If you don't have your password, use "Forgot password" on the login page.`,
+    html: emailShell(inner),
+    attachments: logoAttachment(),
+  })
+}
+
+/// Sent when a password reset is requested.
+export async function sendPasswordResetCode(user: User): Promise<void> {
+  const code = await issueCode(user.id, 'PASSWORD_RESET')
+  const greeting = user.name ? escapeHtml(user.name) : 'there'
+  const inner = `
+    <p style="margin:0 0 8px;font-size:16px;">Hi ${greeting},</p>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#555;">We received a request to reset your ${BRAND} password. Use the code below to set a new one.</p>
+    <div style="text-align:center;margin:8px 0 18px;">${digitsHtml(code)}</div>
+    <p style="margin:0 0 18px;font-size:13px;color:#888;text-align:center;">This code expires in <strong style="color:#d0241d;">10 minutes</strong>.</p>
+    <div style="text-align:center;margin:0 0 14px;">${buttonHtml(appLink('/forgot-password'), 'Reset password')}</div>
+    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">If you didn't request a password reset, you can safely ignore this email — your password won't change.</p>`
+  await sendEmail({
+    to: user.email,
+    subject: `${code} is your ${BRAND} password reset code`,
+    text:
+      `Your ${BRAND} password reset code is ${code}.\n` +
+      `Reset at ${appLink('/forgot-password')} (email: ${user.email}).\n` +
+      `It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
+    html: emailShell(inner),
+    attachments: logoAttachment(),
+  })
 }
 
 /// Validate a submitted code for a channel. On success marks it consumed and
