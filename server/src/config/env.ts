@@ -25,6 +25,10 @@ export const env = {
   // outgoing emails (the in-app path is appended to this).
   appUrl: process.env.APP_URL ?? 'http://localhost:5173',
 
+  // Shared secret protecting the maintenance endpoint driven by Vercel Cron.
+  // Leave unset to disable the endpoint (it then returns 503).
+  cronSecret: process.env.CRON_SECRET ?? '',
+
   // SMTP for outgoing email. Leave unset to run the mailer in log-only mode.
   smtp: {
     host: process.env.SMTP_HOST ?? '',

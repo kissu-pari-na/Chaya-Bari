@@ -10,6 +10,32 @@ import type {
   VerifyEmailInput,
 } from './auth.schemas.js'
 import { consumeCode, sendEmailCode } from './verification.service.js'
+import { consumeRateLimit } from '../../lib/rateLimit.js'
+
+// Throttle how often a confirmation email may be sent to one address, so nobody
+// can spam a stranger's inbox by repeatedly registering or resending. A short
+// cooldown blocks rapid repeats; an hourly cap bounds the total.
+async function assertEmailSendAllowed(email: string): Promise<void> {
+  const key = email.toLowerCase()
+  const cooldown = await consumeRateLimit(`email-code-cooldown:${key}`, 1, 60_000)
+  if (!cooldown.allowed) {
+    throw new HttpError(
+      429,
+      `Please wait ${cooldown.retryAfterSec}s before requesting another code`,
+      undefined,
+      'RATE_LIMITED',
+    )
+  }
+  const hourly = await consumeRateLimit(`email-code-hourly:${key}`, 5, 60 * 60_000)
+  if (!hourly.allowed) {
+    throw new HttpError(
+      429,
+      'Too many code requests for this email. Please try again later.',
+      undefined,
+      'RATE_LIMITED',
+    )
+  }
+}
 
 export interface PublicUser {
   id: string
@@ -48,6 +74,9 @@ function looksLikeEmail(identifier: string): boolean {
 export async function register(
   input: RegisterInput,
 ): Promise<{ user: PublicUser; requiresEmailVerification: true }> {
+  // Throttle before any writes so a spammer can't even create churn.
+  await assertEmailSendAllowed(input.email)
+
   const verifiedEmail = await prisma.user.findFirst({
     where: { email: input.email, emailVerifiedAt: { not: null } },
   })
@@ -105,6 +134,9 @@ export async function verifyEmail(input: VerifyEmailInput): Promise<{ user: Publ
 /// Re-send the email code (before login). Silent about whether the address
 /// exists / is already confirmed, to avoid enumeration.
 export async function resendEmail(input: ResendEmailInput): Promise<void> {
+  // Throttle regardless of whether the account exists, so this can't be used to
+  // probe for accounts or to spam an inbox.
+  await assertEmailSendAllowed(input.email)
   const user = await prisma.user.findUnique({ where: { email: input.email } })
   if (user && user.emailVerifiedAt == null) {
     await sendEmailCode(user)
@@ -133,6 +165,18 @@ export async function login(input: LoginInput): Promise<{ user: PublicUser; toke
   }
 
   return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
+}
+
+/// Delete never-confirmed accounts older than `olderThanHours`. These have no
+/// proven owner and (since they can't log in) no orders or reviews, so removing
+/// them keeps pending rows from piling up and frees any email/phone they held.
+/// Cascades clear their codes and empty customer profile.
+export async function expireUnverifiedAccounts(olderThanHours = 48): Promise<number> {
+  const cutoff = new Date(Date.now() - olderThanHours * 60 * 60_000)
+  const res = await prisma.user.deleteMany({
+    where: { emailVerifiedAt: null, createdAt: { lt: cutoff } },
+  })
+  return res.count
 }
 
 export async function getCurrentUser(userId: string): Promise<PublicUser> {

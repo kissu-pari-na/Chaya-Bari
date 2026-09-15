@@ -72,6 +72,18 @@ model VerificationCode {
   @@index([userId, channel])
 }
 
+/// Fixed-window rate-limit counter, keyed by an opaque bucket string (e.g.
+/// "email-code:foo@bar.com" or "auth-ip:1.2.3.4"). Persisted so limits hold
+/// across serverless invocations. `expiresAt` marks the end of the current
+/// window; once passed, the counter resets on next use.
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
 // (Review model is defined in Phase 12 near the bottom of this schema.)
 
 /// Customer profile (1-1 with a User). Holds ordering-related info and, later,

@@ -15,12 +15,16 @@ import { adminBusinessRouter, publicBusinessRouter } from './modules/business/bu
 import { reviewRouter } from './modules/reviews/review.routes.js'
 import { translateRouter } from './modules/translate/translate.routes.js'
 import { adminUserRouter } from './modules/users/user.routes.js'
+import { maintenanceRouter } from './modules/maintenance/maintenance.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
 export const apiRouter = Router()
 
 apiRouter.use('/health', healthRouter)
 apiRouter.use('/auth', authRouter)
+
+// Scheduled housekeeping (Vercel Cron), secret-protected.
+apiRouter.use('/internal', maintenanceRouter)
 
 // Public best-effort translation (fallback for single-language content).
 apiRouter.use('/', translateRouter)

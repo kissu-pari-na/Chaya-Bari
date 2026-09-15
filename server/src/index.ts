@@ -2,10 +2,11 @@ import { createApp } from './app.js'
 import { env } from './config/env.js'
 import { logger } from './lib/logger.js'
 import { prisma } from './lib/prisma.js'
-import { dispatchReviewInvites } from './modules/reviews/review-invite.service.js'
+import { runMaintenance } from './modules/maintenance/maintenance.service.js'
 
-// How often to check for orders that became eligible for a review invite.
-const REVIEW_INVITE_INTERVAL_MS = 60 * 60 * 1000 // hourly
+// How often to run periodic housekeeping (review invites, unverified-account
+// expiry, rate-limit cleanup).
+const MAINTENANCE_INTERVAL_MS = 60 * 60 * 1000 // hourly
 
 // On serverless platforms (Vercel/AWS Lambda) the function is invoked per
 // request and frozen between requests, so binding a port and running interval
@@ -21,12 +22,12 @@ if (!isServerless) {
     logger.info('Server started', { port: env.port, env: env.nodeEnv })
   })
 
-  // Day-after-delivery review invites: run shortly after boot, then hourly.
-  // Each order is invited at most once, so re-running is harmless.
-  // (On serverless, drive this from a scheduled Cron hitting an endpoint.)
-  const runInvites = () => void dispatchReviewInvites().catch(() => undefined)
-  setTimeout(runInvites, 10_000)
-  const inviteTimer = setInterval(runInvites, REVIEW_INVITE_INTERVAL_MS)
+  // Periodic housekeeping: run shortly after boot, then hourly. All tasks are
+  // idempotent, so re-running is harmless. (On serverless, this is driven by a
+  // scheduled Cron hitting /api/internal/maintenance instead.)
+  const runTasks = () => void runMaintenance().catch(() => undefined)
+  setTimeout(runTasks, 10_000)
+  const inviteTimer = setInterval(runTasks, MAINTENANCE_INTERVAL_MS)
 
   const shutdown = async (signal: string) => {
     logger.info('Shutting down', { signal })
