@@ -7,6 +7,7 @@ export interface AuthUser {
   phone: string | null
   role: Role
   emailVerified: boolean
+  createdAt: string
 }
 
 export interface AuthResponse {

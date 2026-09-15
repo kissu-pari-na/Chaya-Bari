@@ -46,6 +46,7 @@ export interface PublicUser {
   phone: string | null
   role: Role
   emailVerified: boolean
+  createdAt: string
 }
 
 function toPublicUser(user: User): PublicUser {
@@ -56,6 +57,7 @@ function toPublicUser(user: User): PublicUser {
     phone: user.phone,
     role: user.role,
     emailVerified: user.emailVerifiedAt != null,
+    createdAt: user.createdAt.toISOString(),
   }
 }
 

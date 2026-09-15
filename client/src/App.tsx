@@ -41,6 +41,7 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { VerifyEmail } from './pages/VerifyEmail'
 import { ForgotPassword } from './pages/ForgotPassword'
+import { Profile } from './pages/Profile'
 
 export default function App() {
   return (
@@ -56,6 +57,11 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+
+            {/* Account profile — any signed-in user (renders its own header). */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<Profile />} />
+            </Route>
 
             {/* Customer (public browsing) */}
             <Route element={<CustomerLayout />}>

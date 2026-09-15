@@ -88,7 +88,9 @@ export function Header({ variant }: HeaderProps) {
         {user ? (
           <div className="app-header__user">
             <NotificationBell />
-            <span className="app-header__name">{user.name}</span>
+            <NavLink to="/profile" className="app-header__name" title={t('প্রোফাইল', 'Profile')}>
+              {user.name}
+            </NavLink>
             <button type="button" className="app-header__logout" onClick={handleLogout}>
               {t('লগআউট', 'Log out')}
             </button>
