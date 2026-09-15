@@ -17,6 +17,15 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emailVerifiedAt" TIMESTAMP(3);
 UPDATE "User" SET "phoneVerifiedAt" = now() WHERE "phoneVerifiedAt" IS NULL;
 UPDATE "User" SET "emailVerifiedAt" = now() WHERE "emailVerifiedAt" IS NULL;
 
+-- Resolve any pre-existing duplicate phone numbers (e.g. test accounts sharing
+-- a number) so the unique index can be built. Keep the phone on one account
+-- per number (the lexicographically-smallest id) and null it on the rest. No
+-- account is deleted, and phone is nullable, so this is non-destructive.
+UPDATE "User" u
+SET "phone" = NULL
+WHERE u."phone" IS NOT NULL
+  AND u."id" <> (SELECT MIN(u2."id") FROM "User" u2 WHERE u2."phone" = u."phone");
+
 -- One phone number per account (nulls allowed for phone-less staff).
 CREATE UNIQUE INDEX IF NOT EXISTS "User_phone_key" ON "User"("phone") WHERE "phone" IS NOT NULL;
 
