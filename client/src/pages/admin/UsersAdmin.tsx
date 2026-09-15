@@ -153,7 +153,17 @@ export function UsersAdmin() {
                   <td>
                     <span className={`role-badge role-badge--${u.role.toLowerCase()}`}>{roleLabel(u.role)}</span>
                   </td>
-                  <td>{u.isActive ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Inactive')}</td>
+                  <td>
+                    {!u.isActive ? (
+                      <span className="user-status user-status--off">{t('নিষ্ক্রিয়', 'Disabled')}</span>
+                    ) : !u.emailVerified ? (
+                      <span className="user-status user-status--pending">
+                        {t('অপেক্ষমাণ (ইমেইল অনিশ্চিত)', 'Pending — email not confirmed')}
+                      </span>
+                    ) : (
+                      <span className="user-status user-status--ok">{t('সক্রিয়', 'Active')}</span>
+                    )}
+                  </td>
                   <td>{u.createdBy ? u.createdBy.name : <span className="muted">{t('সেলফ / সিস্টেম', 'Self / system')}</span>}</td>
                   <td>{u.createdAt.slice(0, 10)}</td>
                 </tr>

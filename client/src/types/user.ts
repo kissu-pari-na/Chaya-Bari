@@ -7,6 +7,7 @@ export interface AdminUser {
   phone: string | null
   role: Role
   isActive: boolean
+  emailVerified: boolean
   createdAt: string
   /** The admin who created this account (null for self-registered customers). */
   createdBy: { id: string; name: string } | null

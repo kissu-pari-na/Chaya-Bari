@@ -11,6 +11,8 @@ export interface AdminUserRow {
   phone: string | null
   role: 'CUSTOMER' | 'KITCHEN' | 'ADMIN'
   isActive: boolean
+  /// Whether the account has confirmed its email. Until then it can't log in.
+  emailVerified: boolean
   createdAt: string
   /// Footprint: the admin who created this account (null for self-registered
   /// customers and seeded owners).
@@ -24,6 +26,7 @@ const selectRow = {
   phone: true,
   role: true,
   isActive: true,
+  emailVerifiedAt: true,
   createdAt: true,
   createdBy: { select: { id: true, name: true } },
 } as const
@@ -35,6 +38,7 @@ type RawRow = {
   phone: string | null
   role: 'CUSTOMER' | 'KITCHEN' | 'ADMIN'
   isActive: boolean
+  emailVerifiedAt: Date | null
   createdAt: Date
   createdBy: { id: string; name: string } | null
 }
@@ -47,6 +51,7 @@ function toRow(u: RawRow): AdminUserRow {
     phone: u.phone,
     role: u.role,
     isActive: u.isActive,
+    emailVerified: u.emailVerifiedAt != null,
     createdAt: u.createdAt.toISOString(),
     createdBy: u.createdBy,
   }
