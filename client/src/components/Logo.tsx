@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
+import { useAuth } from '../context/AuthContext'
+import { roleHome } from './ProtectedRoute'
 import './Logo.css'
 
 interface LogoProps {
@@ -18,6 +20,7 @@ interface LogoProps {
  */
 export function Logo({ size = 40, onLight = false, link = true }: LogoProps) {
   const { profile } = useBusinessProfile()
+  const { user } = useAuth()
   const src = onLight ? '/logo-light.png' : '/logo-dark.png'
   const img = <img src={src} alt={`${profile.name} logo`} height={size} />
 
@@ -25,8 +28,12 @@ export function Logo({ size = 40, onLight = false, link = true }: LogoProps) {
     return <div className="logo">{img}</div>
   }
 
+  // Send each role to its own home so an admin/kitchen user clicking the mark
+  // stays in their area instead of landing on the customer storefront.
+  const to = user ? roleHome[user.role] : '/'
+
   return (
-    <Link to="/" className="logo logo--link" aria-label={`${profile.name} — হোম / Home`}>
+    <Link to={to} className="logo logo--link" aria-label={`${profile.name} — হোম / Home`}>
       {img}
     </Link>
   )
