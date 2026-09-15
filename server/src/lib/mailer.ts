@@ -2,6 +2,14 @@ import nodemailer, { type Transporter } from 'nodemailer'
 import { env } from '../config/env.js'
 import { logger } from './logger.js'
 
+export interface MailAttachment {
+  filename: string
+  content: Buffer
+  /// Content-ID for referencing the attachment inline from the HTML as
+  /// `<img src="cid:...">`.
+  cid?: string
+}
+
 export interface MailMessage {
   to: string
   subject: string
@@ -9,6 +17,8 @@ export interface MailMessage {
   text: string
   /// Optional HTML body.
   html?: string
+  /// Optional attachments (e.g. an inline logo referenced by cid).
+  attachments?: MailAttachment[]
 }
 
 /// True when SMTP credentials are configured; otherwise the mailer runs in
@@ -50,6 +60,7 @@ export async function sendEmail(msg: MailMessage): Promise<void> {
       subject: msg.subject,
       text: msg.text,
       html: msg.html,
+      attachments: msg.attachments,
     })
     logger.info('Email dispatched', { to: msg.to, subject: msg.subject, from: env.smtp.from })
   } catch (err) {

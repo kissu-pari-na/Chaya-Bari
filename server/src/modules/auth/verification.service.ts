@@ -3,6 +3,7 @@ import type { User, VerificationChannel } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../config/env.js'
 import { sendEmail } from '../../lib/mailer.js'
+import { emailLogoBase64 } from '../../lib/emailLogo.js'
 import { HttpError } from '../../utils/httpError.js'
 
 const CODE_TTL_MS = 10 * 60 * 1000 // 10 minutes
@@ -43,6 +44,8 @@ export async function sendEmailCode(user: User): Promise<void> {
       `Your ${brand()} email confirmation code is ${code}.\n` +
       `It expires in 10 minutes. If you didn't create an account, you can ignore this email.`,
     html: codeEmailHtml(user.name, code),
+    // Inline logo referenced as `cid:logo` from the HTML header.
+    attachments: [{ filename: 'chaya-bari.png', content: Buffer.from(emailLogoBase64, 'base64'), cid: 'logo' }],
   })
 }
 
@@ -70,9 +73,9 @@ function codeEmailHtml(name: string, code: string): string {
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.08);">
             <tr>
-              <td style="background:linear-gradient(135deg,#ea342c,#d0241d);padding:28px 24px;text-align:center;">
-                <div style="font-size:24px;font-weight:800;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:0.5px;">ছায়া বাড়ি</div>
-                <div style="font-size:13px;color:#ffe6b8;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;margin-top:2px;">Chaya Bari</div>
+              <td style="background:linear-gradient(135deg,#ea342c,#d0241d);padding:26px 24px;text-align:center;">
+                <img src="cid:logo" alt="ছায়া বাড়ি — Chaya Bari" height="56" style="height:56px;width:auto;display:inline-block;border:0;outline:none;text-decoration:none;" />
+                <div style="font-size:12px;color:#ffe6b8;font-family:'Segoe UI',Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;margin-top:8px;">Chaya Bari</div>
               </td>
             </tr>
             <tr>
