@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { useI18n } from '../context/LanguageContext'
 import { ApiError, apiRequest } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
+import { PrefControls } from '../components/PrefControls'
 import './Auth.css'
 
 export function ForgotPassword() {
@@ -71,6 +72,9 @@ export function ForgotPassword() {
 
   return (
     <div className="auth-page">
+      <div className="auth-prefs">
+        <PrefControls />
+      </div>
       <div className="auth-card">
         <div className="auth-card__logo">
           <Logo size={48} />

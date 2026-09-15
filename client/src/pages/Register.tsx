@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
+import { PrefControls } from '../components/PrefControls'
 import './Auth.css'
 
 export function Register() {
@@ -39,6 +40,9 @@ export function Register() {
 
   return (
     <div className="auth-page">
+      <div className="auth-prefs">
+        <PrefControls />
+      </div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="auth-card__logo">
           <Logo size={48} />

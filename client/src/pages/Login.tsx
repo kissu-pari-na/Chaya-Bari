@@ -5,6 +5,7 @@ import { useI18n } from '../context/LanguageContext'
 import { roleHome } from '../components/ProtectedRoute'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
+import { PrefControls } from '../components/PrefControls'
 import './Auth.css'
 
 export function Login() {
@@ -50,6 +51,9 @@ export function Login() {
 
   return (
     <div className="auth-page">
+      <div className="auth-prefs">
+        <PrefControls />
+      </div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="auth-card__logo">
           <Logo size={48} />
