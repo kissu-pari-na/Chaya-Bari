@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { roleHome } from '../components/ProtectedRoute'
@@ -12,7 +12,11 @@ export function VerifyEmail() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
-  const prefill = (location.state as { email?: string } | null)?.email ?? ''
+  const [searchParams] = useSearchParams()
+  // Prefill from the "Confirm email" link in emails (?email=…), or from in-app
+  // navigation (router state after registering).
+  const prefill =
+    searchParams.get('email') ?? (location.state as { email?: string } | null)?.email ?? ''
   const [email, setEmail] = useState(prefill)
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)

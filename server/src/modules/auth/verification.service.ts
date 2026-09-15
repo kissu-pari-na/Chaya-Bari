@@ -102,6 +102,10 @@ function setPasswordUrl(email: string): string {
   return appLink(`/forgot-password?email=${encodeURIComponent(email)}`)
 }
 
+function verifyEmailUrl(email: string): string {
+  return appLink(`/verify-email?email=${encodeURIComponent(email)}`)
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -125,14 +129,14 @@ export async function sendEmailCode(user: User): Promise<void> {
     <p style="margin:0 0 20px;font-size:15px;line-height:1.5;color:#555;">Use the code below to confirm your email and finish setting up your ${BRAND} account.</p>
     <div style="text-align:center;margin:8px 0 18px;">${digitsHtml(code)}</div>
     <p style="margin:0 0 18px;font-size:13px;color:#888;text-align:center;">This code expires in <strong style="color:#d0241d;">10 minutes</strong>.</p>
-    <div style="text-align:center;margin:0 0 14px;">${buttonHtml(appLink('/verify-email'), 'Confirm email')}</div>
+    <div style="text-align:center;margin:0 0 14px;">${buttonHtml(verifyEmailUrl(user.email), 'Confirm email')}</div>
     <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">Open the confirmation page, enter your email (<strong>${escapeHtml(user.email)}</strong>) and the code above. If you didn't expect this email, you can safely ignore it.</p>`
   await sendEmail({
     to: user.email,
     subject: `${code} is your ${BRAND} confirmation code`,
     text:
       `Your ${BRAND} email confirmation code is ${code}.\n` +
-      `Confirm at ${appLink('/verify-email')} (email: ${user.email}).\n` +
+      `Confirm at ${verifyEmailUrl(user.email)} (email: ${user.email}).\n` +
       `It expires in 10 minutes. If you didn't expect this, you can ignore this email.`,
     html: emailShell(inner),
     attachments: logoAttachment(),
@@ -187,7 +191,7 @@ export async function sendAdminCreatedEmail(user: User): Promise<void> {
     </table>
     <p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#555;">First, confirm your email to activate the account — enter this code on the confirmation page:</p>
     <div style="text-align:center;margin:8px 0 16px;">${digitsHtml(code)}</div>
-    <div style="text-align:center;margin:0 0 16px;">${buttonHtml(appLink('/verify-email'), 'Confirm email')}</div>
+    <div style="text-align:center;margin:0 0 16px;">${buttonHtml(verifyEmailUrl(user.email), 'Confirm email')}</div>
     <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">Once your email is confirmed, you'll get a link to <strong>set your own password</strong> and can start using your account. If you weren't expecting this account, please ignore this email.</p>`
   await sendEmail({
     to: user.email,
@@ -195,7 +199,7 @@ export async function sendAdminCreatedEmail(user: User): Promise<void> {
     text:
       `Hi ${user.name}, an account has been created for you at ${BRAND}.\n` +
       `Email: ${user.email}\nRole: ${roleLabel(user.role)}\n\n` +
-      `Confirm your email to activate: ${appLink('/verify-email')} — code ${code} (expires in 10 minutes).\n` +
+      `Confirm your email to activate: ${verifyEmailUrl(user.email)} — code ${code} (expires in 10 minutes).\n` +
       `Once confirmed, you'll get a link to set your own password.`,
     html: emailShell(inner),
     attachments: logoAttachment(),
