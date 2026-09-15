@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useI18n } from '../context/LanguageContext'
 import { ApiError, apiRequest } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
@@ -9,7 +9,11 @@ export function ForgotPassword() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
-  const prefill = (location.state as { email?: string } | null)?.email ?? ''
+  const [searchParams] = useSearchParams()
+  // Prefill the email from the "Set your own password" link in emails
+  // (?email=…), or from in-app navigation (router state).
+  const prefill =
+    searchParams.get('email') ?? (location.state as { email?: string } | null)?.email ?? ''
   const [email, setEmail] = useState(prefill)
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
@@ -17,6 +21,8 @@ export function ForgotPassword() {
   const [notice, setNotice] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [resetting, setResetting] = useState(false)
+  // Arriving from the "Set your own password" email link vs the login page.
+  const fromInvite = searchParams.get('email') != null
 
   async function handleSend(event: FormEvent) {
     event.preventDefault()
@@ -69,7 +75,7 @@ export function ForgotPassword() {
         <div className="auth-card__logo">
           <Logo size={48} />
         </div>
-        <h1>{t('পাসওয়ার্ড রিসেট', 'Reset password')}</h1>
+        <h1>{fromInvite ? t('নিজের পাসওয়ার্ড সেট করুন', 'Set your password') : t('পাসওয়ার্ড রিসেট', 'Reset password')}</h1>
         <p className="auth-hint">
           {t(
             'আপনার ইমেইলে একটি কোড পাঠানো হবে। তারপর নতুন পাসওয়ার্ড সেট করুন।',

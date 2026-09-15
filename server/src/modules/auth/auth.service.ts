@@ -14,25 +14,40 @@ import type {
 import { consumeCode, sendEmailCode, sendPasswordResetCode, sendWelcomeEmail } from './verification.service.js'
 import { consumeRateLimit } from '../../lib/rateLimit.js'
 
-// Throttle how often a confirmation email may be sent to one address, so nobody
-// can spam a stranger's inbox by repeatedly registering or resending. A short
-// cooldown blocks rapid repeats; an hourly cap bounds the total.
+// A single per-recipient email budget shared by EVERY user-triggered send
+// (registration codes, resends, and password-reset codes), so one address can't
+// be spammed no matter which endpoint is used. The ceilings sit far above what a
+// legitimate user ever needs, so real users are never affected:
+//   • at least 60s between emails (blocks rapid repeats)
+//   • at most 4 per hour
+//   • at most 8 per day
+// System/lifecycle emails (the welcome and the admin-created account email) are
+// not user-triggerable and deliberately bypass this so they always arrive.
 async function assertEmailSendAllowed(email: string): Promise<void> {
   const key = email.toLowerCase()
-  const cooldown = await consumeRateLimit(`email-code-cooldown:${key}`, 1, 60_000)
+  const cooldown = await consumeRateLimit(`email:cooldown:${key}`, 1, 60_000)
   if (!cooldown.allowed) {
     throw new HttpError(
       429,
-      `Please wait ${cooldown.retryAfterSec}s before requesting another code`,
+      `Please wait ${cooldown.retryAfterSec}s before requesting another email`,
       undefined,
       'RATE_LIMITED',
     )
   }
-  const hourly = await consumeRateLimit(`email-code-hourly:${key}`, 5, 60 * 60_000)
+  const hourly = await consumeRateLimit(`email:hour:${key}`, 4, 60 * 60_000)
   if (!hourly.allowed) {
     throw new HttpError(
       429,
-      'Too many code requests for this email. Please try again later.',
+      'Too many email requests for this address. Please try again later.',
+      undefined,
+      'RATE_LIMITED',
+    )
+  }
+  const daily = await consumeRateLimit(`email:day:${key}`, 8, 24 * 60 * 60_000)
+  if (!daily.allowed) {
+    throw new HttpError(
+      429,
+      'Daily email limit reached for this address. Please try again tomorrow.',
       undefined,
       'RATE_LIMITED',
     )
@@ -133,12 +148,10 @@ export async function verifyEmail(input: VerifyEmailInput): Promise<{ user: Publ
       where: { id: user.id },
       data: { emailVerifiedAt: new Date() },
     })
-    // Welcome self-registered users now that the account is confirmed.
-    // Admin-created users (createdById set) already received a full account
-    // email with their password at creation, so don't send a duplicate.
-    if (confirmed.createdById == null) {
-      await sendWelcomeEmail(confirmed)
-    }
+    // Welcome the user now that the account is confirmed. This is where the
+    // "Set your own password" link becomes usable (it needs a confirmed email),
+    // so admin-created users get it here too — one-time, not an abuse vector.
+    await sendWelcomeEmail(confirmed)
   }
   const fresh = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
   return { user: toPublicUser(fresh), token: signAuthToken({ sub: fresh.id, role: fresh.role }) }
@@ -162,15 +175,10 @@ export async function resendEmail(input: ResendEmailInput): Promise<void> {
 /// inbox: at most 2 requests per email in any 2-day window.
 export async function forgotPassword(input: ForgotPasswordInput): Promise<void> {
   const email = input.email.toLowerCase()
-  const limit = await consumeRateLimit(`pwreset:${email}`, 2, 2 * 24 * 60 * 60_000)
-  if (!limit.allowed) {
-    throw new HttpError(
-      429,
-      'Too many password reset requests. Please try again in a couple of days.',
-      undefined,
-      'RATE_LIMITED',
-    )
-  }
+  // Same shared per-recipient email budget as registration/resend, so reset
+  // requests can't be used to spam an inbox and can't exceed the address's
+  // overall daily email ceiling.
+  await assertEmailSendAllowed(email)
   const user = await prisma.user.findUnique({ where: { email } })
   if (user && user.emailVerifiedAt != null && user.isActive) {
     await sendPasswordResetCode(user)

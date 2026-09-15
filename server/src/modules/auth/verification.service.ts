@@ -92,8 +92,14 @@ function digitsHtml(code: string): string {
     .join('')
 }
 
-function buttonHtml(url: string, label: string): string {
-  return `<a href="${url}" style="display:inline-block;background:#ea342c;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:15px;${font};">${label}</a>`
+function buttonHtml(url: string, label: string, variant: 'primary' | 'gold' = 'primary'): string {
+  const bg = variant === 'gold' ? '#f5b300' : '#ea342c'
+  const fg = variant === 'gold' ? '#3a2a00' : '#ffffff'
+  return `<a href="${url}" style="display:inline-block;background:${bg};color:${fg};text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:15px;${font};">${label}</a>`
+}
+
+function setPasswordUrl(email: string): string {
+  return appLink(`/forgot-password?email=${encodeURIComponent(email)}`)
 }
 
 function escapeHtml(s: string): string {
@@ -145,15 +151,19 @@ export async function sendWelcomeEmail(user: User): Promise<void> {
       <tr><td style="padding:6px 0;color:#888;">Email</td><td style="padding:6px 0;font-weight:600;">${escapeHtml(user.email)}</td></tr>
       <tr><td style="padding:6px 0;color:#888;">Role</td><td style="padding:6px 0;font-weight:600;">${roleLabel(user.role)}</td></tr>
     </table>
-    <div style="text-align:center;margin:0 0 16px;">${buttonHtml(appLink('/login'), 'Log in')}</div>
-    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">If you don't have your password (for example, an account created for you by our team), use <strong>“Forgot password”</strong> on the login page to set one.</p>`
+    <div style="text-align:center;margin:0 0 12px;">${buttonHtml(appLink('/login'), 'Log in')}</div>
+    <div style="background:#fff7ea;border:1px solid #f3dca6;border-radius:12px;padding:16px;text-align:center;margin:6px 0 6px;">
+      <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#8a1a15;">Want to choose your own password?</p>
+      <div>${buttonHtml(setPasswordUrl(user.email), 'Set your own password', 'gold')}</div>
+    </div>`
   await sendEmail({
     to: user.email,
     subject: `Welcome to ${BRAND} — your account is ready`,
     text:
       `Hi ${user.name}, your ${BRAND} account is confirmed.\n` +
       `Email: ${user.email}\nRole: ${roleLabel(user.role)}\n` +
-      `Log in at ${appLink('/login')}. If you don't have your password, use "Forgot password" on the login page.`,
+      `Log in at ${appLink('/login')}.\n` +
+      `Set your own password anytime: ${setPasswordUrl(user.email)}`,
     html: emailShell(inner),
     attachments: logoAttachment(),
   })
@@ -179,7 +189,7 @@ export async function sendAdminCreatedEmail(user: User, password: string): Promi
     <p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#555;">First, confirm your email to activate the account — enter this code on the confirmation page:</p>
     <div style="text-align:center;margin:8px 0 16px;">${digitsHtml(code)}</div>
     <div style="text-align:center;margin:0 0 16px;">${buttonHtml(appLink('/verify-email'), 'Confirm email')}</div>
-    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">For your security, change this password after your first login using <strong>“Forgot password”</strong> on the login page. If you weren't expecting this account, please ignore this email.</p>`
+    <p style="margin:0;font-size:12px;line-height:1.5;color:#999;">Once your email is confirmed you'll get a link to <strong>set your own password</strong> — for your security, do that after your first login. If you weren't expecting this account, please ignore this email.</p>`
   await sendEmail({
     to: user.email,
     subject: `Your ${BRAND} account details`,
