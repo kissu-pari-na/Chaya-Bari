@@ -86,8 +86,8 @@
 .pcard__media {
   position: absolute;
   z-index: 2;
-  top: 14px;
-  left: 2%;
+  top: 30px;
+  left: 12%;
   right: 0;
   height: 196px;
   display: grid;
