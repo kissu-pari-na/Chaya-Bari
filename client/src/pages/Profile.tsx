@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Header } from '../components/Header'
+import { AddressBook } from '../components/AddressBook'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import type { Role } from '../types/auth'
@@ -82,6 +83,8 @@ export function Profile() {
               </div>
             </dl>
           </section>
+
+          {user.role === 'CUSTOMER' && <AddressBook />}
 
           <div className="profile__actions">
             {user.role === 'CUSTOMER' && (

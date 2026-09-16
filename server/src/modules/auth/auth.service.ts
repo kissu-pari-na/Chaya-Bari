@@ -15,6 +15,7 @@ import type {
   VerifyEmailInput,
 } from './auth.schemas.js'
 import { consumeCode, sendEmailCode, sendPasswordResetCode, sendWelcomeEmail } from './verification.service.js'
+import { ensureOrbitaxDefaultAddress } from '../orders/address.service.js'
 import { consumeRateLimit } from '../../lib/rateLimit.js'
 
 // A single per-recipient email budget shared by EVERY user-triggered send
@@ -132,7 +133,14 @@ export async function register(
       role: 'CUSTOMER',
       customer: { create: {} },
     },
+    include: { customer: true },
   })
+
+  // Orbitax staff get their office address pre-filled as the default (no-op for
+  // other domains). Never let this block registration if it fails.
+  if (user.customer) {
+    await ensureOrbitaxDefaultAddress(user.customer.id, user).catch(() => {})
+  }
 
   await sendEmailCode(user)
 
@@ -264,7 +272,13 @@ export async function loginWithGoogle(input: GoogleAuthInput): Promise<{ user: P
       emailVerifiedAt: new Date(),
       customer: { create: {} },
     },
+    include: { customer: true },
   })
+  // Orbitax staff get their office address pre-filled as the default (no-op for
+  // other domains). Never let this block sign-in if it fails.
+  if (user.customer) {
+    await ensureOrbitaxDefaultAddress(user.customer.id, user).catch(() => {})
+  }
   return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
 }
 
