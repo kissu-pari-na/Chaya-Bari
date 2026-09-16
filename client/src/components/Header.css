@@ -25,6 +25,12 @@
   gap: 0.6rem;
 }
 
+/* Notification bell in the top bar — only shown on small screens, beside the
+   cart icon and menu toggle (the nav bell takes over on desktop). */
+.app-header__bar-bell {
+  display: none;
+}
+
 /* Cart icon in the top bar — only shown on small screens, beside the menu toggle. */
 .app-header__cart-icon {
   display: none;
@@ -277,6 +283,16 @@
 
   .app-header__cart-icon {
     display: inline-flex;
+  }
+
+  /* Show the bell in the top bar; hide the one inside the collapsed nav so it
+     is not duplicated when the menu is opened. */
+  .app-header__bar-bell {
+    display: inline-flex;
+  }
+
+  .app-header__nav-bell {
+    display: none;
   }
 
   /* Nav becomes a vertical panel that opens under the bar. */

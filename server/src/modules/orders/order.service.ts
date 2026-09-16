@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { AddressInput, CheckoutInput } from './order.schemas.js'
 import { getOrderingSetting, computeWindow } from './ordering.service.js'
+import { isSlotEnabledForDate } from './slots.js'
 import { priceOrder } from './pricing.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
 import { paymentTotals, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
@@ -37,6 +38,7 @@ export interface PublicOrder {
   city: string
   addressNote: string | null
   fulfillmentDate: string
+  timeSlot: string | null
   notes: string | null
   subtotal: number
   productDiscount: number
@@ -70,6 +72,7 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
     city: order.city,
     addressNote: order.addressNote,
     fulfillmentDate: order.fulfillmentDate.toISOString().slice(0, 10),
+    timeSlot: order.timeSlot,
     notes: order.notes,
     subtotal: Number(order.subtotal),
     productDiscount: Number(order.productDiscount),
@@ -154,6 +157,11 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
     )
   }
 
+  // The chosen slot must be one that is actually open for that weekday.
+  if (!isSlotEnabledForDate(input.fulfillmentDate, input.timeSlot)) {
+    throw HttpError.badRequest('The selected time slot is not available for that day.')
+  }
+
   const address = await resolveAddress(customerId, input.addressId, input.address)
 
   // Load products; the pricing helper captures list + charged prices and
@@ -183,6 +191,7 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
       city: address.city,
       addressNote: address.addressNote,
       fulfillmentDate,
+      timeSlot: input.timeSlot,
       notes: input.notes,
       subtotal: priced.subtotal,
       productDiscount: priced.productDiscount,

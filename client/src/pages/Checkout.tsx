@@ -1,15 +1,25 @@
-import { useEffect, useMemo, useState, type SyntheticEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeOrder, previewCoupon } from '../lib/orders'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt } from '../lib/format'
+import { TIME_SLOTS, formatSlotLabel, isSlotEnabledForDate, isWeekend, pickDefaultSlot } from '../lib/slots'
 import type { Address, CouponPreview, OrderingWindow } from '../types/order'
 import './Checkout.css'
 
+// Orbitax staff get the free-delivery coupon auto-applied when it is valid.
+const ORBITAX_COUPON = 'ORBIFREEDEL'
+function isOrbitaxEmail(email: string): boolean {
+  const domain = email.trim().toLowerCase().split('@')[1] ?? ''
+  return domain === 'orbitax.com' || domain.endsWith('.orbitax.com')
+}
+
 export function Checkout() {
   const { items, subtotal, clear } = useCart()
+  const { user } = useAuth()
   const { t } = useI18n()
   const navigate = useNavigate()
 
@@ -18,6 +28,7 @@ export function Checkout() {
   const [window, setWindow] = useState<OrderingWindow | null>(null)
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [fulfillmentDate, setFulfillmentDate] = useState('')
+  const [timeSlot, setTimeSlot] = useState('')
   const [notes, setNotes] = useState('')
   const [couponCode, setCouponCode] = useState('')
   const [coupon, setCoupon] = useState<CouponPreview | null>(null)
@@ -43,6 +54,29 @@ export function Checkout() {
       .catch(() => setError(t('ঠিকানা লোড করা যায়নি', 'Could not load addresses')))
       .finally(() => setAddressesLoaded(true))
   }, [])
+
+  // Auto-select the closest available time slot whenever the delivery day
+  // changes (a new day can open/close different slots).
+  useEffect(() => {
+    if (fulfillmentDate) setTimeSlot(pickDefaultSlot(fulfillmentDate))
+  }, [fulfillmentDate])
+
+  // Auto-apply the free-delivery coupon for Orbitax staff when it is currently
+  // valid. Runs once; never overrides a coupon the user applied themselves, and
+  // stays silent if the coupon does not apply.
+  const autoCouponTried = useRef(false)
+  useEffect(() => {
+    if (autoCouponTried.current || !user || items.length === 0) return
+    autoCouponTried.current = true
+    if (!isOrbitaxEmail(user.email)) return
+    previewCoupon(
+      ORBITAX_COUPON,
+      items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    )
+      .then((preview) => setCoupon((current) => current ?? preview))
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, items])
 
   const deliveryCost = window?.defaultDeliveryCost ?? 0
   // With a valid coupon, trust the server-computed pricing (gross subtotal +
@@ -94,12 +128,17 @@ export function Checkout() {
       setError(t('অর্ডার করার আগে একটি ডেলিভারি ঠিকানা নির্বাচন করুন', 'Please set a delivery address before ordering'))
       return
     }
+    if (!timeSlot) {
+      setError(t('একটি ডেলিভারি সময় স্লট নির্বাচন করুন', 'Please choose a delivery time slot'))
+      return
+    }
     setSubmitting(true)
     try {
       const order = await placeOrder({
         items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
         addressId: selectedAddressId,
         fulfillmentDate,
+        timeSlot,
         notes: notes || undefined,
         couponCode: coupon ? coupon.coupon.code : undefined,
       })
@@ -182,6 +221,36 @@ export function Checkout() {
               {t(
                 `অগ্রিম অর্ডার: সর্বনিম্ন ${window.earliestFulfillmentDate} তারিখের জন্য (কাটঅফ ${window.cutoffTime})।`,
                 `Pre-order: earliest for ${window.earliestFulfillmentDate} (cutoff ${window.cutoffTime}).`,
+              )}
+            </p>
+          )}
+        </fieldset>
+
+        <fieldset>
+          <legend>{t('ডেলিভারির সময়', 'Delivery time slot')}</legend>
+          <div className="slot-grid">
+            {TIME_SLOTS.map((s) => {
+              const enabled = fulfillmentDate ? isSlotEnabledForDate(fulfillmentDate, s.value) : false
+              const selected = timeSlot === s.value
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  className={selected ? 'slot slot--on' : 'slot'}
+                  disabled={!enabled}
+                  aria-pressed={selected}
+                  onClick={() => setTimeSlot(s.value)}
+                >
+                  {formatSlotLabel(s)}
+                </button>
+              )
+            })}
+          </div>
+          {fulfillmentDate && !isWeekend(fulfillmentDate) && (
+            <p className="hint">
+              {t(
+                'সপ্তাহের দিনে (রবি–বৃহস্পতি) শুধু দুপুর ১২টা–২টা স্লট পাওয়া যায়।',
+                'On weekdays (Sun–Thu) only the 12pm–2pm slot is available.',
               )}
             </p>
           )}

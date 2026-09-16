@@ -7,6 +7,7 @@ import {
 } from '../../lib/orders'
 import { formatBdt } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
+import { formatSlotValue } from '../../lib/slots'
 import { nextStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { ApiError } from '../../lib/apiClient'
 import { useI18n } from '../../context/LanguageContext'
@@ -71,7 +72,10 @@ export function OrderDetailAdmin() {
         <div className="order-detail__head">
           <div>
             <h1>{t('অর্ডার', 'Order')} {order.orderNumber}</h1>
-            <p className="muted">{t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}</p>
+            <p className="muted">
+              {t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}
+              {order.timeSlot && <> · {t('সময়:', 'Time:')} {formatSlotValue(order.timeSlot)}</>}
+            </p>
           </div>
           <div className="order-detail__badges">
             <span className={`status status--${order.status.toLowerCase()}`}>{orderStatusLabel[order.status]}</span>

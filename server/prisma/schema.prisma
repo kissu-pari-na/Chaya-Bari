@@ -224,6 +224,10 @@ model Order {
 
   /// The day the food is to be prepared/delivered (advance order).
   fulfillmentDate DateTime @db.Date
+  /// Chosen two-hour delivery window for the fulfillment day, stored as a
+  /// canonical "HH:MM-HH:MM" value (e.g. "12:00-14:00"). Nullable for orders
+  /// placed before time slots existed.
+  timeSlot        String?
   notes           String?
 
   /// Gross food total (sum of list prices × quantity).
