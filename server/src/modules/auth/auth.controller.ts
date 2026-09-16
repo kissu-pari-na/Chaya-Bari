@@ -11,6 +11,11 @@ export async function login(req: Request, res: Response) {
   res.status(200).json(result)
 }
 
+export async function googleAuth(req: Request, res: Response) {
+  const result = await authService.loginWithGoogle(req.body)
+  res.status(200).json(result)
+}
+
 export async function verifyEmail(req: Request, res: Response) {
   const result = await authService.verifyEmail(req.body)
   res.status(200).json(result)

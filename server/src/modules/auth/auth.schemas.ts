@@ -16,6 +16,12 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
+// Google Sign-In: the browser sends the ID token (a JWT credential) issued by
+// Google Identity Services; the server verifies it.
+export const googleAuthSchema = z.object({
+  credential: z.string().min(10, 'Missing Google credential'),
+})
+
 const codeField = z.string().min(4, 'Enter the code').max(10)
 
 // Email confirmation is public: it happens before the first login, so it is
@@ -42,6 +48,7 @@ export const resetPasswordSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>
 export type ResendEmailInput = z.infer<typeof resendEmailSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>

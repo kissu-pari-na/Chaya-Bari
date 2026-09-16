@@ -1,10 +1,13 @@
+import { randomBytes } from 'node:crypto'
 import type { Role, User } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { hashPassword, verifyPassword } from '../../utils/password.js'
 import { signAuthToken } from '../../utils/jwt.js'
 import { HttpError } from '../../utils/httpError.js'
+import { verifyGoogleIdToken } from '../../lib/googleAuth.js'
 import type {
   ForgotPasswordInput,
+  GoogleAuthInput,
   LoginInput,
   RegisterInput,
   ResendEmailInput,
@@ -215,6 +218,53 @@ export async function login(input: LoginInput): Promise<{ user: PublicUser; toke
     throw new HttpError(403, 'Please confirm your email to continue', undefined, 'EMAIL_UNVERIFIED')
   }
 
+  return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
+}
+
+/// Sign in (or register) with a Google account. The browser obtains a Google
+/// ID token via Google Identity Services and sends it here; we verify it against
+/// Google's public keys and then either log the matching account in or create a
+/// new CUSTOMER on the spot.
+///
+/// Because Google asserts ownership of a verified email, a Google sign-in for an
+/// existing address is the same person: we log them in (and confirm their email
+/// if it was still pending) without touching their role. A brand-new address
+/// creates a confirmed account immediately — no email code round-trip — which is
+/// the whole point of the smoother sign-up. The account has no usable password
+/// until the user sets one via "forgot password"; a random hash fills the column
+/// so password login can't succeed by accident in the meantime.
+export async function loginWithGoogle(input: GoogleAuthInput): Promise<{ user: PublicUser; token: string }> {
+  const profile = await verifyGoogleIdToken(input.credential)
+  if (!profile.emailVerified) {
+    throw HttpError.badRequest('Your Google account email is not verified')
+  }
+  const email = profile.email.toLowerCase()
+
+  const existing = await prisma.user.findUnique({ where: { email } })
+  if (existing) {
+    if (!existing.isActive) throw HttpError.unauthorized('This account has been disabled')
+    const user =
+      existing.emailVerifiedAt == null
+        ? await prisma.user.update({ where: { id: existing.id }, data: { emailVerifiedAt: new Date() } })
+        : existing
+    return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
+  }
+
+  // New account. Clear any unconfirmed squatters holding this email (they never
+  // proved ownership; Google just did), then create a confirmed customer.
+  await prisma.user.deleteMany({ where: { emailVerifiedAt: null, email } })
+  const passwordHash = await hashPassword(randomBytes(32).toString('hex'))
+  const name = profile.name.trim() || email.split('@')[0]
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash,
+      role: 'CUSTOMER',
+      emailVerifiedAt: new Date(),
+      customer: { create: {} },
+    },
+  })
   return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
 }
 

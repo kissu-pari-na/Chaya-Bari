@@ -11,6 +11,8 @@ interface AuthContextValue {
   register: (payload: RegisterPayload) => Promise<RegisterResult>
   /// Confirm the email with the code; on success the user is logged in.
   verifyEmail: (email: string, code: string) => Promise<AuthUser>
+  /// Sign in or register with a Google ID token (credential); logs the user in.
+  loginWithGoogle: (credential: string) => Promise<AuthUser>
   logout: () => void
 }
 
@@ -75,14 +77,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [handleAuth],
   )
 
+  const loginWithGoogle = useCallback(
+    async (credential: string) => {
+      const res = await apiRequest<AuthResponse>('/auth/google', {
+        method: 'POST',
+        body: { credential },
+      })
+      return handleAuth(res)
+    },
+    [handleAuth],
+  )
+
   const logout = useCallback(() => {
     setToken(null)
     setUser(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, verifyEmail, logout }),
-    [user, loading, login, register, verifyEmail, logout],
+    () => ({ user, loading, login, register, verifyEmail, loginWithGoogle, logout }),
+    [user, loading, login, register, verifyEmail, loginWithGoogle, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
