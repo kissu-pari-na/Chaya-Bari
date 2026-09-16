@@ -80,7 +80,30 @@ export function GoogleSignInButton({ onCredential, onError, text = 'continue_wit
   useEffect(() => {
     if (!CLIENT_ID) return
     let cancelled = false
+    // Track the width we last drew at so a resize only re-renders on change.
+    let lastWidth = 0
 
+    // Draw the GIS button sized to the container. GIS renders a fixed-width
+    // button, so we clamp to the container width (and GIS's own 200–400 range)
+    // to keep the personalized "Sign in as …" button from overflowing the card.
+    function draw() {
+      const el = containerRef.current
+      if (cancelled || !el || !window.google) return
+      const width = Math.max(200, Math.min(el.clientWidth || 320, 400))
+      lastWidth = el.clientWidth
+      el.innerHTML = ''
+      window.google.accounts.id.renderButton(el, {
+        type: 'standard',
+        theme: theme === 'dark' ? 'filled_black' : 'outline',
+        size: 'large',
+        text,
+        shape: 'pill',
+        logo_alignment: 'center',
+        width,
+      })
+    }
+
+    let observer: ResizeObserver | undefined
     loadGis()
       .then(() => {
         if (cancelled || !containerRef.current || !window.google) return
@@ -88,16 +111,16 @@ export function GoogleSignInButton({ onCredential, onError, text = 'continue_wit
           client_id: CLIENT_ID,
           callback: (res) => cbRef.current(res.credential),
         })
-        containerRef.current.innerHTML = ''
-        window.google.accounts.id.renderButton(containerRef.current, {
-          type: 'standard',
-          theme: theme === 'dark' ? 'filled_black' : 'outline',
-          size: 'large',
-          text,
-          shape: 'pill',
-          logo_alignment: 'center',
-          width: Math.min(containerRef.current.offsetWidth || 320, 400),
-        })
+        draw()
+        // Keep the button in step with the card as it responds to viewport
+        // changes, so it never renders wider than its container.
+        if (typeof ResizeObserver !== 'undefined') {
+          observer = new ResizeObserver(() => {
+            const el = containerRef.current
+            if (el && el.clientWidth !== lastWidth) draw()
+          })
+          observer.observe(containerRef.current)
+        }
       })
       .catch(() => {
         if (cancelled) return
@@ -107,6 +130,7 @@ export function GoogleSignInButton({ onCredential, onError, text = 'continue_wit
 
     return () => {
       cancelled = true
+      observer?.disconnect()
     }
     // Re-render the button when the theme changes so it matches light/dark.
   }, [theme, text, onError])

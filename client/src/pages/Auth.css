@@ -152,7 +152,18 @@
 .google-signin {
   display: flex;
   justify-content: center;
+  width: 100%;
   min-height: 40px;
+  /* The GIS script renders a wrapper <div> + <iframe> at a fixed pixel width.
+     As a flex item it keeps its intrinsic width (min-width: auto), so a wide
+     personalized button ("Sign in as …") would otherwise spill past the card's
+     rounded edges. Clip it to the card so the layout can never break. */
+  overflow: hidden;
+}
+
+.google-signin > div,
+.google-signin iframe {
+  max-width: 100%;
 }
 
 /* "or" divider between the Google button and the email/password form. */
