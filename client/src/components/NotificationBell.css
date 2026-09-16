@@ -87,6 +87,23 @@
   overflow-y: auto;
 }
 
+/* On small screens anchor the panel to the viewport instead of the bell, so it
+   can never overflow off-screen when the bell sits near the right edge. */
+@media (max-width: 600px) {
+  .notif__panel {
+    position: fixed;
+    top: 3.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+    max-width: none;
+  }
+
+  .notif__list {
+    max-height: 70vh;
+  }
+}
+
 .notif__empty {
   padding: 1.5rem 1rem;
   color: var(--card-muted);

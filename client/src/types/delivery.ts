@@ -15,6 +15,7 @@ export interface DeliveryListRow extends Delivery {
   orderNumber: string
   recipientName: string
   fulfillmentDate: string
+  timeSlot: string | null
 }
 
 export interface DeliveryUpdate {

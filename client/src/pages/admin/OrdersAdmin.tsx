@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { fetchAdminOrders, type OrderFilters } from '../../lib/orders'
 import { formatBdt } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
+import { formatSlotValue } from '../../lib/slots'
 import { orderStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { useI18n } from '../../context/LanguageContext'
 import type { AdminOrder } from '../../types/order'
@@ -102,7 +103,10 @@ export function OrdersAdmin() {
                     <Link to={`/admin/orders/${o.id}`}>{o.orderNumber}</Link>
                   </td>
                   <td>{o.customer.name}</td>
-                  <td>{o.fulfillmentDate}</td>
+                  <td>
+                    {o.fulfillmentDate}
+                    {o.timeSlot && <><br /><span className="muted">{formatSlotValue(o.timeSlot)}</span></>}
+                  </td>
                   <td>{formatBdt(o.total)}</td>
                   <td>
                     <span className={`status status--${o.status.toLowerCase()}`}>{orderStatusLabel[o.status]}</span>

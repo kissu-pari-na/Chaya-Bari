@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { fetchDeliveries } from '../../lib/delivery'
 import { deliveryStatusLabel } from '../../lib/deliveryStatus'
 import { formatBdt } from '../../lib/format'
+import { formatSlotValue } from '../../lib/slots'
 import { useI18n } from '../../context/LanguageContext'
 import type { DeliveryListRow } from '../../types/delivery'
 import '../Orders.css'
@@ -74,7 +75,10 @@ export function DeliveriesAdmin() {
                     <td>
                       <Link to={`/admin/orders/${r.orderId}`}>{r.orderNumber}</Link>
                     </td>
-                    <td>{r.fulfillmentDate}</td>
+                    <td>
+                      {r.fulfillmentDate}
+                      {r.timeSlot && <><br /><span className="muted">{formatSlotValue(r.timeSlot)}</span></>}
+                    </td>
                     <td>{r.provider ?? '—'}</td>
                     <td>{formatBdt(r.customerDeliveryCost)}</td>
                     <td>{r.actualDeliveryCost != null ? formatBdt(r.actualDeliveryCost) : '—'}</td>

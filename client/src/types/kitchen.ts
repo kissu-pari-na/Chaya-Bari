@@ -27,6 +27,7 @@ export interface KitchenOrder {
   orderNumber: string
   recipientName: string
   status: OrderKitchenStatus
+  timeSlot: string | null
   createdAt: string
   note: string | null
   lines: OrderLine[]

@@ -4,6 +4,7 @@ import { useI18n } from '../context/LanguageContext'
 import { useContentLang } from '../context/TranslationContext'
 import { fetchProduction, fetchProductionDates, moveLine, moveProduct, packOrder } from '../lib/kitchen'
 import { pick, localeDigits } from '../lib/i18n'
+import { formatSlotValue } from '../lib/slots'
 import type {
   KitchenStage,
   OrderKitchenStatus,
@@ -193,7 +194,10 @@ export function KitchenHome() {
                   <span className="ord-card__num">{o.orderNumber}</span>
                   <span className={`ord-chip ord-chip--${o.status.toLowerCase()}`}>{orderStatusLabel[o.status]}</span>
                 </div>
-                <div className="ord-card__who">{o.recipientName}</div>
+                <div className="ord-card__who">
+                  {o.recipientName}
+                  {o.timeSlot && <span className="ord-card__slot">🕐 {formatSlotValue(o.timeSlot)}</span>}
+                </div>
                 {o.note && <p className="ord-card__note">📝 {o.note}</p>}
                 <ul className="ord-lines">
                   {o.lines.map((l) => (
