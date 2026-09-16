@@ -47,15 +47,41 @@ export function Header({ variant }: HeaderProps) {
     <header className="app-header">
       <div className="app-header__bar">
         <Logo />
-        <button
-          type="button"
-          className="app-header__toggle"
-          aria-label={t('মেনু', 'Menu')}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          {menuOpen ? '✕' : '☰'}
-        </button>
+        <div className="app-header__bar-actions">
+          {variant === 'customer' && (
+            <NavLink
+              to="/cart"
+              className="app-header__cart-icon"
+              aria-label={t('কার্ট', 'Cart')}
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+              {count > 0 && <span className="app-header__cart-count">{count}</span>}
+            </NavLink>
+          )}
+          <button
+            type="button"
+            className="app-header__toggle"
+            aria-label={t('মেনু', 'Menu')}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </div>
 
       <nav className="app-header__nav" data-open={menuOpen}>

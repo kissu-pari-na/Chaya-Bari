@@ -19,6 +19,40 @@
   gap: 0.75rem;
 }
 
+.app-header__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Cart icon in the top bar — only shown on small screens, beside the menu toggle. */
+.app-header__cart-icon {
+  display: none;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--header-border);
+  background: transparent;
+  color: var(--header-fg);
+  text-decoration: none;
+}
+
+.app-header__cart-icon:hover {
+  color: var(--accent-bright);
+  text-decoration: none;
+}
+
+.app-header__cart-icon .app-header__cart-count {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  margin-left: 0;
+  line-height: 1;
+}
+
 .app-header__toggle {
   display: none;
   align-items: center;
@@ -238,6 +272,10 @@
   }
 
   .app-header__toggle {
+    display: inline-flex;
+  }
+
+  .app-header__cart-icon {
     display: inline-flex;
   }
 
