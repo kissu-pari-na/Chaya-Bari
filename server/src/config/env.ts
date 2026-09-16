@@ -36,6 +36,14 @@ export const env = {
   // Leave unset to disable the endpoint (it then returns 503).
   cronSecret: process.env.CRON_SECRET ?? '',
 
+  // Google Sign-In. Only the OAuth client ID is needed to verify the ID token
+  // that Google Identity Services issues in the browser (no client secret, since
+  // we verify the token's signature against Google's public keys rather than
+  // exchanging an authorization code). Leave unset to disable Google sign-in.
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  },
+
   // SMTP for outgoing email. Leave unset to run the mailer in log-only mode.
   smtp: {
     host: process.env.SMTP_HOST ?? '',
@@ -59,5 +67,8 @@ export const env = {
 /// back to a self-contained sandbox that simulates the gateway end to end.
 export const isBkashLive =
   !!env.bkash.baseUrl && !!env.bkash.appKey && !!env.bkash.appSecret && !!env.bkash.username && !!env.bkash.password
+
+/// True when Google Sign-In is configured (an OAuth client ID is present).
+export const isGoogleAuthEnabled = !!env.google.clientId
 
 export const isProduction = env.nodeEnv === 'production'

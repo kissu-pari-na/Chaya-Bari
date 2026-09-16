@@ -2,13 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
+import { roleHome } from '../components/ProtectedRoute'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
 import { PrefControls } from '../components/PrefControls'
+import { GoogleSignInButton, isGoogleEnabled } from '../components/GoogleSignInButton'
 import './Auth.css'
 
 export function Register() {
-  const { register } = useAuth()
+  const { register, loginWithGoogle } = useAuth()
   const { t } = useI18n()
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -17,6 +19,16 @@ export function Register() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  async function handleGoogle(credential: string) {
+    setError(null)
+    try {
+      const user = await loginWithGoogle(credential)
+      navigate(roleHome[user.role], { replace: true })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -49,6 +61,14 @@ export function Register() {
         </div>
         <h1>{t('রেজিস্টার', 'Register')}</h1>
         {error && <div className="auth-error">{error}</div>}
+        {isGoogleEnabled && (
+          <>
+            <GoogleSignInButton text="signup_with" onCredential={handleGoogle} onError={setError} />
+            <div className="auth-divider">
+              <span>{t('অথবা', 'or')}</span>
+            </div>
+          </>
+        )}
         <label>
           {t('নাম', 'Name')}
           <input value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />

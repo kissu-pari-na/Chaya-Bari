@@ -1,0 +1,117 @@
+import { useEffect, useRef, useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
+
+// Minimal typings for the Google Identity Services (GIS) client we use. The
+// script is loaded on demand; only the pieces we call are declared here.
+interface GoogleCredentialResponse {
+  credential: string
+}
+interface GoogleIdApi {
+  initialize(config: {
+    client_id: string
+    callback: (response: GoogleCredentialResponse) => void
+  }): void
+  renderButton(
+    parent: HTMLElement,
+    options: {
+      type?: 'standard' | 'icon'
+      theme?: 'outline' | 'filled_blue' | 'filled_black'
+      size?: 'large' | 'medium' | 'small'
+      text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
+      shape?: 'rectangular' | 'pill' | 'circle' | 'square'
+      logo_alignment?: 'left' | 'center'
+      width?: number
+    },
+  ): void
+}
+declare global {
+  interface Window {
+    google?: { accounts: { id: GoogleIdApi } }
+  }
+}
+
+const GIS_SRC = 'https://accounts.google.com/gsi/client'
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
+
+/// Whether Google sign-in is configured. Pages use this to decide whether to
+/// show the "or" divider alongside the button.
+export const isGoogleEnabled = !!CLIENT_ID
+
+/// Loads the GIS script once and resolves when window.google is available.
+function loadGis(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts?.id) return resolve()
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${GIS_SRC}"]`)
+    if (existing) {
+      existing.addEventListener('load', () => resolve())
+      existing.addEventListener('error', () => reject(new Error('Failed to load Google script')))
+      return
+    }
+    const script = document.createElement('script')
+    script.src = GIS_SRC
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google script'))
+    document.head.appendChild(script)
+  })
+}
+
+interface Props {
+  /// Called with the Google ID token (credential) once the user picks an account.
+  onCredential: (credential: string) => void
+  /// Called if the credential exchange with our server fails, so the parent can
+  /// show a message. The GIS button handles its own UI otherwise.
+  onError?: (message: string) => void
+  /// Wording on the button.
+  text?: 'signin_with' | 'signup_with' | 'continue_with'
+}
+
+/// "Continue with Google" button. Renders nothing when no client ID is
+/// configured (VITE_GOOGLE_CLIENT_ID unset), so the app works without Google.
+export function GoogleSignInButton({ onCredential, onError, text = 'continue_with' }: Props) {
+  const { theme } = useTheme()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [failed, setFailed] = useState(false)
+  // Keep the latest callback without re-initializing the button on each render.
+  const cbRef = useRef(onCredential)
+  cbRef.current = onCredential
+
+  useEffect(() => {
+    if (!CLIENT_ID) return
+    let cancelled = false
+
+    loadGis()
+      .then(() => {
+        if (cancelled || !containerRef.current || !window.google) return
+        window.google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: (res) => cbRef.current(res.credential),
+        })
+        containerRef.current.innerHTML = ''
+        window.google.accounts.id.renderButton(containerRef.current, {
+          type: 'standard',
+          theme: theme === 'dark' ? 'filled_black' : 'outline',
+          size: 'large',
+          text,
+          shape: 'pill',
+          logo_alignment: 'center',
+          width: Math.min(containerRef.current.offsetWidth || 320, 400),
+        })
+      })
+      .catch(() => {
+        if (cancelled) return
+        setFailed(true)
+        onError?.('Could not load Google sign-in.')
+      })
+
+    return () => {
+      cancelled = true
+    }
+    // Re-render the button when the theme changes so it matches light/dark.
+  }, [theme, text, onError])
+
+  if (!CLIENT_ID || failed) return null
+
+  return <div ref={containerRef} className="google-signin" />
+}

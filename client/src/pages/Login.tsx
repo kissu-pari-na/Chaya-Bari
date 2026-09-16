@@ -6,10 +6,11 @@ import { roleHome } from '../components/ProtectedRoute'
 import { ApiError } from '../lib/apiClient'
 import { Logo } from '../components/Logo'
 import { PrefControls } from '../components/PrefControls'
+import { GoogleSignInButton, isGoogleEnabled } from '../components/GoogleSignInButton'
 import './Auth.css'
 
 export function Login() {
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
@@ -22,6 +23,18 @@ export function Login() {
   // the confirmation screen instead of a dead-end error.
   const [needsEmail, setNeedsEmail] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  async function handleGoogle(credential: string) {
+    setError(null)
+    setNeedsEmail(false)
+    try {
+      const user = await loginWithGoogle(credential)
+      const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
+      navigate(from ?? roleHome[user.role], { replace: true })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -61,6 +74,14 @@ export function Login() {
         <h1>{t('লগইন', 'Log in')}</h1>
         {notice && <div className="auth-notice">{notice}</div>}
         {error && <div className="auth-error">{error}</div>}
+        {isGoogleEnabled && (
+          <>
+            <GoogleSignInButton text="signin_with" onCredential={handleGoogle} onError={setError} />
+            <div className="auth-divider">
+              <span>{t('অথবা', 'or')}</span>
+            </div>
+          </>
+        )}
         {needsEmail && (
           <p className="auth-alt">
             <Link to="/verify-email" state={{ email: identifier }}>

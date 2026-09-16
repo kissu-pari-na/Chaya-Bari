@@ -4,6 +4,7 @@ import { authenticate } from '../../middleware/auth.js'
 import { rateLimitByIp } from '../../middleware/rateLimit.js'
 import {
   forgotPasswordSchema,
+  googleAuthSchema,
   loginSchema,
   registerSchema,
   resendEmailSchema,
@@ -20,6 +21,9 @@ const authThrottle = rateLimitByIp('auth-ip', 30, 5 * 60_000)
 
 authRouter.post('/register', authThrottle, validateBody(registerSchema), asyncHandler(authController.register))
 authRouter.post('/login', authThrottle, validateBody(loginSchema), asyncHandler(authController.login))
+
+// Google Sign-In (public): verifies a Google ID token and logs in or registers.
+authRouter.post('/google', authThrottle, validateBody(googleAuthSchema), asyncHandler(authController.googleAuth))
 
 // Email confirmation (public — done before the first login).
 authRouter.post('/verify-email', authThrottle, validateBody(verifyEmailSchema), asyncHandler(authController.verifyEmail))

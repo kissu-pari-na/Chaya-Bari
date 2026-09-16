@@ -148,6 +148,30 @@
   font-size: 0.85rem;
 }
 
+/* Google Sign-In button: center the GIS-rendered button in the card. */
+.google-signin {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
+}
+
+/* "or" divider between the Google button and the email/password form. */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--card-muted);
+  font-size: 0.82rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--card-border);
+}
+
 /* A secondary, text-style action (resend / send code) that doesn't compete
    with the primary submit button. */
 .auth-card button.auth-link-btn {
