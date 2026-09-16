@@ -84,12 +84,15 @@ export function GoogleSignInButton({ onCredential, onError, text = 'continue_wit
     let lastWidth = 0
 
     // Draw the GIS button sized to the container. GIS renders a fixed-width
-    // button, so we clamp to the container width (and GIS's own 200–400 range)
-    // to keep the personalized "Sign in as …" button from overflowing the card.
+    // button and the filled themes can render a touch wider than requested, so
+    // we leave a small inset on each side and clamp to GIS's own 200–400 range.
+    // This keeps the button (including the personalized "Sign in as …" variant)
+    // centered within the card instead of reaching its rounded edges.
     function draw() {
       const el = containerRef.current
       if (cancelled || !el || !window.google) return
-      const width = Math.max(200, Math.min(el.clientWidth || 320, 400))
+      const inset = 24
+      const width = Math.max(200, Math.min((el.clientWidth || 320) - inset, 400))
       lastWidth = el.clientWidth
       el.innerHTML = ''
       window.google.accounts.id.renderButton(el, {
