@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SLOT_VALUES } from './slots.js'
 
 const optionalText = (max: number) =>
   z
@@ -41,6 +42,9 @@ export const checkoutSchema = z.object({
   addressId: z.string().cuid().optional(),
   address: addressSchema.optional(),
   fulfillmentDate: dateString,
+  timeSlot: z.enum(SLOT_VALUES as [string, ...string[]], {
+    errorMap: () => ({ message: 'Please choose a delivery time slot' }),
+  }),
   notes: optionalText(1000),
   couponCode: z
     .string()

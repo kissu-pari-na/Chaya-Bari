@@ -35,6 +35,7 @@ function toAdminOrder(order: OrderRow): AdminOrder {
     city: order.city,
     addressNote: order.addressNote,
     fulfillmentDate: order.fulfillmentDate.toISOString().slice(0, 10),
+    timeSlot: order.timeSlot,
     notes: order.notes,
     subtotal: Number(order.subtotal),
     productDiscount: Number(order.productDiscount),

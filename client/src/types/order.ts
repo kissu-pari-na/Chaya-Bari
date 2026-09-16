@@ -56,6 +56,7 @@ export interface Order {
   city: string
   addressNote: string | null
   fulfillmentDate: string
+  timeSlot: string | null
   notes: string | null
   subtotal: number
   productDiscount: number
@@ -134,6 +135,7 @@ export interface CheckoutInput {
   addressId?: string
   address?: AddressInput
   fulfillmentDate: string
+  timeSlot: string
   notes?: string
   couponCode?: string
 }

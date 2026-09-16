@@ -48,6 +48,11 @@ export function Header({ variant }: HeaderProps) {
       <div className="app-header__bar">
         <Logo />
         <div className="app-header__bar-actions">
+          {user && (
+            <span className="app-header__bar-bell">
+              <NotificationBell />
+            </span>
+          )}
           {variant === 'customer' && (
             <NavLink
               to="/cart"
@@ -113,7 +118,9 @@ export function Header({ variant }: HeaderProps) {
 
         {user ? (
           <div className="app-header__user">
-            <NotificationBell />
+            <span className="app-header__nav-bell">
+              <NotificationBell />
+            </span>
             <NavLink to="/profile" className="app-header__name" title={t('প্রোফাইল', 'Profile')}>
               {user.name}
             </NavLink>

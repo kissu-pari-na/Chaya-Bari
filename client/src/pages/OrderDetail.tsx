@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { fetchMyOrder } from '../lib/orders'
 import { formatBdt } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
+import { formatSlotValue } from '../lib/slots'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { DocumentHeader } from '../components/DocumentHeader'
 import { OrderTracker } from '../components/OrderTracker'
@@ -45,7 +46,10 @@ export function OrderDetail() {
       <div className="order-detail__head">
         <div>
           <h1>{t('অর্ডার', 'Order')} {order.orderNumber}</h1>
-          <p className="muted">{t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}</p>
+          <p className="muted">
+            {t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}
+            {order.timeSlot && <> · {t('সময়:', 'Time:')} {formatSlotValue(order.timeSlot)}</>}
+          </p>
         </div>
         <div className="order-detail__badges">
           <span className={`status status--${order.status.toLowerCase()}`}>{orderStatusLabel[order.status]}</span>
