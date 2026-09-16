@@ -47,6 +47,7 @@ export interface KitchenOrder {
   orderNumber: string
   recipientName: string
   status: OrderStatus
+  timeSlot: string | null
   createdAt: string
   note: string | null
   lines: OrderLine[]
@@ -165,6 +166,11 @@ export async function getProductionDay(dateStr: string): Promise<ProductionDay> 
     (a, b) => b.stages.TO_COOK.qty + b.stages.PREPARING.qty - (a.stages.TO_COOK.qty + a.stages.PREPARING.qty),
   )
 
+  // Sort the day's orders by their delivery time slot so the kitchen works them
+  // in delivery order. Slot values are zero-padded ("08:00-10:00") so a plain
+  // string compare is chronological; orders without a slot sort last, and
+  // createdAt breaks ties.
+  const slotKey = (s: string | null) => s ?? '~'
   const kitchenOrders: KitchenOrder[] = orders
     .map((o) => ({
       id: o.id,
@@ -173,11 +179,14 @@ export async function getProductionDay(dateStr: string): Promise<ProductionDay> 
       // The stored status is kept in sync with the lines and also carries the
       // manual PACKED state, so use it directly.
       status: o.status,
+      timeSlot: o.timeSlot,
       createdAt: o.createdAt.toISOString(),
       note: o.notes,
       lines: o.items.map((i) => ({ id: i.id, productName: i.productName, quantity: i.quantity, stage: i.kitchenStage })),
     }))
-    .sort((a, b) => (ORDER_IDX[a.status] ?? 0) - (ORDER_IDX[b.status] ?? 0) || a.createdAt.localeCompare(b.createdAt))
+    .sort(
+      (a, b) => slotKey(a.timeSlot).localeCompare(slotKey(b.timeSlot)) || a.createdAt.localeCompare(b.createdAt),
+    )
 
   let toCook = 0
   let preparing = 0

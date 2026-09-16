@@ -94,6 +94,7 @@ export interface DeliveryListRow extends PublicDelivery {
   orderNumber: string
   recipientName: string
   fulfillmentDate: string
+  timeSlot: string | null
 }
 
 export async function listDeliveries(): Promise<DeliveryListRow[]> {
@@ -106,5 +107,6 @@ export async function listDeliveries(): Promise<DeliveryListRow[]> {
     orderNumber: d.order.orderNumber,
     recipientName: d.order.recipientName,
     fulfillmentDate: d.order.fulfillmentDate.toISOString().slice(0, 10),
+    timeSlot: d.order.timeSlot,
   }))
 }

@@ -207,9 +207,20 @@
   color: var(--card-heading);
 }
 .ord-card__who {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   font-size: 0.82rem;
   color: var(--card-muted);
   margin-bottom: 0.5rem;
+}
+
+.ord-card__slot {
+  font-weight: 700;
+  color: var(--accent-bright);
+  white-space: nowrap;
 }
 .ord-card__note {
   background: rgba(224, 161, 46, 0.1);
