@@ -27,6 +27,14 @@ export function createAddress(input: AddressInput) {
   )
 }
 
+export function updateAddress(id: string, input: Partial<AddressInput>) {
+  return apiRequest<{ address: Address }>(`/addresses/${id}`, {
+    method: 'PATCH',
+    body: input,
+    auth: true,
+  }).then((r) => r.address)
+}
+
 export function deleteAddress(id: string) {
   return apiRequest<void>(`/addresses/${id}`, { method: 'DELETE', auth: true })
 }

@@ -90,9 +90,35 @@
   background: rgba(228, 50, 43, 0.12);
 }
 
+.address-opt__badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  vertical-align: middle;
+}
+
 .address-form {
   border-top: 1px dashed var(--card-border);
   padding-top: 0.85rem;
+}
+
+.address-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.address-empty p {
+  margin: 0;
+  color: var(--card-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 /* Summary panel */

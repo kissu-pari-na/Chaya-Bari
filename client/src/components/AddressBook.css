@@ -1,0 +1,178 @@
+.addressbook__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.addressbook__head h2 {
+  margin: 0;
+}
+
+.btn--sm {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.addressbook__empty {
+  margin: 0;
+}
+
+.addressbook__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.addr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  background: var(--card-2);
+}
+
+.addr-item--default {
+  border-color: var(--accent);
+  background: rgba(228, 50, 43, 0.1);
+}
+
+.addr-item__body {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.addr-item__top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.addr-item__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--card-muted);
+}
+
+.addr-item__badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.addr-item__line,
+.addr-item__note {
+  color: var(--card-muted);
+}
+
+.addr-item__note {
+  font-style: italic;
+  font-size: 0.82rem;
+}
+
+.addr-item__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.linkbtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--link);
+}
+
+.linkbtn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.linkbtn--danger {
+  color: var(--danger);
+}
+
+.linkbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.addressbook__form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.addressbook__form h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--card-heading);
+}
+
+.addressbook__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--card-muted);
+}
+
+.addressbook__form input {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--card-text);
+}
+
+.addressbook__row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.addressbook__row > label {
+  flex: 1;
+  min-width: 150px;
+}
+
+.addressbook__check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--card-text);
+  font-size: 0.88rem;
+}
+
+.addressbook__check input {
+  width: auto;
+}
+
+.addressbook__formactions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}

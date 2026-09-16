@@ -5,17 +5,8 @@ import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeOrder, previewCoupon } from '../lib/orders'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt } from '../lib/format'
-import type { Address, AddressInput, CouponPreview, OrderingWindow } from '../types/order'
+import type { Address, CouponPreview, OrderingWindow } from '../types/order'
 import './Checkout.css'
-
-const emptyAddress: AddressInput = {
-  recipientName: '',
-  recipientPhone: '',
-  addressLine: '',
-  area: '',
-  city: 'Dhaka',
-  note: '',
-}
 
 export function Checkout() {
   const { items, subtotal, clear } = useCart()
@@ -23,11 +14,9 @@ export function Checkout() {
   const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState<Address[]>([])
+  const [addressesLoaded, setAddressesLoaded] = useState(false)
   const [window, setWindow] = useState<OrderingWindow | null>(null)
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
-  const [useNew, setUseNew] = useState(false)
-  const [newAddress, setNewAddress] = useState<AddressInput>(emptyAddress)
-  const [saveAddress, setSaveAddress] = useState(true)
   const [fulfillmentDate, setFulfillmentDate] = useState('')
   const [notes, setNotes] = useState('')
   const [couponCode, setCouponCode] = useState('')
@@ -46,11 +35,13 @@ export function Checkout() {
     fetchAddresses()
       .then((a) => {
         setAddresses(a)
+        // Pre-select the default address (or the first one) so checkout is filled
+        // in from the profile without any extra taps.
         const def = a.find((x) => x.isDefault) ?? a[0]
         if (def) setSelectedAddressId(def.id)
-        else setUseNew(true)
       })
-      .catch(() => setUseNew(true))
+      .catch(() => setError(t('ঠিকানা লোড করা যায়নি', 'Could not load addresses')))
+      .finally(() => setAddressesLoaded(true))
   }, [])
 
   const deliveryCost = window?.defaultDeliveryCost ?? 0
@@ -99,12 +90,15 @@ export function Checkout() {
   async function handleSubmit(event: SyntheticEvent) {
     event.preventDefault()
     setError(null)
+    if (!selectedAddressId) {
+      setError(t('অর্ডার করার আগে একটি ডেলিভারি ঠিকানা নির্বাচন করুন', 'Please set a delivery address before ordering'))
+      return
+    }
     setSubmitting(true)
     try {
       const order = await placeOrder({
         items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
-        addressId: useNew ? undefined : selectedAddressId || undefined,
-        address: useNew ? { ...newAddress, isDefault: saveAddress && addresses.length === 0 } : undefined,
+        addressId: selectedAddressId,
         fulfillmentDate,
         notes: notes || undefined,
         couponCode: coupon ? coupon.coupon.code : undefined,
@@ -130,82 +124,44 @@ export function Checkout() {
 
         <fieldset>
           <legend>{t('ডেলিভারি ঠিকানা', 'Delivery address')}</legend>
-          {addresses.length > 0 && (
-            <div className="address-options">
-              {addresses.map((a) => (
-                <label key={a.id} className={selectedAddressId === a.id && !useNew ? 'address-opt address-opt--on' : 'address-opt'}>
-                  <input
-                    type="radio"
-                    name="address"
-                    checked={selectedAddressId === a.id && !useNew}
-                    onChange={() => {
-                      setUseNew(false)
-                      setSelectedAddressId(a.id)
-                    }}
-                  />
-                  <span>
-                    <strong>{a.recipientName}</strong> · {a.recipientPhone}
-                    <br />
-                    {a.addressLine}{a.area ? `, ${a.area}` : ''}, {a.city}
-                  </span>
-                </label>
-              ))}
-              <label className={useNew ? 'address-opt address-opt--on' : 'address-opt'}>
-                <input type="radio" name="address" checked={useNew} onChange={() => setUseNew(true)} />
-                <span>{t('নতুন ঠিকানা যোগ করুন', 'Add a new address')}</span>
-              </label>
-            </div>
-          )}
-
-          {(useNew || addresses.length === 0) && (
-            <div className="address-form">
-              <div className="admin-form__row">
-                <label>
-                  {t('প্রাপকের নাম', 'Recipient name')}
-                  <input
-                    value={newAddress.recipientName}
-                    onChange={(e) => setNewAddress({ ...newAddress, recipientName: e.target.value })}
-                    required
-                  />
-                </label>
-                <label>
-                  {t('ফোন', 'Phone')}
-                  <input
-                    value={newAddress.recipientPhone}
-                    onChange={(e) => setNewAddress({ ...newAddress, recipientPhone: e.target.value })}
-                    required
-                  />
-                </label>
+          {addresses.length > 0 ? (
+            <>
+              <div className="address-options">
+                {addresses.map((a) => (
+                  <label key={a.id} className={selectedAddressId === a.id ? 'address-opt address-opt--on' : 'address-opt'}>
+                    <input
+                      type="radio"
+                      name="address"
+                      checked={selectedAddressId === a.id}
+                      onChange={() => setSelectedAddressId(a.id)}
+                    />
+                    <span>
+                      <strong>{a.recipientName}</strong> · {a.recipientPhone}
+                      {a.isDefault && <span className="address-opt__badge">{t('ডিফল্ট', 'Default')}</span>}
+                      <br />
+                      {a.addressLine}{a.area ? `, ${a.area}` : ''}, {a.city}
+                    </span>
+                  </label>
+                ))}
               </div>
-              <label>
-                {t('ঠিকানা', 'Address')}
-                <input
-                  value={newAddress.addressLine}
-                  onChange={(e) => setNewAddress({ ...newAddress, addressLine: e.target.value })}
-                  required
-                />
-              </label>
-              <div className="admin-form__row">
-                <label>
-                  {t('এলাকা', 'Area')}
-                  <input value={newAddress.area} onChange={(e) => setNewAddress({ ...newAddress, area: e.target.value })} />
-                </label>
-                <label>
-                  {t('শহর', 'City')}
-                  <input
-                    value={newAddress.city}
-                    onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                    required
-                  />
-                </label>
+              <p className="hint">
+                <Link to="/profile#addresses">{t('ঠিকানা পরিচালনা করুন', 'Manage addresses')} →</Link>
+              </p>
+            </>
+          ) : (
+            addressesLoaded && (
+              <div className="address-empty">
+                <p>
+                  {t(
+                    'অর্ডার করার আগে আপনার প্রোফাইলে একটি ডেলিভারি ঠিকানা যোগ করুন, তারপর এখানে ফিরে আসুন।',
+                    'Please add a delivery address in your profile first, then come back here to order.',
+                  )}
+                </p>
+                <Link to="/profile#addresses" className="btn btn--brand">
+                  {t('ঠিকানা যোগ করুন', 'Add an address')}
+                </Link>
               </div>
-              {addresses.length > 0 && (
-                <label className="admin-form__check">
-                  <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
-                  {t('এই ঠিকানা সংরক্ষণ করুন', 'Save this address')}
-                </label>
-              )}
-            </div>
+            )
           )}
         </fieldset>
 
@@ -292,9 +248,17 @@ export function Checkout() {
           <span>{t('সর্বমোট', 'Grand total')}</span>
           <span>{formatBdt(total)}</span>
         </div>
-        <button type="button" onClick={handleSubmit} disabled={submitting} className="checkout__place">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitting || !selectedAddressId}
+          className="checkout__place"
+        >
           {submitting ? t('অর্ডার হচ্ছে…', 'Placing order…') : t('অর্ডার নিশ্চিত করুন', 'Confirm order')}
         </button>
+        {addressesLoaded && !selectedAddressId && (
+          <p className="hint">{t('অর্ডার করতে একটি ঠিকানা যোগ করুন।', 'Add an address to place your order.')}</p>
+        )}
         <p className="hint">{t('পেমেন্ট পরবর্তী ধাপে যুক্ত হবে; আপাতত অর্ডার রেকর্ড হবে।', 'Payment is added in a later step; for now the order is recorded.')}</p>
       </aside>
     </section>
