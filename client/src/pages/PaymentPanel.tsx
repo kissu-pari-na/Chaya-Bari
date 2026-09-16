@@ -97,6 +97,10 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
       setBusy(false)
     }
   }
+  // bKash online payment is temporarily shown as "coming soon" in the UI. The
+  // flow above is intentionally kept in place for when it's switched back on;
+  // this reference keeps it from being flagged as unused in the meantime.
+  void payWithBkash
 
   async function handleClaim(event: FormEvent) {
     event.preventDefault()
@@ -164,12 +168,15 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
 
       {!cancelled && due > 0 && (
         <>
-          {/* Online: bKash */}
+          {/* Online: bKash — temporarily disabled ("coming soon"). The
+              payWithBkash flow and gateway logic below are kept intact so this
+              can be switched back on later; only the UI is changed here. */}
           <div className="pay-online">
-            <button type="button" className="pay-bkash" onClick={payWithBkash} disabled={busy}>
-              {t('বিকাশে পেমেন্ট করুন', 'Pay with bKash')} (৳{Number(amount) || due})
+            <button type="button" className="pay-bkash" disabled aria-disabled="true">
+              {t('বিকাশে পেমেন্ট করুন', 'Pay with bKash')}
+              <span className="pay-soon">{t('শীঘ্রই আসছে', 'Coming soon')}</span>
             </button>
-            <p className="hint">{t('বিকাশে তাৎক্ষণিক পেমেন্ট — সফল হলে সঙ্গে সঙ্গে নিশ্চিত হবে।', 'Instant bKash payment — confirmed immediately on success.')}</p>
+            <p className="hint">{t('বিকাশে অনলাইন পেমেন্ট শীঘ্রই চালু হবে। আপাতত নিচের মাধ্যমে সরাসরি পরিশোধ করে জানান।', 'Online bKash payment is coming soon. For now, please pay directly using the option below and report it.')}</p>
           </div>
 
           <div className="pay-divider"><span>{t('অথবা', 'or')}</span></div>

@@ -269,6 +269,22 @@
 }
 .pay-bkash:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
 .pay-bkash:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+.pay-bkash {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.pay-soon {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
 
 .pay-divider {
   display: flex;
