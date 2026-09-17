@@ -16,11 +16,6 @@ function isOrbitaxEmail(email: string): boolean {
   const domain = email.trim().toLowerCase().split('@')[1] ?? ''
   return domain === 'orbitax.com' || domain.endsWith('.orbitax.com')
 }
-function isWeekend(dateString: string): boolean {
-  const date = new Date(dateString);
-  const day = date.getDay();
-  return day === 0 || day === 6;
-}
 
 export function Checkout() {
   const { items, subtotal, clear } = useCart()
@@ -74,7 +69,6 @@ export function Checkout() {
     if (autoCouponTried.current || !user || items.length === 0) return
     autoCouponTried.current = true
     if (!isOrbitaxEmail(user.email)) return
-    if (isWeekend(fulfillmentDate)) return
     previewCoupon(
       ORBITAX_COUPON,
       items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
@@ -82,7 +76,7 @@ export function Checkout() {
       .then((preview) => setCoupon((current) => current ?? preview))
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, items, fulfillmentDate])
+  }, [user, items])
 
   const deliveryCost = window?.defaultDeliveryCost ?? 0
   // With a valid coupon, trust the server-computed pricing (gross subtotal +
