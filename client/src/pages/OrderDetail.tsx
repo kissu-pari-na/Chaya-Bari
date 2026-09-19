@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { fetchMyOrder } from '../lib/orders'
-import { formatBdt } from '../lib/format'
+import { formatBdt, formatDateWithDay } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
@@ -47,7 +47,7 @@ export function OrderDetail() {
         <div>
           <h1>{t('অর্ডার', 'Order')} {order.orderNumber}</h1>
           <p className="muted">
-            {t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}
+            {t('ডেলিভারির তারিখ:', 'Delivery date:')} {formatDateWithDay(order.fulfillmentDate)}
             {order.timeSlot && <> · {t('সময়:', 'Time:')} {formatSlotValue(order.timeSlot)}</>}
           </p>
         </div>

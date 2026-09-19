@@ -5,7 +5,7 @@ import {
   updateOrderPaymentStatus,
   updateOrderStatus,
 } from '../../lib/orders'
-import { formatBdt } from '../../lib/format'
+import { formatBdt, formatDateWithDay } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { formatSlotValue } from '../../lib/slots'
 import { nextStatuses, paymentStatuses } from '../../lib/orderEnums'
@@ -73,7 +73,7 @@ export function OrderDetailAdmin() {
           <div>
             <h1>{t('অর্ডার', 'Order')} {order.orderNumber}</h1>
             <p className="muted">
-              {t('ডেলিভারির তারিখ:', 'Delivery date:')} {order.fulfillmentDate}
+              {t('ডেলিভারির তারিখ:', 'Delivery date:')} {formatDateWithDay(order.fulfillmentDate)}
               {order.timeSlot && <> · {t('সময়:', 'Time:')} {formatSlotValue(order.timeSlot)}</>}
             </p>
           </div>

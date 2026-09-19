@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchAdminOrders, type OrderFilters } from '../../lib/orders'
-import { formatBdt } from '../../lib/format'
+import { formatBdt, formatDateWithDay } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { formatSlotValue } from '../../lib/slots'
 import { orderStatuses, paymentStatuses } from '../../lib/orderEnums'
@@ -107,7 +107,7 @@ export function OrdersAdmin() {
                     {o.customer.isGuest && <><br /><span className="muted small">{t('অতিথি', 'Guest')}</span></>}
                   </td>
                   <td>
-                    {o.fulfillmentDate}
+                    {formatDateWithDay(o.fulfillmentDate)}
                     {o.timeSlot && <><br /><span className="muted">{formatSlotValue(o.timeSlot)}</span></>}
                   </td>
                   <td>{formatBdt(o.total)}</td>

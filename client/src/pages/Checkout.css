@@ -107,6 +107,13 @@
   padding-top: 0.85rem;
 }
 
+/* Selected delivery date shown with its weekday, under the date picker. */
+.checkout__chosen-date {
+  margin: 0.4rem 0 0;
+  font-weight: 600;
+  color: var(--accent-gold, #f5b300);
+}
+
 /* Guest checkout: register-benefits banner + inline contact/address grid. */
 .checkout__guest-banner {
   background: rgba(245, 179, 0, 0.1);
