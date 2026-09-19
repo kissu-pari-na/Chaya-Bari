@@ -184,6 +184,15 @@ enum PaymentStatus {
   FAILED
 }
 
+/// How the customer settles an order. PREPAID orders pay in advance (cash/
+/// transfer verified, or bKash online) and only reach the kitchen once fully
+/// paid. COD (cash on delivery) orders are collected at the door, so they do
+/// not wait on prepayment — payment is recorded when the order is delivered.
+enum PaymentMode {
+  PREPAID
+  COD
+}
+
 /// A customer's saved delivery address. Orders snapshot the address fields so
 /// editing or deleting an address never changes past orders.
 model Address {
@@ -243,6 +252,9 @@ model Order {
 
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
+  /// How this order is settled. COD orders are collected on delivery and are
+  /// not gated on prepayment; PREPAID orders must be paid before confirmation.
+  paymentMode   PaymentMode   @default(PREPAID)
 
   /// When the order reached DELIVERED (drives the day-after review invite).
   deliveredAt        DateTime?

@@ -107,6 +107,30 @@
   padding-top: 0.85rem;
 }
 
+/* Payment method (prepaid vs cash on delivery) options — same visual language
+   as the address options. */
+.pay-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pay-mode {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.pay-mode--on {
+  border-color: var(--accent);
+  background: rgba(228, 50, 43, 0.12);
+}
+
 .slot-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

@@ -36,6 +36,7 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
   const executedRef = useRef(false)
 
   const cancelled = order.status === 'CANCELLED'
+  const isCod = order.paymentMode === 'COD'
   const due = order.amountDue
 
   // Complete a bKash payment when the customer returns from the live gateway.
@@ -148,6 +149,15 @@ export function PaymentPanel({ order, onOrderChange }: PaymentPanelProps) {
           <strong className={due > 0 ? 'pay-due' : 'pay-paid'}>{formatBdt(due)}</strong>
         </span>
       </div>
+
+      {isCod && due > 0 && !cancelled && (
+        <div className="pay-note pay-note--cod">
+          {t(
+            `এই অর্ডারটি ক্যাশ অন ডেলিভারি — ডেলিভারির সময় ৳${due} নগদে পরিশোধ করুন। চাইলে নিচে আগেই পরিশোধ করেও জানাতে পারেন।`,
+            `This is a cash-on-delivery order — please pay ৳${due} in cash when it arrives. You can also pay in advance below if you prefer.`,
+          )}
+        </div>
+      )}
 
       {msg && <div className="pay-note pay-note--ok">{msg}</div>}
       {error && <div className="pay-note pay-note--err">{error}</div>}

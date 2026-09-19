@@ -2,21 +2,24 @@ import type { CSSProperties } from 'react'
 import { orderTrackerView } from '../lib/orderTracking'
 import { orderStatusLabel } from '../lib/orderStatus'
 import { useI18n } from '../context/LanguageContext'
-import type { OrderStatus, PaymentStatus } from '../types/order'
+import type { OrderStatus, PaymentMode, PaymentStatus } from '../types/order'
 import './OrderTracker.css'
 
 interface OrderTrackerProps {
   status: OrderStatus
   paymentStatus: PaymentStatus
+  /// Prepaid orders gate on payment before confirmation; cash-on-delivery
+  /// orders track the cash payment as the closing milestone instead.
+  paymentMode?: PaymentMode
 }
 
 /// A visual progress timeline that lets a customer track where their order is
-/// in the fulfillment flow. Derives its state from the order + payment status,
-/// so it stays in sync whenever the order is refetched (including the dedicated
-/// payment milestone).
-export function OrderTracker({ status, paymentStatus }: OrderTrackerProps) {
+/// in the fulfillment flow. Derives its state from the order + payment status
+/// and payment mode, so it stays in sync whenever the order is refetched
+/// (including the dedicated payment milestone).
+export function OrderTracker({ status, paymentStatus, paymentMode = 'PREPAID' }: OrderTrackerProps) {
   const { t } = useI18n()
-  const view = orderTrackerView(status, paymentStatus)
+  const view = orderTrackerView(status, paymentStatus, paymentMode)
 
   if (view.cancelled) {
     return (

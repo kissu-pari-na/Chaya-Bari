@@ -7,6 +7,7 @@ import { PrefControls } from './PrefControls'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
+import { isOrbitaxEmail } from '../lib/orbitax'
 import './Header.css'
 
 interface HeaderProps {
@@ -43,6 +44,28 @@ export function Header({ variant }: HeaderProps) {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'app-header__link app-header__link--active' : 'app-header__link'
 
+  // Orbitax staff get a billing shortcut (combined outstanding balance) in the
+  // header, wherever their account surface is.
+  const showOrbitax = !!user && isOrbitaxEmail(user.email)
+
+  const orbitaxIcon = (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+      <path d="M6 15h4" />
+    </svg>
+  )
+
   return (
     <header className="app-header">
       <div className="app-header__bar">
@@ -52,6 +75,16 @@ export function Header({ variant }: HeaderProps) {
             <span className="app-header__bar-bell">
               <NotificationBell />
             </span>
+          )}
+          {showOrbitax && (
+            <NavLink
+              to="/orbitax"
+              className="app-header__orbitax-icon"
+              aria-label={t('অরবিট্যাক্স বিলিং', 'Orbitax billing')}
+              title={t('অরবিট্যাক্স বিলিং', 'Orbitax billing')}
+            >
+              {orbitaxIcon}
+            </NavLink>
           )}
           {variant === 'customer' && (
             <NavLink

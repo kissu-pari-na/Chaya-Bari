@@ -45,6 +45,7 @@ function toAdminOrder(order: OrderRow): AdminOrder {
     couponCode: order.couponCode,
     status: order.status,
     paymentStatus: order.paymentStatus,
+    paymentMode: order.paymentMode,
     amountPaid: totals.amountPaid,
     amountDue: totals.amountDue,
     createdAt: order.createdAt.toISOString(),
@@ -130,8 +131,10 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   if (order.status !== status && !transitions[order.status].includes(status)) {
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
-  // Prepay business: an order can't be confirmed until it is fully paid.
-  if (status === 'CONFIRMED' && order.paymentStatus !== 'PAID') {
+  // Prepaid orders can't be confirmed until fully paid. Cash-on-delivery orders
+  // are collected at the door, so they skip this gate and can be confirmed and
+  // sent to the kitchen while still unpaid.
+  if (status === 'CONFIRMED' && order.paymentMode !== 'COD' && order.paymentStatus !== 'PAID') {
     throw HttpError.badRequest('Cannot confirm this order until payment is completed in full')
   }
   // Stamp the delivery time on first transition to DELIVERED; it drives the

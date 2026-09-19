@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeOrder, previewCoupon } from '../lib/orders'
+import { isOrbitaxEmail } from '../lib/orbitax'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt } from '../lib/format'
 import { TIME_SLOTS, formatSlotLabel, isSlotEnabledForDate, isWeekend, pickDefaultSlot } from '../lib/slots'
@@ -12,10 +13,6 @@ import './Checkout.css'
 
 // Orbitax staff get the free-delivery coupon auto-applied when it is valid.
 const ORBITAX_COUPON = 'ORBIFREEDEL'
-function isOrbitaxEmail(email: string): boolean {
-  const domain = email.trim().toLowerCase().split('@')[1] ?? ''
-  return domain === 'orbitax.com' || domain.endsWith('.orbitax.com')
-}
 
 export function Checkout() {
   const { items, subtotal, clear } = useCart()
@@ -33,6 +30,7 @@ export function Checkout() {
   const [couponCode, setCouponCode] = useState('')
   const [coupon, setCoupon] = useState<CouponPreview | null>(null)
   const [couponError, setCouponError] = useState<string | null>(null)
+  const [paymentMode, setPaymentMode] = useState<'PREPAID' | 'COD'>('PREPAID')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -141,6 +139,7 @@ export function Checkout() {
         timeSlot,
         notes: notes || undefined,
         couponCode: coupon ? coupon.coupon.code : undefined,
+        paymentMode,
       })
       clear()
       navigate(`/orders/${order.id}`, { state: { justPlaced: true } })
@@ -257,6 +256,38 @@ export function Checkout() {
         </fieldset>
 
         <fieldset>
+          <legend>{t('পেমেন্ট পদ্ধতি', 'Payment method')}</legend>
+          <div className="pay-mode-options">
+            <label className={paymentMode === 'PREPAID' ? 'pay-mode pay-mode--on' : 'pay-mode'}>
+              <input
+                type="radio"
+                name="paymentMode"
+                checked={paymentMode === 'PREPAID'}
+                onChange={() => setPaymentMode('PREPAID')}
+              />
+              <span>
+                <strong>{t('অগ্রিম পেমেন্ট', 'Pay in advance')}</strong>
+                <br />
+                {t('বিকাশ/নগদ/ব্যাংকে পরিশোধ করে অর্ডার নিশ্চিত করুন।', 'Pay via bKash/Nagad/bank to confirm your order.')}
+              </span>
+            </label>
+            <label className={paymentMode === 'COD' ? 'pay-mode pay-mode--on' : 'pay-mode'}>
+              <input
+                type="radio"
+                name="paymentMode"
+                checked={paymentMode === 'COD'}
+                onChange={() => setPaymentMode('COD')}
+              />
+              <span>
+                <strong>{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</strong>
+                <br />
+                {t('ডেলিভারির সময় নগদে পরিশোধ করুন।', 'Pay in cash when your order is delivered.')}
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>{t('নোট (ঐচ্ছিক)', 'Note (optional)')}</legend>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={1000} />
         </fieldset>
@@ -328,7 +359,11 @@ export function Checkout() {
         {addressesLoaded && !selectedAddressId && (
           <p className="hint">{t('অর্ডার করতে একটি ঠিকানা যোগ করুন।', 'Add an address to place your order.')}</p>
         )}
-        <p className="hint">{t('পেমেন্ট পরবর্তী ধাপে যুক্ত হবে; আপাতত অর্ডার রেকর্ড হবে।', 'Payment is added in a later step; for now the order is recorded.')}</p>
+        <p className="hint">
+          {paymentMode === 'COD'
+            ? t('ক্যাশ অন ডেলিভারি: ডেলিভারির সময় নগদে পরিশোধ করবেন।', 'Cash on delivery: you will pay in cash when the order arrives.')
+            : t('অর্ডারের পর পেমেন্টের ধাপে বিকাশ/নগদ/ব্যাংকে পরিশোধ করে জানাতে পারবেন।', 'After ordering, you can pay via bKash/Nagad/bank and report it on the payment step.')}
+        </p>
       </aside>
     </section>
   )

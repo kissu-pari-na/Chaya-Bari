@@ -13,6 +13,9 @@ export type OrderStatus =
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'PARTIALLY_PAID' | 'REFUNDED' | 'FAILED'
 
+/// How an order is settled: PREPAID (pay in advance) or COD (cash on delivery).
+export type PaymentMode = 'PREPAID' | 'COD'
+
 export interface Address {
   id: string
   label: string | null
@@ -66,6 +69,7 @@ export interface Order {
   couponCode: string | null
   status: OrderStatus
   paymentStatus: PaymentStatus
+  paymentMode: PaymentMode
   amountPaid: number
   amountDue: number
   createdAt: string
@@ -138,4 +142,5 @@ export interface CheckoutInput {
   timeSlot: string
   notes?: string
   couponCode?: string
+  paymentMode?: PaymentMode
 }
