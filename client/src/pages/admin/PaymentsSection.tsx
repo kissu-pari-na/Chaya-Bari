@@ -31,6 +31,7 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
   }, [order.id])
 
   const pendingCount = payments.filter((p) => p.status === 'PENDING').length
+  const cancelled = order.status === 'CANCELLED'
 
   async function handleRecord(event: FormEvent) {
     event.preventDefault()
@@ -166,7 +167,9 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
                     )}
                   </td>
                   <td className="admin-table__actions">
-                    {p.status === 'PENDING' ? (
+                    {cancelled ? (
+                      <span className="muted">—</span>
+                    ) : p.status === 'PENDING' ? (
                       <>
                         <button className="btn-mini btn-mini--ok" onClick={() => handleVerify(p, 'verify')}>
                           {t('নিশ্চিত', 'Confirm')}
@@ -195,6 +198,11 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
         )
       )}
 
+      {cancelled ? (
+        <p className="hint" style={{ marginTop: '0.5rem' }}>
+          {t('এই অর্ডারটি বাতিল হয়েছে — পেমেন্ট সংক্রান্ত কোনো পরিবর্তন করা যাবে না।', 'This order is cancelled — payment changes are locked.')}
+        </p>
+      ) : (
       <form className="pay-form" onSubmit={handleRecord}>
         {error && <div className="auth-error">{error}</div>}
         <p className="hint" style={{ marginTop: 0 }}>{t('অ্যাডমিন হিসেবে সরাসরি নিশ্চিত পেমেন্ট রেকর্ড করুন।', 'Record a confirmed payment directly as an admin.')}</p>
@@ -234,6 +242,7 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
           <button type="submit">{t('পেমেন্ট রেকর্ড করুন', 'Record payment')}</button>
         </div>
       </form>
+      )}
     </div>
   )
 }

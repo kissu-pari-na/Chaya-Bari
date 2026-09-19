@@ -167,6 +167,14 @@ admin/kitchen account. Each role lands on its own area:
   phone; at checkout a missing address phone is auto-filled from the customer's
   profile number (which itself is captured at checkout when absent) and saved
   back onto the address.
+- **Order cancellation rules**: a customer can cancel their own order only while
+  it is still pending (and nothing has been paid); once confirmed or beyond, the
+  order page tells them to contact the business, linking a new public **/contact**
+  page built from the business profile. An admin can cancel only from
+  pending/confirmed (never once preparing has started) and only after refunding
+  any amount paid. Once an order is cancelled everything is locked — no status,
+  payment, or payment-method changes. Customers and admins are notified on
+  cancellation.
 - **Missing phone capture**: a phone number is optional on some accounts (e.g.
   Google sign-in). Customers can add/edit their own name and phone from the
   profile (`PATCH /api/auth/me`); a storefront-wide banner and a checkout field

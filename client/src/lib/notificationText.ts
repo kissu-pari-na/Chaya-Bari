@@ -95,6 +95,13 @@ const catalog: Record<string, (d: NotificationData) => Rendered> = {
       `A payment on your order ${d.orderNumber} was refunded or reversed, so it is awaiting payment again. Contact us if you have any questions.`,
     ),
   }),
+  'order.cancelled_by_customer_admin': (d) => ({
+    title: pick('গ্রাহক অর্ডার বাতিল করেছেন', 'Order cancelled by customer'),
+    body: pick(
+      `গ্রাহক অর্ডার ${d.orderNumber} বাতিল করেছেন।`,
+      `The customer cancelled order ${d.orderNumber}.`,
+    ),
+  }),
   'review.invite': (d) => ({
     title: pick('আপনার মতামত জানান ⭐', 'Share your feedback ⭐'),
     body: pick(

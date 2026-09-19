@@ -223,6 +223,43 @@
 .pay-note--err { background: var(--danger-bg); color: var(--danger); border: 1px solid #e6b8b3; }
 .pay-note--cod { background: #e6f4ea; color: #1f7a44; border: 1px solid #b7e0c5; }
 
+/* Cancel controls on the customer order page. */
+.order-cancel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  margin: 0 0 1.25rem;
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius-md);
+}
+
+.order-cancel--locked {
+  border-style: solid;
+  background: rgba(245, 179, 0, 0.08);
+}
+
+.order-cancel--locked p {
+  margin: 0;
+}
+
+.btn--danger {
+  background: var(--danger, #b3261e);
+  color: #fff;
+  border: none;
+}
+
+.btn--danger:hover {
+  background: #9c211a;
+  color: #fff;
+}
+
+.btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Customer control to switch payment method before the order is confirmed. */
 .pay-mode-switch {
   display: flex;

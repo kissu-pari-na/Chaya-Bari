@@ -49,6 +49,7 @@ orderRouter.patch(
   validateBody(updatePaymentModeSchema),
   asyncHandler(orderController.changePaymentMode),
 )
+orderRouter.post('/orders/:id/cancel', asyncHandler(orderController.cancelOrder))
 
 /// Admin ordering settings + order management.
 export const adminOrderingRouter = Router()

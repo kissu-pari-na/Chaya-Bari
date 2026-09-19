@@ -6,8 +6,13 @@ import { getOrderingSetting, computeWindow } from './ordering.service.js'
 import { isSlotEnabledForDate } from './slots.js'
 import { priceOrder } from './pricing.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
-import { paymentTotals, recomputeOrderPaymentStatus, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
-import { notifyOrderPlaced, notifyNewOrderToAdmins } from '../notifications/notification.service.js'
+import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
+import {
+  notifyOrderPlaced,
+  notifyNewOrderToAdmins,
+  notifyOrderStatus,
+  notifyOrderCancelledByCustomer,
+} from '../notifications/notification.service.js'
 
 interface AddressSnapshot {
   recipientName: string
@@ -311,6 +316,30 @@ export async function getMyOrder(customerId: string, id: string): Promise<Public
     throw HttpError.notFound('Order not found')
   }
   return toPublicOrder(order)
+}
+
+/// Customer cancels their own order. Allowed only while it is still PENDING
+/// (not yet confirmed). If any money has been paid, a refund is involved, so the
+/// customer must contact the business instead of self-cancelling — this keeps a
+/// cancelled order from stranding a refund.
+export async function cancelOrder(customerId: string, id: string): Promise<PublicOrder> {
+  const order = await prisma.order.findUnique({ where: { id } })
+  if (!order || order.customerId !== customerId) throw HttpError.notFound('Order not found')
+  if (order.status !== 'PENDING') {
+    throw HttpError.badRequest(
+      'This order can no longer be cancelled. Please contact us if you still need to cancel it.',
+    )
+  }
+  const payments = await prisma.payment.findMany({ where: { orderId: id } })
+  if (netPaid(payments).gt(0)) {
+    throw HttpError.badRequest(
+      'You have already paid for this order. Please contact us to cancel it and arrange a refund.',
+    )
+  }
+  await prisma.order.update({ where: { id }, data: { status: 'CANCELLED' } })
+  await notifyOrderStatus(customerId, 'CANCELLED', order.orderNumber, order.id)
+  await notifyOrderCancelledByCustomer(order.orderNumber, order.id)
+  return getMyOrder(customerId, id)
 }
 
 /// Customer switches their own order between pay-in-advance and cash-on-delivery.

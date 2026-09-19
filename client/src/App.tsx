@@ -17,6 +17,7 @@ import { Checkout } from './pages/Checkout'
 import { MyOrders } from './pages/MyOrders'
 import { OrderDetail } from './pages/OrderDetail'
 import { OrbitaxBilling } from './pages/OrbitaxBilling'
+import { Contact } from './pages/Contact'
 import { OrderReview } from './pages/OrderReview'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { BusinessProfileSettings } from './pages/BusinessProfileSettings'
@@ -69,6 +70,7 @@ export default function App() {
               <Route path="/" element={<CustomerHome />} />
               <Route path="/products" element={<ProductList />} />
               <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
               {/* Checkout is public: guests can order without an account. */}
               <Route path="/checkout" element={<Checkout />} />
