@@ -303,10 +303,13 @@ admin/kitchen account. Each role lands on its own area:
 ## Phase 11 — what's implemented
 
 - **In-app notifications** (fully working): emitted from real events — order
-  placed (→ customer + admins), order status changes (→ customer), and
-  successful payments (→ customer + admins). A header bell shows the unread
-  count with a dropdown to read and mark-all-read. Email/SMS/push channels can
-  be layered on the same events later.
+  placed (→ customer + admins), order status changes (→ customer), payment
+  submitted/received/verified/rejected, and the review invite. A header bell
+  shows the unread count with a dropdown to read and mark-all-read.
+  **Bilingual**: each notification is stored with a message key + params (plus a
+  Bengali fallback), and the bell renders the text in the active UI language, so
+  it follows the Bangla/English toggle. Email/SMS/push channels can be layered on
+  the same events later.
 - **Delivery provider integration point** (mock): "dispatch to provider"
   generates a tracking reference and moves the delivery to *assigned* —
   swap the adapter for a real Pathao/pandago client without changing callers.

@@ -1,10 +1,20 @@
 import { apiRequest } from './apiClient'
 
+/// Localization payload the client uses to render the notification text in the
+/// active language. `title`/`body` remain as the Bengali fallback.
+export interface NotificationData {
+  key: string
+  orderNumber?: string
+  amount?: number
+  method?: string
+}
+
 export interface AppNotification {
   id: string
   type: string
   title: string
   body: string
+  data: NotificationData | null
   orderId: string | null
   link: string | null
   read: boolean

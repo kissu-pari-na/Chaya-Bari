@@ -1,12 +1,23 @@
-import type { Notification, NotificationType, OrderStatus } from '@prisma/client'
+import { Prisma, type Notification, type NotificationType, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
+
+/// Structured payload for client-side localization: a message key and the params
+/// the client needs to render either language. The server also stores a Bengali
+/// title/body as a fallback for clients that can't localize from this.
+export interface NotificationData {
+  key: string
+  orderNumber?: string
+  amount?: number
+  method?: string
+}
 
 export interface PublicNotification {
   id: string
   type: NotificationType
   title: string
   body: string
+  data: NotificationData | null
   orderId: string | null
   link: string | null
   read: boolean
@@ -19,6 +30,7 @@ function toPublic(n: Notification): PublicNotification {
     type: n.type,
     title: n.title,
     body: n.body,
+    data: (n.data as NotificationData | null) ?? null,
     orderId: n.orderId,
     link: n.link,
     read: n.read,
@@ -31,6 +43,8 @@ interface NotifyInput {
   type: NotificationType
   title: string
   body: string
+  /// Localization payload (key + params) rendered client-side per the toggle.
+  data?: NotificationData
   orderId?: string
   /// In-app path to open when the notification is clicked.
   link?: string
@@ -46,6 +60,7 @@ export async function notify(input: NotifyInput): Promise<void> {
         type: input.type,
         title: input.title,
         body: input.body,
+        data: input.data ? (input.data as unknown as Prisma.InputJsonValue) : undefined,
         orderId: input.orderId,
         link: input.link,
       },
@@ -83,47 +98,54 @@ export async function notifyAdmins(input: Omit<NotifyInput, 'userId'>): Promise<
 function statusMessage(
   status: OrderStatus,
   orderNumber: string,
-): { type: NotificationType; title: string; body: string } | null {
+): { type: NotificationType; key: string; title: string; body: string } | null {
   switch (status) {
     case 'CONFIRMED':
       return {
         type: 'ORDER_CONFIRMED',
+        key: 'order.confirmed',
         title: 'অর্ডার নিশ্চিত হয়েছে ✅',
         body: `আপনার অর্ডার ${orderNumber} নিশ্চিত করা হয়েছে। শীঘ্রই খাবার তৈরি শুরু হবে।`,
       }
     case 'PREPARING':
       return {
         type: 'ORDER_PREPARING',
+        key: 'order.preparing',
         title: 'রান্না শুরু হয়েছে 👨‍🍳',
         body: `আপনার অর্ডার ${orderNumber}-এর খাবার এখন আমাদের রান্নাঘরে তৈরি হচ্ছে।`,
       }
     case 'READY':
       return {
         type: 'ORDER_READY',
+        key: 'order.ready',
         title: 'খাবার প্রস্তুত 🍱',
         body: `আপনার অর্ডার ${orderNumber}-এর খাবার তৈরি হয়ে গেছে। এখন প্যাক করা হবে।`,
       }
     case 'PACKED':
       return {
         type: 'ORDER_PACKED',
+        key: 'order.packed',
         title: 'প্যাকিং সম্পন্ন 📦',
         body: `আপনার অর্ডার ${orderNumber} প্যাক করা হয়েছে এবং ডেলিভারির জন্য প্রস্তুত।`,
       }
     case 'OUT_FOR_DELIVERY':
       return {
         type: 'ORDER_OUT_FOR_DELIVERY',
+        key: 'order.out_for_delivery',
         title: 'অর্ডার পথে রয়েছে 🛵',
         body: `আপনার অর্ডার ${orderNumber} ডেলিভারির জন্য রওনা হয়েছে। অনুগ্রহ করে ফোন সচল রাখুন।`,
       }
     case 'DELIVERED':
       return {
         type: 'ORDER_DELIVERED',
+        key: 'order.delivered',
         title: 'অর্ডার ডেলিভার হয়েছে 🎉',
         body: `আপনার অর্ডার ${orderNumber} পৌঁছে দেওয়া হয়েছে। ছায়া বাড়ির সাথে থাকার জন্য ধন্যবাদ!`,
       }
     case 'CANCELLED':
       return {
         type: 'ORDER_CANCELLED',
+        key: 'order.cancelled',
         title: 'অর্ডার বাতিল হয়েছে',
         body: `আপনার অর্ডার ${orderNumber} বাতিল করা হয়েছে। কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।`,
       }
@@ -139,6 +161,7 @@ export async function notifyNewOrderToAdmins(orderNumber: string, orderId: strin
     type: 'NEW_ORDER',
     title: 'নতুন অর্ডার এসেছে 🛎️',
     body: `নতুন অর্ডার ${orderNumber} এসেছে। প্রক্রিয়া শুরু করতে বিস্তারিত দেখুন।`,
+    data: { key: 'order.new_admin', orderNumber },
     orderId,
     link: adminOrderLink(orderId),
   })
@@ -149,6 +172,7 @@ export async function notifyOrderPlaced(customerId: string, orderNumber: string,
     type: 'ORDER_PLACED',
     title: 'অর্ডার পেয়েছি ✅',
     body: `ধন্যবাদ! আপনার অর্ডার ${orderNumber} সফলভাবে গ্রহণ করা হয়েছে। শীঘ্রই এটি নিশ্চিত করা হবে।`,
+    data: { key: 'order.placed', orderNumber },
     orderId,
     link: customerOrderLink(orderId),
   })
@@ -162,6 +186,7 @@ export async function notifyOrderStatus(customerId: string | null, status: Order
     type: msg.type,
     title: msg.title,
     body: msg.body,
+    data: { key: msg.key, orderNumber },
     orderId,
     link: customerOrderLink(orderId),
   })
@@ -173,6 +198,7 @@ export async function notifyReviewInvite(customerId: string, orderNumber: string
     type: 'REVIEW_INVITE',
     title: 'আপনার মতামত জানান ⭐',
     body: `আপনার অর্ডার ${orderNumber}-এর খাবার কেমন ছিল জানান। রিভিউ ও রেটিং দিতে ট্যাপ করুন — আপনার মতামত আমাদের কাছে গুরুত্বপূর্ণ।`,
+    data: { key: 'review.invite', orderNumber },
     orderId,
     link: orderReviewLink(orderId),
   })
@@ -183,6 +209,7 @@ export async function notifyPaymentReceived(customerId: string | null, amount: n
     type: 'PAYMENT_RECEIVED',
     title: 'পেমেন্ট গৃহীত হয়েছে 💳',
     body: `আপনার অর্ডার ${orderNumber}-এর জন্য ৳${amount} পেমেন্ট গ্রহণ করা হয়েছে। ধন্যবাদ!`,
+    data: { key: 'payment.received.customer', orderNumber, amount },
     orderId,
     link: customerOrderLink(orderId),
   })
@@ -190,6 +217,7 @@ export async function notifyPaymentReceived(customerId: string | null, amount: n
     type: 'PAYMENT_RECEIVED',
     title: 'পেমেন্ট গৃহীত',
     body: `অর্ডার ${orderNumber}-এর জন্য ৳${amount} পেমেন্ট রেকর্ড হয়েছে।`,
+    data: { key: 'payment.received.admin', orderNumber, amount },
     orderId,
     link: adminOrderLink(orderId),
   })
@@ -201,6 +229,7 @@ export async function notifyPaymentSubmitted(amount: number, method: string, ord
     type: 'PAYMENT_SUBMITTED',
     title: 'পেমেন্ট যাচাই করুন',
     body: `গ্রাহক অর্ডার ${orderNumber}-এর জন্য ৳${amount} (${method}) পরিশোধের তথ্য জমা দিয়েছেন। অনুগ্রহ করে যাচাই করুন।`,
+    data: { key: 'payment.submitted.admin', orderNumber, amount, method },
     orderId,
     link: adminOrderLink(orderId),
   })
@@ -213,6 +242,7 @@ export async function notifyPaymentVerified(customerId: string | null, verified:
       type: 'PAYMENT_VERIFIED',
       title: 'পেমেন্ট নিশ্চিত হয়েছে ✅',
       body: `আপনার অর্ডার ${orderNumber}-এর ৳${amount} পেমেন্ট যাচাই করে নিশ্চিত করা হয়েছে। ধন্যবাদ!`,
+      data: { key: 'payment.verified', orderNumber, amount },
       orderId,
       link: customerOrderLink(orderId),
     })
@@ -221,6 +251,7 @@ export async function notifyPaymentVerified(customerId: string | null, verified:
       type: 'PAYMENT_REJECTED',
       title: 'পেমেন্ট যাচাই করা যায়নি',
       body: `আপনার অর্ডার ${orderNumber}-এর ৳${amount} পেমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে সঠিক তথ্য দিয়ে আবার জমা দিন।`,
+      data: { key: 'payment.rejected', orderNumber, amount },
       orderId,
       link: customerOrderLink(orderId),
     })
