@@ -331,6 +331,11 @@ export async function cancelOrder(customerId: string, id: string): Promise<Publi
     )
   }
   const payments = await prisma.payment.findMany({ where: { orderId: id } })
+  if (payments.some((p) => p.status === 'PENDING')) {
+    throw HttpError.badRequest(
+      'You have a payment awaiting verification. Please contact us to cancel this order.',
+    )
+  }
   if (netPaid(payments).gt(0)) {
     throw HttpError.badRequest(
       'You have already paid for this order. Please contact us to cancel it and arrange a refund.',
