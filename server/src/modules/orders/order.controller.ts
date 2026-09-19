@@ -61,6 +61,12 @@ export async function getMyOrder(req: Request, res: Response) {
   res.json({ order: await orderService.getMyOrder(customerId, req.params.id) })
 }
 
+export async function changePaymentMode(req: Request, res: Response) {
+  const customerId = await requireCustomerId(req.user!.id)
+  const order = await orderService.changePaymentMode(customerId, req.params.id, req.body.paymentMode)
+  res.json({ order })
+}
+
 // ---- Admin ordering settings ----
 
 export async function getSetting(_req: Request, res: Response) {

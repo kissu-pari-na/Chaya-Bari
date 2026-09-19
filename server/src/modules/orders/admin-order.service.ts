@@ -2,7 +2,7 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { PublicOrder } from './order.service.js'
-import { paymentTotals, toPublicPayment } from '../payments/payment.service.js'
+import { paymentTotals, recomputeOrderPaymentStatus, toPublicPayment } from '../payments/payment.service.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 export interface AdminOrder extends PublicOrder {
@@ -167,5 +167,21 @@ export async function updatePaymentStatus(id: string, paymentStatus: string): Pr
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order) throw HttpError.notFound('Order not found')
   await prisma.order.update({ where: { id }, data: { paymentStatus: paymentStatus as never } })
+  return getOrder(id)
+}
+
+/// Admin switches an order between pay-in-advance and cash-on-delivery. Only
+/// allowed while the order is still PENDING (before it is confirmed); once it has
+/// moved past confirmation the payment method is locked.
+export async function updatePaymentMode(id: string, paymentMode: 'PREPAID' | 'COD'): Promise<AdminOrder> {
+  const order = await prisma.order.findUnique({ where: { id } })
+  if (!order) throw HttpError.notFound('Order not found')
+  if (order.status !== 'PENDING') {
+    throw HttpError.badRequest('Payment method can only be changed before the order is confirmed')
+  }
+  if (order.paymentMode !== paymentMode) {
+    await prisma.order.update({ where: { id }, data: { paymentMode } })
+    await recomputeOrderPaymentStatus(id)
+  }
   return getOrder(id)
 }

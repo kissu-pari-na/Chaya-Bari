@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { fetchMyOrder } from '../lib/orders'
+import { changeOrderPaymentMode, fetchMyOrder } from '../lib/orders'
 import { formatBdt, formatDateWithDay } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
+import { ApiError } from '../lib/apiClient'
 import { DocumentHeader } from '../components/DocumentHeader'
 import { OrderTracker } from '../components/OrderTracker'
 import { useI18n } from '../context/LanguageContext'
@@ -20,6 +21,8 @@ export function OrderDetail() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [modeBusy, setModeBusy] = useState(false)
+  const [modeError, setModeError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -28,6 +31,19 @@ export function OrderDetail() {
       .catch(() => setError('__NOT_FOUND__'))
       .finally(() => setLoading(false))
   }, [id])
+
+  async function switchPaymentMode(target: 'PREPAID' | 'COD') {
+    if (!order) return
+    setModeBusy(true)
+    setModeError(null)
+    try {
+      setOrder(await changeOrderPaymentMode(order.id, target))
+    } catch (err) {
+      setModeError(err instanceof ApiError ? err.message : t('পরিবর্তন করা যায়নি', 'Could not change payment method'))
+    } finally {
+      setModeBusy(false)
+    }
+  }
 
   if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
   if (error || !order)
@@ -61,6 +77,27 @@ export function OrderDetail() {
       </div>
 
       <OrderTracker status={order.status} paymentStatus={order.paymentStatus} paymentMode={order.paymentMode} />
+
+      {order.status === 'PENDING' && (
+        <div className="pay-mode-switch">
+          <div>
+            <strong>{t('পেমেন্ট পদ্ধতি', 'Payment method')}:</strong>{' '}
+            {order.paymentMode === 'COD' ? t('ক্যাশ অন ডেলিভারি', 'Cash on delivery') : t('অগ্রিম পেমেন্ট', 'Pay in advance')}
+          </div>
+          <button
+            type="button"
+            className="btn btn--sm"
+            disabled={modeBusy}
+            onClick={() => switchPaymentMode(order.paymentMode === 'COD' ? 'PREPAID' : 'COD')}
+          >
+            {order.paymentMode === 'COD'
+              ? t('অগ্রিম পেমেন্টে পরিবর্তন করুন', 'Switch to pay in advance')
+              : t('ক্যাশ অন ডেলিভারিতে পরিবর্তন করুন', 'Switch to cash on delivery')}
+          </button>
+          {modeError && <p className="hint hint--err">{modeError}</p>}
+          <p className="hint">{t('অর্ডার নিশ্চিত হওয়ার আগ পর্যন্ত পেমেন্ট পদ্ধতি পরিবর্তন করা যাবে।', 'Payment method can be changed until the order is confirmed.')}</p>
+        </div>
+      )}
 
       {order.status === 'DELIVERED' && (
         <Link to={`/orders/${order.id}/review`} className="order-detail__review-cta">

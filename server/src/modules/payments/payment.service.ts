@@ -75,7 +75,7 @@ export function derivePaymentStatus(payments: Payment[], total: Prisma.Decimal):
   return 'PENDING'
 }
 
-async function recomputeOrderPaymentStatus(orderId: string): Promise<void> {
+export async function recomputeOrderPaymentStatus(orderId: string): Promise<void> {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payments: true } })
   if (!order) return
   const paymentStatus = derivePaymentStatus(order.payments, order.total)

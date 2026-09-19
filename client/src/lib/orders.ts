@@ -11,6 +11,7 @@ import type {
   Order,
   OrderingWindow,
   OrderStatus,
+  PaymentMode,
   PaymentStatus,
 } from '../types/order'
 
@@ -55,6 +56,16 @@ export function fetchMyOrders() {
 
 export function fetchMyOrder(id: string) {
   return apiRequest<{ order: Order }>(`/orders/${id}`, { auth: true }).then((r) => r.order)
+}
+
+/// Customer switches their own order between pay-in-advance and cash-on-delivery
+/// (allowed only while the order is still pending confirmation).
+export function changeOrderPaymentMode(id: string, paymentMode: PaymentMode) {
+  return apiRequest<{ order: Order }>(`/orders/${id}/payment-mode`, {
+    method: 'PATCH',
+    body: { paymentMode },
+    auth: true,
+  }).then((r) => r.order)
 }
 
 // ---- Admin ordering settings ----
@@ -137,6 +148,16 @@ export function updateOrderPaymentStatus(id: string, paymentStatus: PaymentStatu
   return apiRequest<{ order: AdminOrder }>(`/admin/orders/${id}/payment-status`, {
     method: 'PATCH',
     body: { paymentStatus },
+    auth: true,
+  }).then((r) => r.order)
+}
+
+/// Admin switches an order between pay-in-advance and cash-on-delivery (allowed
+/// only while the order is still pending confirmation).
+export function updateOrderPaymentMode(id: string, paymentMode: PaymentMode) {
+  return apiRequest<{ order: AdminOrder }>(`/admin/orders/${id}/payment-mode`, {
+    method: 'PATCH',
+    body: { paymentMode },
     auth: true,
   }).then((r) => r.order)
 }
