@@ -223,6 +223,18 @@
 .pay-note--err { background: var(--danger-bg); color: var(--danger); border: 1px solid #e6b8b3; }
 .pay-note--cod { background: #e6f4ea; color: #1f7a44; border: 1px solid #b7e0c5; }
 
+/* Customer control to switch payment method before the order is confirmed. */
+.pay-mode-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  margin: 0 0 1.25rem;
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius-md);
+}
+
 .pay-history {
   list-style: none;
   padding: 0;

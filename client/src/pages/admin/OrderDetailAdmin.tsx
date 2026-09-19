@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   fetchAdminOrder,
+  updateOrderPaymentMode,
   updateOrderPaymentStatus,
   updateOrderStatus,
 } from '../../lib/orders'
@@ -60,6 +61,19 @@ export function OrderDetailAdmin() {
     }
   }
 
+  async function changePaymentMode(paymentMode: AdminOrder['paymentMode']) {
+    if (!order) return
+    setBusy(true)
+    setError(null)
+    try {
+      setOrder(await updateOrderPaymentMode(order.id, paymentMode))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('পেমেন্ট পদ্ধতি পরিবর্তন করা যায়নি', 'Could not change payment method'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
   if (error && !order) return <div className="card"><p className="muted">{error}</p></div>
   if (!order) return null
@@ -109,6 +123,24 @@ export function OrderDetailAdmin() {
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <span className="control-label">{t('পেমেন্ট পদ্ধতি:', 'Payment method:')}</span>
+            {order.status === 'PENDING' ? (
+              <select
+                value={order.paymentMode}
+                disabled={busy}
+                onChange={(e) => changePaymentMode(e.target.value as AdminOrder['paymentMode'])}
+              >
+                <option value="PREPAID">{t('অগ্রিম পেমেন্ট', 'Pay in advance')}</option>
+                <option value="COD">{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</option>
+              </select>
+            ) : (
+              <span className="muted">
+                {order.paymentMode === 'COD' ? t('ক্যাশ অন ডেলিভারি', 'Cash on delivery') : t('অগ্রিম পেমেন্ট', 'Pay in advance')}
+                {' '}({t('লকড', 'locked')})
+              </span>
+            )}
           </div>
         </div>
 

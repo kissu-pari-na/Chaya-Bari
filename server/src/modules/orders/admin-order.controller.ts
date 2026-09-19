@@ -28,3 +28,7 @@ export async function updateStatus(req: Request, res: Response) {
 export async function updatePaymentStatus(req: Request, res: Response) {
   res.json({ order: await adminOrderService.updatePaymentStatus(req.params.id, req.body.paymentStatus) })
 }
+
+export async function updatePaymentMode(req: Request, res: Response) {
+  res.json({ order: await adminOrderService.updatePaymentMode(req.params.id, req.body.paymentMode) })
+}

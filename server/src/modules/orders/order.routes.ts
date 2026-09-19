@@ -7,6 +7,7 @@ import {
   guestCheckoutSchema,
   updateAddressSchema,
   updateOrderingSettingSchema,
+  updatePaymentModeSchema,
   updatePaymentStatusSchema,
   updateStatusSchema,
 } from './order.schemas.js'
@@ -43,6 +44,11 @@ orderRouter.delete('/addresses/:id', asyncHandler(orderController.deleteAddress)
 orderRouter.post('/orders', validateBody(checkoutSchema), asyncHandler(orderController.checkout))
 orderRouter.get('/orders', asyncHandler(orderController.listMyOrders))
 orderRouter.get('/orders/:id', asyncHandler(orderController.getMyOrder))
+orderRouter.patch(
+  '/orders/:id/payment-mode',
+  validateBody(updatePaymentModeSchema),
+  asyncHandler(orderController.changePaymentMode),
+)
 
 /// Admin ordering settings + order management.
 export const adminOrderingRouter = Router()
@@ -65,4 +71,9 @@ adminOrderingRouter.patch(
   '/orders/:id/payment-status',
   validateBody(updatePaymentStatusSchema),
   asyncHandler(adminOrderController.updatePaymentStatus),
+)
+adminOrderingRouter.patch(
+  '/orders/:id/payment-mode',
+  validateBody(updatePaymentModeSchema),
+  asyncHandler(adminOrderController.updatePaymentMode),
 )

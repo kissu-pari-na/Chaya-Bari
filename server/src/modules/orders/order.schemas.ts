@@ -112,6 +112,7 @@ export const paymentStatuses = ['PENDING', 'PAID', 'PARTIALLY_PAID', 'REFUNDED',
 
 export const updateStatusSchema = z.object({ status: z.enum(orderStatuses) })
 export const updatePaymentStatusSchema = z.object({ paymentStatus: z.enum(paymentStatuses) })
+export const updatePaymentModeSchema = z.object({ paymentMode: z.enum(['PREPAID', 'COD']) })
 
 export const updateOrderingSettingSchema = z.object({
   cutoffTime: z

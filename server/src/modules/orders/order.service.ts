@@ -6,7 +6,7 @@ import { getOrderingSetting, computeWindow } from './ordering.service.js'
 import { isSlotEnabledForDate } from './slots.js'
 import { priceOrder } from './pricing.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
-import { paymentTotals, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
+import { paymentTotals, recomputeOrderPaymentStatus, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
 import { notifyOrderPlaced, notifyNewOrderToAdmins } from '../notifications/notification.service.js'
 
 interface AddressSnapshot {
@@ -311,4 +311,26 @@ export async function getMyOrder(customerId: string, id: string): Promise<Public
     throw HttpError.notFound('Order not found')
   }
   return toPublicOrder(order)
+}
+
+/// Customer switches their own order between pay-in-advance and cash-on-delivery.
+/// Only allowed while the order is still PENDING (awaiting admin confirmation);
+/// once it has been confirmed and moved on, the payment method is locked.
+export async function changePaymentMode(
+  customerId: string,
+  id: string,
+  paymentMode: 'PREPAID' | 'COD',
+): Promise<PublicOrder> {
+  const order = await prisma.order.findUnique({ where: { id } })
+  if (!order || order.customerId !== customerId) throw HttpError.notFound('Order not found')
+  if (order.status !== 'PENDING') {
+    throw HttpError.badRequest('Payment method can only be changed before the order is confirmed')
+  }
+  if (order.paymentMode !== paymentMode) {
+    await prisma.order.update({ where: { id }, data: { paymentMode } })
+    // Switching to prepaid can auto-confirm an already fully-paid order; switching
+    // to COD leaves the status alone. Recompute keeps the invariants consistent.
+    await recomputeOrderPaymentStatus(id)
+  }
+  return getMyOrder(customerId, id)
 }
