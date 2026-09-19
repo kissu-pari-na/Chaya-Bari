@@ -156,11 +156,15 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   if (status === 'CONFIRMED' && order.paymentMode !== 'COD' && order.paymentStatus !== 'PAID') {
     throw HttpError.badRequest('Cannot confirm this order until payment is completed in full')
   }
-  // Cancelling requires the order to owe nothing to the customer: any money
-  // collected must be refunded first, so a cancelled order never strands a
-  // refund (nothing can change once it is cancelled).
+  // Cancelling requires the payment situation to be settled first, so a cancelled
+  // order never strands money (nothing can change once it is cancelled):
+  //  - any payment awaiting verification must be verified or rejected first;
+  //  - any amount actually collected must be refunded first.
   if (status === 'CANCELLED') {
     const payments = await prisma.payment.findMany({ where: { orderId: id } })
+    if (payments.some((p) => p.status === 'PENDING')) {
+      throw HttpError.badRequest('Verify or reject the pending payment before cancelling this order.')
+    }
     if (netPaid(payments).gt(0)) {
       throw HttpError.badRequest('Refund the paid amount before cancelling this order.')
     }
