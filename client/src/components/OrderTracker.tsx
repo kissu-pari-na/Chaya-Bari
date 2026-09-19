@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { orderTrackerView } from '../lib/orderTracking'
 import { orderStatusLabel } from '../lib/orderStatus'
+import { toBnDigits } from '../lib/format'
 import { useI18n } from '../context/LanguageContext'
 import type { OrderStatus, PaymentMode, PaymentStatus } from '../types/order'
 import './OrderTracker.css'
@@ -13,10 +14,11 @@ interface OrderTrackerProps {
   paymentMode?: PaymentMode
 }
 
-/// A visual progress timeline that lets a customer track where their order is
-/// in the fulfillment flow. Derives its state from the order + payment status
-/// and payment mode, so it stays in sync whenever the order is refetched
-/// (including the dedicated payment milestone).
+/// A visual progress timeline that lets a customer track where their order is in
+/// the fulfillment flow. A prominent "current status" banner up top states, in
+/// plain words, exactly what is happening now and what comes next; the timeline
+/// below shows the whole journey. Derives its state from the order + payment
+/// status and payment mode, so it stays in sync whenever the order is refetched.
 export function OrderTracker({ status, paymentStatus, paymentMode = 'PREPAID' }: OrderTrackerProps) {
   const { t } = useI18n()
   const view = orderTrackerView(status, paymentStatus, paymentMode)
@@ -36,34 +38,55 @@ export function OrderTracker({ status, paymentStatus, paymentMode = 'PREPAID' }:
   }
 
   const total = view.steps.length
+  const current = view.steps[view.currentIndex]
+  // The last step being the current one means the whole journey is complete.
+  const complete = view.currentIndex === total - 1 && current.reached(status, paymentStatus)
+  const stepNo = view.currentIndex + 1
   const progressPct = view.currentIndex <= 0 ? 0 : (view.currentIndex / (total - 1)) * 100
 
   return (
     <div
       className="order-tracker"
-      role="list"
+      role="group"
       aria-label={t(`অর্ডার ট্র্যাকিং — বর্তমান অবস্থা: ${orderStatusLabel[status]}`, `Order tracking — current status: ${orderStatusLabel[status]}`)}
       style={{ '--track-progress': `${progressPct}%` } as CSSProperties}
     >
-      <div className="order-tracker__rail" aria-hidden="true">
-        <div className="order-tracker__rail-fill" />
+      {/* Plain-language "what's happening now" banner. */}
+      <div className={complete ? 'order-tracker__now order-tracker__now--done' : 'order-tracker__now'}>
+        <span className="order-tracker__now-icon" aria-hidden="true">
+          {complete ? '✓' : current.icon}
+        </span>
+        <div className="order-tracker__now-text">
+          <span className="order-tracker__now-eyebrow">{t('বর্তমান অবস্থা', 'Current status')}</span>
+          <strong>{current.label}</strong>
+          <p>{current.description}</p>
+        </div>
+        <span className="order-tracker__now-step" aria-hidden="true">
+          {t('ধাপ', 'Step')} {toBnDigits(stepNo)}/{toBnDigits(total)}
+        </span>
       </div>
-      <ol className="order-tracker__steps">
-        {view.steps.map((step) => (
-          <li
-            key={step.key}
-            role="listitem"
-            className={`order-tracker__step order-tracker__step--${step.state}`}
-            aria-current={step.state === 'current' ? 'step' : undefined}
-          >
-            <span className="order-tracker__dot" aria-hidden="true">
-              {step.state === 'done' ? '✓' : step.icon}
-            </span>
-            <span className="order-tracker__label">{step.label}</span>
-            <span className="order-tracker__desc">{step.description}</span>
-          </li>
-        ))}
-      </ol>
+
+      <div className="order-tracker__timeline">
+        <div className="order-tracker__rail" aria-hidden="true">
+          <div className="order-tracker__rail-fill" />
+        </div>
+        <ol className="order-tracker__steps" role="list">
+          {view.steps.map((step) => (
+            <li
+              key={step.key}
+              role="listitem"
+              className={`order-tracker__step order-tracker__step--${step.state}`}
+              aria-current={step.state === 'current' ? 'step' : undefined}
+            >
+              <span className="order-tracker__dot" aria-hidden="true">
+                {step.state === 'done' ? '✓' : step.icon}
+              </span>
+              <span className="order-tracker__label">{step.label}</span>
+              <span className="order-tracker__desc">{step.description}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   )
 }

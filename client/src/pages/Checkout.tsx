@@ -18,7 +18,7 @@ const ORBITAX_COUPON = 'ORBIFREEDEL'
 
 export function Checkout() {
   const { items, subtotal, clear } = useCart()
-  const { user, updateProfile } = useAuth()
+  const { user, loading: authLoading, updateProfile } = useAuth()
   const { t } = useI18n()
   const navigate = useNavigate()
 
@@ -61,22 +61,30 @@ export function Checkout() {
         setFulfillmentDate(w.earliestFulfillmentDate)
       })
       .catch(() => setError(t('অর্ডার তথ্য লোড করা যায়নি', 'Could not load ordering info')))
-    if (user) {
-      fetchAddresses()
-        .then((a) => {
-          setAddresses(a)
-          // Pre-select the default address (or the first one) so checkout is
-          // filled in from the profile without any extra taps.
-          const def = a.find((x) => x.isDefault) ?? a[0]
-          if (def) setSelectedAddressId(def.id)
-        })
-        .catch(() => setError(t('ঠিকানা লোড করা যায়নি', 'Could not load addresses')))
-        .finally(() => setAddressesLoaded(true))
-    } else {
-      setAddressesLoaded(true)
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Load saved addresses once auth has resolved. On a hard refresh the user is
+  // briefly null while /auth/me is in flight, so this waits for `authLoading` to
+  // finish and re-runs when the signed-in user appears (otherwise a logged-in
+  // customer would be treated as a guest and see the empty-address state).
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      setAddressesLoaded(true)
+      return
+    }
+    fetchAddresses()
+      .then((a) => {
+        setAddresses(a)
+        // Pre-select the default address (or the first one) so checkout is
+        // filled in from the profile without any extra taps.
+        setSelectedAddressId((current) => current || (a.find((x) => x.isDefault) ?? a[0])?.id || '')
+      })
+      .catch(() => setError(t('ঠিকানা লোড করা যায়নি', 'Could not load addresses')))
+      .finally(() => setAddressesLoaded(true))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user?.id])
 
   // Payment-account details (public) — shown to a guest who chooses to pay in
   // advance, on the confirmation screen.
@@ -140,6 +148,12 @@ export function Checkout() {
     setCoupon(null)
     setCouponCode('')
     setCouponError(null)
+  }
+
+  // Wait for auth to resolve before deciding guest vs. signed-in, so a refresh
+  // doesn't briefly render the guest view for a logged-in customer.
+  if (authLoading) {
+    return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
   }
 
   if (items.length === 0 && !placedGuest) {

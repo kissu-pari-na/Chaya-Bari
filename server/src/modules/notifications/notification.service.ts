@@ -76,14 +76,60 @@ export async function notifyAdmins(input: Omit<NotifyInput, 'userId'>): Promise<
 
 // ---- Event helpers ----
 
-const statusMessage: Partial<Record<OrderStatus, { type: NotificationType; title: string; body: string }>> = {
-  CONFIRMED: { type: 'ORDER_CONFIRMED', title: 'অর্ডার নিশ্চিত হয়েছে', body: 'আপনার অর্ডারটি নিশ্চিত করা হয়েছে।' },
-  PREPARING: { type: 'ORDER_PREPARING', title: 'খাবার তৈরি হচ্ছে', body: 'আপনার অর্ডারের খাবার তৈরি হচ্ছে।' },
-  READY: { type: 'ORDER_READY', title: 'খাবার প্রস্তুত', body: 'আপনার অর্ডারের খাবার তৈরি হয়ে গেছে।' },
-  PACKED: { type: 'ORDER_PACKED', title: 'প্যাকিং সম্পন্ন', body: 'আপনার অর্ডার প্যাক করা হয়েছে।' },
-  OUT_FOR_DELIVERY: { type: 'ORDER_OUT_FOR_DELIVERY', title: 'ডেলিভারিতে', body: 'আপনার অর্ডার ডেলিভারির পথে।' },
-  DELIVERED: { type: 'ORDER_DELIVERED', title: 'ডেলিভার্ড', body: 'আপনার অর্ডার ডেলিভার হয়েছে। ধন্যবাদ!' },
-  CANCELLED: { type: 'ORDER_CANCELLED', title: 'অর্ডার বাতিল', body: 'আপনার অর্ডারটি বাতিল করা হয়েছে।' },
+/// Customer-facing message for each order status change. Each names the order,
+/// says what just happened, and hints at what comes next so the customer always
+/// knows where things stand. Returns null for statuses with no notification
+/// (e.g. the initial PENDING).
+function statusMessage(
+  status: OrderStatus,
+  orderNumber: string,
+): { type: NotificationType; title: string; body: string } | null {
+  switch (status) {
+    case 'CONFIRMED':
+      return {
+        type: 'ORDER_CONFIRMED',
+        title: 'অর্ডার নিশ্চিত হয়েছে ✅',
+        body: `আপনার অর্ডার ${orderNumber} নিশ্চিত করা হয়েছে। শীঘ্রই খাবার তৈরি শুরু হবে।`,
+      }
+    case 'PREPARING':
+      return {
+        type: 'ORDER_PREPARING',
+        title: 'রান্না শুরু হয়েছে 👨‍🍳',
+        body: `আপনার অর্ডার ${orderNumber}-এর খাবার এখন আমাদের রান্নাঘরে তৈরি হচ্ছে।`,
+      }
+    case 'READY':
+      return {
+        type: 'ORDER_READY',
+        title: 'খাবার প্রস্তুত 🍱',
+        body: `আপনার অর্ডার ${orderNumber}-এর খাবার তৈরি হয়ে গেছে। এখন প্যাক করা হবে।`,
+      }
+    case 'PACKED':
+      return {
+        type: 'ORDER_PACKED',
+        title: 'প্যাকিং সম্পন্ন 📦',
+        body: `আপনার অর্ডার ${orderNumber} প্যাক করা হয়েছে এবং ডেলিভারির জন্য প্রস্তুত।`,
+      }
+    case 'OUT_FOR_DELIVERY':
+      return {
+        type: 'ORDER_OUT_FOR_DELIVERY',
+        title: 'অর্ডার পথে রয়েছে 🛵',
+        body: `আপনার অর্ডার ${orderNumber} ডেলিভারির জন্য রওনা হয়েছে। অনুগ্রহ করে ফোন সচল রাখুন।`,
+      }
+    case 'DELIVERED':
+      return {
+        type: 'ORDER_DELIVERED',
+        title: 'অর্ডার ডেলিভার হয়েছে 🎉',
+        body: `আপনার অর্ডার ${orderNumber} পৌঁছে দেওয়া হয়েছে। ছায়া বাড়ির সাথে থাকার জন্য ধন্যবাদ!`,
+      }
+    case 'CANCELLED':
+      return {
+        type: 'ORDER_CANCELLED',
+        title: 'অর্ডার বাতিল হয়েছে',
+        body: `আপনার অর্ডার ${orderNumber} বাতিল করা হয়েছে। কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।`,
+      }
+    default:
+      return null
+  }
 }
 
 /// Notify every admin that a new order arrived (used for both customer and
@@ -91,8 +137,8 @@ const statusMessage: Partial<Record<OrderStatus, { type: NotificationType; title
 export async function notifyNewOrderToAdmins(orderNumber: string, orderId: string): Promise<void> {
   await notifyAdmins({
     type: 'NEW_ORDER',
-    title: 'নতুন অর্ডার',
-    body: `নতুন অর্ডার ${orderNumber} এসেছে।`,
+    title: 'নতুন অর্ডার এসেছে 🛎️',
+    body: `নতুন অর্ডার ${orderNumber} এসেছে। প্রক্রিয়া শুরু করতে বিস্তারিত দেখুন।`,
     orderId,
     link: adminOrderLink(orderId),
   })
@@ -101,8 +147,8 @@ export async function notifyNewOrderToAdmins(orderNumber: string, orderId: strin
 export async function notifyOrderPlaced(customerId: string, orderNumber: string, orderId: string): Promise<void> {
   await notifyCustomer(customerId, {
     type: 'ORDER_PLACED',
-    title: 'অর্ডার গৃহীত হয়েছে',
-    body: `আপনার অর্ডার ${orderNumber} গ্রহণ করা হয়েছে।`,
+    title: 'অর্ডার পেয়েছি ✅',
+    body: `ধন্যবাদ! আপনার অর্ডার ${orderNumber} সফলভাবে গ্রহণ করা হয়েছে। শীঘ্রই এটি নিশ্চিত করা হবে।`,
     orderId,
     link: customerOrderLink(orderId),
   })
@@ -110,12 +156,12 @@ export async function notifyOrderPlaced(customerId: string, orderNumber: string,
 }
 
 export async function notifyOrderStatus(customerId: string | null, status: OrderStatus, orderNumber: string, orderId: string): Promise<void> {
-  const msg = statusMessage[status]
+  const msg = statusMessage(status, orderNumber)
   if (!msg) return
   await notifyCustomer(customerId, {
     type: msg.type,
     title: msg.title,
-    body: `${msg.body} (${orderNumber})`,
+    body: msg.body,
     orderId,
     link: customerOrderLink(orderId),
   })
@@ -125,8 +171,8 @@ export async function notifyOrderStatus(customerId: string | null, status: Order
 export async function notifyReviewInvite(customerId: string, orderNumber: string, orderId: string): Promise<void> {
   await notifyCustomer(customerId, {
     type: 'REVIEW_INVITE',
-    title: 'আপনার মতামত জানান',
-    body: `${orderNumber} অর্ডারের পণ্যগুলোর রিভিউ ও রেটিং দিন — আপনার মতামত আমাদের কাছে গুরুত্বপূর্ণ।`,
+    title: 'আপনার মতামত জানান ⭐',
+    body: `আপনার অর্ডার ${orderNumber}-এর খাবার কেমন ছিল জানান। রিভিউ ও রেটিং দিতে ট্যাপ করুন — আপনার মতামত আমাদের কাছে গুরুত্বপূর্ণ।`,
     orderId,
     link: orderReviewLink(orderId),
   })
@@ -135,15 +181,15 @@ export async function notifyReviewInvite(customerId: string, orderNumber: string
 export async function notifyPaymentReceived(customerId: string | null, amount: number, orderNumber: string, orderId: string): Promise<void> {
   await notifyCustomer(customerId, {
     type: 'PAYMENT_RECEIVED',
-    title: 'পেমেন্ট গৃহীত',
-    body: `${orderNumber} অর্ডারের জন্য ৳${amount} পেমেন্ট গ্রহণ করা হয়েছে।`,
+    title: 'পেমেন্ট গৃহীত হয়েছে 💳',
+    body: `আপনার অর্ডার ${orderNumber}-এর জন্য ৳${amount} পেমেন্ট গ্রহণ করা হয়েছে। ধন্যবাদ!`,
     orderId,
     link: customerOrderLink(orderId),
   })
   await notifyAdmins({
     type: 'PAYMENT_RECEIVED',
     title: 'পেমেন্ট গৃহীত',
-    body: `${orderNumber}: ৳${amount} পেমেন্ট।`,
+    body: `অর্ডার ${orderNumber}-এর জন্য ৳${amount} পেমেন্ট রেকর্ড হয়েছে।`,
     orderId,
     link: adminOrderLink(orderId),
   })
@@ -153,8 +199,8 @@ export async function notifyPaymentReceived(customerId: string | null, amount: n
 export async function notifyPaymentSubmitted(amount: number, method: string, orderNumber: string, orderId: string): Promise<void> {
   await notifyAdmins({
     type: 'PAYMENT_SUBMITTED',
-    title: 'পেমেন্ট যাচাইয়ের অপেক্ষায়',
-    body: `${orderNumber}: গ্রাহক ৳${amount} (${method}) পরিশোধের দাবি করেছেন — যাচাই করুন।`,
+    title: 'পেমেন্ট যাচাই করুন',
+    body: `গ্রাহক অর্ডার ${orderNumber}-এর জন্য ৳${amount} (${method}) পরিশোধের তথ্য জমা দিয়েছেন। অনুগ্রহ করে যাচাই করুন।`,
     orderId,
     link: adminOrderLink(orderId),
   })
@@ -165,8 +211,8 @@ export async function notifyPaymentVerified(customerId: string | null, verified:
   if (verified) {
     await notifyCustomer(customerId, {
       type: 'PAYMENT_VERIFIED',
-      title: 'পেমেন্ট নিশ্চিত হয়েছে',
-      body: `${orderNumber} অর্ডারের ৳${amount} পেমেন্ট যাচাই করে নিশ্চিত করা হয়েছে। ধন্যবাদ!`,
+      title: 'পেমেন্ট নিশ্চিত হয়েছে ✅',
+      body: `আপনার অর্ডার ${orderNumber}-এর ৳${amount} পেমেন্ট যাচাই করে নিশ্চিত করা হয়েছে। ধন্যবাদ!`,
       orderId,
       link: customerOrderLink(orderId),
     })
@@ -174,7 +220,7 @@ export async function notifyPaymentVerified(customerId: string | null, verified:
     await notifyCustomer(customerId, {
       type: 'PAYMENT_REJECTED',
       title: 'পেমেন্ট যাচাই করা যায়নি',
-      body: `${orderNumber} অর্ডারের ৳${amount} পেমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে সঠিক তথ্য দিয়ে আবার জানান।`,
+      body: `আপনার অর্ডার ${orderNumber}-এর ৳${amount} পেমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে সঠিক তথ্য দিয়ে আবার জমা দিন।`,
       orderId,
       link: customerOrderLink(orderId),
     })
