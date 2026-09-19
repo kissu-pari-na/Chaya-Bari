@@ -612,6 +612,9 @@ enum NotificationType {
   ORDER_OUT_FOR_DELIVERY
   ORDER_DELIVERED
   ORDER_CANCELLED
+  /// Order returned to pending because a payment was refunded/voided and it is
+  /// no longer fully paid.
+  ORDER_PENDING
   PAYMENT_RECEIVED
   PAYMENT_SUBMITTED
   PAYMENT_VERIFIED

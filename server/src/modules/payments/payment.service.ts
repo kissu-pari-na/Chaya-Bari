@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { ClaimPaymentInput, RecordPaymentInput } from './payment.schemas.js'
 import {
+  notifyOrderRevertedToPending,
   notifyOrderStatus,
   notifyPaymentReceived,
   notifyPaymentSubmitted,
@@ -101,7 +102,14 @@ export async function recomputeOrderPaymentStatus(orderId: string): Promise<void
   })
 
   if (nextStatus !== order.status) {
-    await notifyOrderStatus(order.customerId, nextStatus, order.orderNumber, order.id)
+    // A revert to PENDING has no generic status message (PENDING is also the
+    // initial state), so use the dedicated "refunded/voided → awaiting payment"
+    // notification; otherwise the auto-confirm uses the normal status message.
+    if (nextStatus === 'PENDING') {
+      await notifyOrderRevertedToPending(order.customerId, order.orderNumber, order.id)
+    } else {
+      await notifyOrderStatus(order.customerId, nextStatus, order.orderNumber, order.id)
+    }
   }
 }
 
