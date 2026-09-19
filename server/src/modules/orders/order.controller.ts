@@ -67,6 +67,12 @@ export async function changePaymentMode(req: Request, res: Response) {
   res.json({ order })
 }
 
+export async function cancelOrder(req: Request, res: Response) {
+  const customerId = await requireCustomerId(req.user!.id)
+  const order = await orderService.cancelOrder(customerId, req.params.id)
+  res.json({ order })
+}
+
 // ---- Admin ordering settings ----
 
 export async function getSetting(_req: Request, res: Response) {

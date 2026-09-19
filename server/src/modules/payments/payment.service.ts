@@ -141,6 +141,7 @@ export async function recordPayment(
 ): Promise<PublicPayment> {
   const order = await prisma.order.findUnique({ where: { id: orderId } })
   if (!order) throw HttpError.notFound('Order not found')
+  if (order.status === 'CANCELLED') throw HttpError.badRequest('This order is cancelled — no further payment changes are allowed.')
 
   const admin = await actor(adminId)
   const payment = await prisma.payment.create({
@@ -167,8 +168,11 @@ export async function recordPayment(
 /// VOID with who/when/why, so it stops counting toward the paid total but stays
 /// on the audit trail. Only a live payment (pending or successful) can be voided.
 export async function voidPayment(id: string, adminId: string, reason?: string): Promise<PublicPayment> {
-  const payment = await prisma.payment.findUnique({ where: { id } })
+  const payment = await prisma.payment.findUnique({ where: { id }, include: { order: true } })
   if (!payment) throw HttpError.notFound('Payment not found')
+  if (payment.order.status === 'CANCELLED') {
+    throw HttpError.badRequest('This order is cancelled — no further payment changes are allowed.')
+  }
   if (payment.status !== 'SUCCESS' && payment.status !== 'PENDING') {
     throw HttpError.badRequest('Only a pending or successful payment can be voided')
   }
@@ -199,6 +203,9 @@ export async function refundPayment(
 ): Promise<PublicPayment> {
   const original = await prisma.payment.findUnique({ where: { id }, include: { order: true } })
   if (!original) throw HttpError.notFound('Payment not found')
+  if (original.order.status === 'CANCELLED') {
+    throw HttpError.badRequest('This order is cancelled — no further payment changes are allowed.')
+  }
   if (original.status !== 'SUCCESS') {
     throw HttpError.badRequest('Only a successful payment can be refunded')
   }
@@ -233,6 +240,7 @@ export async function refundPayment(
 
 export async function submitClaim(orderId: string, customerId: string, input: ClaimPaymentInput): Promise<PublicPayment> {
   const order = await ownedOrder(orderId, customerId)
+  if (order.status === 'CANCELLED') throw HttpError.badRequest('This order is cancelled — payment can no longer be submitted.')
 
   const payment = await prisma.payment.create({
     data: {
@@ -256,6 +264,9 @@ export async function submitClaim(orderId: string, customerId: string, input: Cl
 export async function verifyPayment(id: string, action: 'verify' | 'reject'): Promise<PublicPayment> {
   const payment = await prisma.payment.findUnique({ where: { id }, include: { order: true } })
   if (!payment) throw HttpError.notFound('Payment not found')
+  if (payment.order.status === 'CANCELLED') {
+    throw HttpError.badRequest('This order is cancelled — no further payment changes are allowed.')
+  }
   if (payment.status !== 'PENDING') throw HttpError.badRequest('Only pending payments can be verified')
 
   const updated = await prisma.payment.update({
@@ -288,6 +299,7 @@ export async function startBkashPayment(
   requestedAmount?: number,
 ): Promise<BkashStart> {
   const order = await ownedOrder(orderId, customerId)
+  if (order.status === 'CANCELLED') throw HttpError.badRequest('This order is cancelled — payment can no longer be made.')
   const due = await outstanding(orderId, order.total)
   if (due.lte(0)) throw HttpError.badRequest('This order has no outstanding amount')
 
@@ -322,6 +334,7 @@ export async function executeBkashPayment(
   paymentID: string,
 ): Promise<{ payment: PublicPayment; status: 'completed' | 'failed' }> {
   const order = await ownedOrder(orderId, customerId)
+  if (order.status === 'CANCELLED') throw HttpError.badRequest('This order is cancelled — payment can no longer be made.')
   const row = await prisma.payment.findFirst({ where: { orderId, reference: paymentID } })
   if (!row) throw HttpError.notFound('Payment attempt not found')
 

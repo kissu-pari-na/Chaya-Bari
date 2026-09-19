@@ -114,7 +114,7 @@ export function OrderDetailAdmin() {
             <span className="control-label">{t('পেমেন্ট:', 'Payment:')}</span>
             <select
               value={order.paymentStatus}
-              disabled={busy}
+              disabled={busy || order.status === 'CANCELLED'}
               onChange={(e) => changePayment(e.target.value as PaymentStatus)}
             >
               {paymentStatuses.map((s) => (

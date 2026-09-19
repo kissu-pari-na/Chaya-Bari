@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { changeOrderPaymentMode, fetchMyOrder } from '../lib/orders'
+import { cancelMyOrder, changeOrderPaymentMode, fetchMyOrder } from '../lib/orders'
 import { formatBdt, formatDateWithDay } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
@@ -23,6 +23,8 @@ export function OrderDetail() {
   const [error, setError] = useState<string | null>(null)
   const [modeBusy, setModeBusy] = useState(false)
   const [modeError, setModeError] = useState<string | null>(null)
+  const [cancelBusy, setCancelBusy] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -42,6 +44,20 @@ export function OrderDetail() {
       setModeError(err instanceof ApiError ? err.message : t('পরিবর্তন করা যায়নি', 'Could not change payment method'))
     } finally {
       setModeBusy(false)
+    }
+  }
+
+  async function handleCancel() {
+    if (!order) return
+    if (!window.confirm(t('আপনি কি নিশ্চিত এই অর্ডারটি বাতিল করতে চান?', 'Are you sure you want to cancel this order?'))) return
+    setCancelBusy(true)
+    setCancelError(null)
+    try {
+      setOrder(await cancelMyOrder(order.id))
+    } catch (err) {
+      setCancelError(err instanceof ApiError ? err.message : t('অর্ডার বাতিল করা যায়নি', 'Could not cancel the order'))
+    } finally {
+      setCancelBusy(false)
     }
   }
 
@@ -96,6 +112,31 @@ export function OrderDetail() {
           </button>
           {modeError && <p className="hint hint--err">{modeError}</p>}
           <p className="hint">{t('অর্ডার নিশ্চিত হওয়ার আগ পর্যন্ত পেমেন্ট পদ্ধতি পরিবর্তন করা যাবে।', 'Payment method can be changed until the order is confirmed.')}</p>
+        </div>
+      )}
+
+      {order.status === 'PENDING' && (
+        <div className="order-cancel">
+          <button type="button" className="btn btn--danger" disabled={cancelBusy} onClick={handleCancel}>
+            {cancelBusy ? t('বাতিল হচ্ছে…', 'Cancelling…') : t('অর্ডার বাতিল করুন', 'Cancel order')}
+          </button>
+          {cancelError && <p className="hint hint--err">{cancelError}</p>}
+          <p className="hint">{t('অর্ডার নিশ্চিত হওয়ার আগ পর্যন্ত আপনি এটি বাতিল করতে পারবেন।', 'You can cancel this order until it is confirmed.')}</p>
+        </div>
+      )}
+
+      {order.status !== 'PENDING' && order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
+        <div className="order-cancel order-cancel--locked">
+          <p>
+            {t(
+              'এই অর্ডারটি নিশ্চিত হয়ে গেছে, তাই আপনি নিজে এটি বাতিল করতে পারবেন না।',
+              'This order has been confirmed, so it can no longer be cancelled by you.',
+            )}
+          </p>
+          <p className="hint">
+            {t('বাতিল করতে চাইলে অনুগ্রহ করে আমাদের সাথে যোগাযোগ করুন — ', 'If you still need to cancel it, please contact us — ')}
+            <Link to="/contact">{t('যোগাযোগ পেজ', 'Contact page')}</Link>
+          </p>
         </div>
       )}
 

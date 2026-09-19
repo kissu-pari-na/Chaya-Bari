@@ -68,6 +68,11 @@ export function changeOrderPaymentMode(id: string, paymentMode: PaymentMode) {
   }).then((r) => r.order)
 }
 
+/// Customer cancels their own order (allowed only while still pending).
+export function cancelMyOrder(id: string) {
+  return apiRequest<{ order: Order }>(`/orders/${id}/cancel`, { method: 'POST', auth: true }).then((r) => r.order)
+}
+
 // ---- Admin ordering settings ----
 
 export interface OrderingSetting {

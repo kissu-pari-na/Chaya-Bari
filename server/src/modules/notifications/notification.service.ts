@@ -167,6 +167,18 @@ export async function notifyNewOrderToAdmins(orderNumber: string, orderId: strin
   })
 }
 
+/// A customer cancelled their own (still-unconfirmed) order — let admins know.
+export async function notifyOrderCancelledByCustomer(orderNumber: string, orderId: string): Promise<void> {
+  await notifyAdmins({
+    type: 'ORDER_CANCELLED',
+    title: 'গ্রাহক অর্ডার বাতিল করেছেন',
+    body: `গ্রাহক অর্ডার ${orderNumber} বাতিল করেছেন।`,
+    data: { key: 'order.cancelled_by_customer_admin', orderNumber },
+    orderId,
+    link: adminOrderLink(orderId),
+  })
+}
+
 export async function notifyOrderPlaced(customerId: string, orderNumber: string, orderId: string): Promise<void> {
   await notifyCustomer(customerId, {
     type: 'ORDER_PLACED',

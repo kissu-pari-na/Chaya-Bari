@@ -2,7 +2,7 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { PublicOrder } from './order.service.js'
-import { paymentTotals, recomputeOrderPaymentStatus, toPublicPayment } from '../payments/payment.service.js'
+import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment } from '../payments/payment.service.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 export interface AdminOrder extends PublicOrder {
@@ -126,14 +126,16 @@ export async function getOrder(id: string): Promise<AdminOrder> {
   return toAdminOrder(order)
 }
 
-// Allowed forward transitions; CANCELLED is reachable from any non-terminal state.
+// Allowed forward transitions. An order can only be CANCELLED while it is still
+// PENDING or CONFIRMED — once it reaches PREPARING (or beyond) it can no longer
+// be cancelled. CANCELLED and DELIVERED are terminal (everything is locked).
 const transitions: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['PREPARING', 'CANCELLED'],
-  PREPARING: ['READY', 'CANCELLED'],
-  READY: ['PACKED', 'CANCELLED'],
-  PACKED: ['OUT_FOR_DELIVERY', 'CANCELLED'],
-  OUT_FOR_DELIVERY: ['DELIVERED', 'CANCELLED'],
+  PREPARING: ['READY'],
+  READY: ['PACKED'],
+  PACKED: ['OUT_FOR_DELIVERY'],
+  OUT_FOR_DELIVERY: ['DELIVERED'],
   DELIVERED: [],
   CANCELLED: [],
 }
@@ -142,6 +144,10 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order) throw HttpError.notFound('Order not found')
   if (order.status !== status && !transitions[order.status].includes(status)) {
+    // Give a clearer reason for the common "too late to cancel" case.
+    if (status === 'CANCELLED') {
+      throw HttpError.badRequest('This order can no longer be cancelled — it is already being prepared.')
+    }
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
   // Prepaid orders can't be confirmed until fully paid. Cash-on-delivery orders
@@ -149,6 +155,15 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   // sent to the kitchen while still unpaid.
   if (status === 'CONFIRMED' && order.paymentMode !== 'COD' && order.paymentStatus !== 'PAID') {
     throw HttpError.badRequest('Cannot confirm this order until payment is completed in full')
+  }
+  // Cancelling requires the order to owe nothing to the customer: any money
+  // collected must be refunded first, so a cancelled order never strands a
+  // refund (nothing can change once it is cancelled).
+  if (status === 'CANCELLED') {
+    const payments = await prisma.payment.findMany({ where: { orderId: id } })
+    if (netPaid(payments).gt(0)) {
+      throw HttpError.badRequest('Refund the paid amount before cancelling this order.')
+    }
   }
   // Stamp the delivery time on first transition to DELIVERED; it drives the
   // day-after review invite.
@@ -166,6 +181,9 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
 export async function updatePaymentStatus(id: string, paymentStatus: string): Promise<AdminOrder> {
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order) throw HttpError.notFound('Order not found')
+  if (order.status === 'CANCELLED') {
+    throw HttpError.badRequest('This order is cancelled — no further changes are allowed.')
+  }
   await prisma.order.update({ where: { id }, data: { paymentStatus: paymentStatus as never } })
   return getOrder(id)
 }

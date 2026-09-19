@@ -32,6 +32,7 @@ export function Header({ variant }: HeaderProps) {
     customer: [
       { to: '/', label: t('হোম', 'Home'), end: true },
       { to: '/products', label: t('পণ্য', 'Products') },
+      { to: '/contact', label: t('যোগাযোগ', 'Contact') },
     ],
     kitchen: [{ to: '/kitchen', label: t('প্রোডাকশন', 'Production'), end: true }],
   }
