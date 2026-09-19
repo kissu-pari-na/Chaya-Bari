@@ -88,6 +88,13 @@ const catalog: Record<string, (d: NotificationData) => Rendered> = {
       `Your order ${d.orderNumber} has been cancelled. Contact us if you have any questions.`,
     ),
   }),
+  'order.reverted_pending': (d) => ({
+    title: pick('অর্ডার আবার পেমেন্টের অপেক্ষায়', 'Order awaiting payment again'),
+    body: pick(
+      `আপনার অর্ডার ${d.orderNumber}-এর একটি পেমেন্ট ফেরত/বাতিল হওয়ায় অর্ডারটি পুনরায় পেমেন্টের অপেক্ষায় রয়েছে। প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।`,
+      `A payment on your order ${d.orderNumber} was refunded or reversed, so it is awaiting payment again. Contact us if you have any questions.`,
+    ),
+  }),
   'review.invite': (d) => ({
     title: pick('আপনার মতামত জানান ⭐', 'Share your feedback ⭐'),
     body: pick(

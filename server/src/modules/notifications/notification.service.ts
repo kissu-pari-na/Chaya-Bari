@@ -192,6 +192,19 @@ export async function notifyOrderStatus(customerId: string | null, status: Order
   })
 }
 
+/// The order was auto-reverted to pending because a payment was refunded or
+/// voided and it is no longer fully paid, so it needs paying again.
+export async function notifyOrderRevertedToPending(customerId: string | null, orderNumber: string, orderId: string): Promise<void> {
+  await notifyCustomer(customerId, {
+    type: 'ORDER_PENDING',
+    title: 'অর্ডার আবার পেমেন্টের অপেক্ষায়',
+    body: `আপনার অর্ডার ${orderNumber}-এর একটি পেমেন্ট ফেরত/বাতিল হওয়ায় অর্ডারটি পুনরায় পেমেন্টের অপেক্ষায় রয়েছে। প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন।`,
+    data: { key: 'order.reverted_pending', orderNumber },
+    orderId,
+    link: customerOrderLink(orderId),
+  })
+}
+
 /// Day-after-delivery invitation to review the order's products.
 export async function notifyReviewInvite(customerId: string, orderNumber: string, orderId: string): Promise<void> {
   await notifyCustomer(customerId, {
