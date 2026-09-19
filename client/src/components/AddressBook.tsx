@@ -222,11 +222,11 @@ export function AddressBook() {
                   />
                 </label>
                 <label>
-                  {t('ফোন', 'Phone')}
+                  {t('ফোন (ঐচ্ছিক)', 'Phone (optional)')}
                   <input
                     value={form.recipientPhone}
                     onChange={(e) => setForm({ ...form, recipientPhone: e.target.value })}
-                    required
+                    placeholder={t('চেকআউটে আপনার নম্বর থেকে পূরণ হবে', 'Filled from your number at checkout')}
                   />
                 </label>
               </div>

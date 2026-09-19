@@ -157,4 +157,5 @@ export interface GuestCheckoutInput {
   timeSlot: string
   notes?: string
   couponCode?: string
+  paymentMode?: PaymentMode
 }

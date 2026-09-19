@@ -63,7 +63,9 @@ export async function createAddress(customerId: string, input: AddressInput) {
     if (input.isDefault) {
       await tx.address.updateMany({ where: { customerId }, data: { isDefault: false } })
     }
-    return tx.address.create({ data: { ...input, customerId } })
+    // Phone is optional on an address (backfilled at checkout); the column is
+    // non-null, so store an empty string when it wasn't provided.
+    return tx.address.create({ data: { ...input, recipientPhone: input.recipientPhone ?? '', customerId } })
   })
 }
 

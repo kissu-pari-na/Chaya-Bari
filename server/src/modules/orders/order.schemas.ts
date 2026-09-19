@@ -13,7 +13,15 @@ const optionalText = (max: number) =>
 export const addressSchema = z.object({
   label: optionalText(60),
   recipientName: z.string().min(2, 'Recipient name is required').max(100),
-  recipientPhone: z.string().min(6, 'A valid phone is required').max(20),
+  // Phone is optional on an address: it can be auto-filled from the customer's
+  // profile (or the number captured) at checkout. When provided it must be a
+  // valid length.
+  recipientPhone: z
+    .string()
+    .min(6, 'A valid phone is required')
+    .max(20)
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
   addressLine: z.string().min(3, 'Address is required').max(300),
   area: optionalText(120),
   city: z.string().min(1, 'City is required').max(120),
@@ -56,9 +64,9 @@ export const checkoutSchema = z.object({
   paymentMode: z.enum(['PREPAID', 'COD']).optional().default('PREPAID'),
 })
 
-// Guest checkout: no account, so contact + delivery details are inline and
-// required. Guest orders are cash-on-delivery only (they can't prepay or track
-// a payment without an account), so paymentMode is fixed server-side.
+// Guest checkout: no account, so contact + delivery details are inline. Guests
+// can pay in advance (they get manual-payment instructions on the confirmation)
+// or choose cash on delivery.
 export const guestCheckoutSchema = z.object({
   items: z
     .array(
@@ -85,6 +93,7 @@ export const guestCheckoutSchema = z.object({
     .max(40)
     .optional()
     .or(z.literal('').transform(() => undefined)),
+  paymentMode: z.enum(['PREPAID', 'COD']).optional().default('COD'),
 })
 
 // ---- Ordering settings ----
