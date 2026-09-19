@@ -65,6 +65,17 @@
   line-height: 1.3;
 }
 
+.order-tracker__now-next {
+  margin-top: 0.15rem !important;
+  font-size: 0.76rem !important;
+  font-weight: 600;
+  color: var(--accent-bright) !important;
+}
+
+.order-tracker__now--done .order-tracker__now-next {
+  color: #43a047 !important;
+}
+
 .order-tracker__now-step {
   flex-shrink: 0;
   align-self: flex-start;

@@ -39,9 +39,18 @@ export function OrderTracker({ status, paymentStatus, paymentMode = 'PREPAID' }:
 
   const total = view.steps.length
   const current = view.steps[view.currentIndex]
-  // The last step being the current one means the whole journey is complete.
-  const complete = view.currentIndex === total - 1 && current.reached(status, paymentStatus)
-  const stepNo = view.currentIndex + 1
+  // The banner reflects what has actually been REACHED (the milestone texts are
+  // written in the past tense, so using the current — not-yet-reached — step
+  // would wrongly claim, e.g., "Confirmed" for an order still awaiting admin
+  // confirmation). The headline is the furthest completed milestone; `next` is
+  // the pending one (what the order is waiting on). When the last step is
+  // reached the journey is complete.
+  const currentReached = current.reached(status, paymentStatus)
+  const complete = view.currentIndex === total - 1 && currentReached
+  const doneIndex = currentReached ? view.currentIndex : Math.max(0, view.currentIndex - 1)
+  const headline = view.steps[doneIndex]
+  const next = complete ? null : current
+  const doneCount = currentReached ? total : view.currentIndex
   const progressPct = view.currentIndex <= 0 ? 0 : (view.currentIndex / (total - 1)) * 100
 
   return (
@@ -51,18 +60,23 @@ export function OrderTracker({ status, paymentStatus, paymentMode = 'PREPAID' }:
       aria-label={t(`অর্ডার ট্র্যাকিং — বর্তমান অবস্থা: ${orderStatusLabel[status]}`, `Order tracking — current status: ${orderStatusLabel[status]}`)}
       style={{ '--track-progress': `${progressPct}%` } as CSSProperties}
     >
-      {/* Plain-language "what's happening now" banner. */}
+      {/* Plain-language "what's happening now" banner, based on what's reached. */}
       <div className={complete ? 'order-tracker__now order-tracker__now--done' : 'order-tracker__now'}>
         <span className="order-tracker__now-icon" aria-hidden="true">
-          {complete ? '✓' : current.icon}
+          {complete ? '✓' : headline.icon}
         </span>
         <div className="order-tracker__now-text">
           <span className="order-tracker__now-eyebrow">{t('বর্তমান অবস্থা', 'Current status')}</span>
-          <strong>{current.label}</strong>
-          <p>{current.description}</p>
+          <strong>{headline.label}</strong>
+          <p>{headline.description}</p>
+          {next && (
+            <p className="order-tracker__now-next">
+              {t('পরবর্তী ধাপ:', 'Up next:')} {next.label}
+            </p>
+          )}
         </div>
         <span className="order-tracker__now-step" aria-hidden="true">
-          {t('ধাপ', 'Step')} {toBnDigits(stepNo)}/{toBnDigits(total)}
+          {t('ধাপ', 'Step')} {toBnDigits(doneCount)}/{toBnDigits(total)}
         </span>
       </div>
 
