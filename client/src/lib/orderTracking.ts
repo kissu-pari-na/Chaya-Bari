@@ -40,11 +40,13 @@ const stepPlaced: TrackStep = {
 }
 
 /// Prepaid-only milestone: full payment received before the order is confirmed.
+/// Worded so it reads correctly both while pending (shown in the status banner)
+/// and once paid (a done checkmark on the timeline).
 const stepPaidPrepaid: TrackStep = {
   key: 'PAID',
   icon: '💳',
-  get label() { return pick('পেমেন্ট সম্পন্ন', 'Payment completed') },
-  get description() { return pick('সম্পূর্ণ পেমেন্ট পাওয়া গেছে', 'Full payment received') },
+  get label() { return pick('পেমেন্ট', 'Payment') },
+  get description() { return pick('সম্পূর্ণ পেমেন্ট পেলে অর্ডার নিশ্চিত হবে', 'Order is confirmed once full payment is received') },
   reached: (_status, paymentStatus) => paymentStatus === 'PAID',
 }
 
@@ -107,8 +109,8 @@ const stepDelivered: TrackStep = {
 const stepPaidCod: TrackStep = {
   key: 'PAID',
   icon: '💵',
-  get label() { return pick('পেমেন্ট সম্পন্ন', 'Payment received') },
-  get description() { return pick('ডেলিভারিতে নগদ পরিশোধ', 'Cash collected on delivery') },
+  get label() { return pick('নগদ পেমেন্ট', 'Cash payment') },
+  get description() { return pick('ডেলিভারিতে নগদে সংগ্রহ করা হবে', 'Collected in cash at your door') },
   reached: (_status, paymentStatus) => paymentStatus === 'PAID',
 }
 
