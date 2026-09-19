@@ -60,8 +60,10 @@ const customerOrderLink = (orderId: string) => `/orders/${orderId}`
 const adminOrderLink = (orderId: string) => `/admin/orders/${orderId}`
 const orderReviewLink = (orderId: string) => `/orders/${orderId}/review`
 
-/// Notify the user who owns a customer profile.
-export async function notifyCustomer(customerId: string, input: Omit<NotifyInput, 'userId'>): Promise<void> {
+/// Notify the user who owns a customer profile. A null customerId (guest order)
+/// is a no-op — there is no account to notify.
+export async function notifyCustomer(customerId: string | null, input: Omit<NotifyInput, 'userId'>): Promise<void> {
+  if (!customerId) return
   const customer = await prisma.customer.findUnique({ where: { id: customerId } })
   if (customer) await notify({ ...input, userId: customer.userId })
 }
@@ -84,14 +86,9 @@ const statusMessage: Partial<Record<OrderStatus, { type: NotificationType; title
   CANCELLED: { type: 'ORDER_CANCELLED', title: 'অর্ডার বাতিল', body: 'আপনার অর্ডারটি বাতিল করা হয়েছে।' },
 }
 
-export async function notifyOrderPlaced(customerId: string, orderNumber: string, orderId: string): Promise<void> {
-  await notifyCustomer(customerId, {
-    type: 'ORDER_PLACED',
-    title: 'অর্ডার গৃহীত হয়েছে',
-    body: `আপনার অর্ডার ${orderNumber} গ্রহণ করা হয়েছে।`,
-    orderId,
-    link: customerOrderLink(orderId),
-  })
+/// Notify every admin that a new order arrived (used for both customer and
+/// guest orders).
+export async function notifyNewOrderToAdmins(orderNumber: string, orderId: string): Promise<void> {
   await notifyAdmins({
     type: 'NEW_ORDER',
     title: 'নতুন অর্ডার',
@@ -101,7 +98,18 @@ export async function notifyOrderPlaced(customerId: string, orderNumber: string,
   })
 }
 
-export async function notifyOrderStatus(customerId: string, status: OrderStatus, orderNumber: string, orderId: string): Promise<void> {
+export async function notifyOrderPlaced(customerId: string, orderNumber: string, orderId: string): Promise<void> {
+  await notifyCustomer(customerId, {
+    type: 'ORDER_PLACED',
+    title: 'অর্ডার গৃহীত হয়েছে',
+    body: `আপনার অর্ডার ${orderNumber} গ্রহণ করা হয়েছে।`,
+    orderId,
+    link: customerOrderLink(orderId),
+  })
+  await notifyNewOrderToAdmins(orderNumber, orderId)
+}
+
+export async function notifyOrderStatus(customerId: string | null, status: OrderStatus, orderNumber: string, orderId: string): Promise<void> {
   const msg = statusMessage[status]
   if (!msg) return
   await notifyCustomer(customerId, {
@@ -124,7 +132,7 @@ export async function notifyReviewInvite(customerId: string, orderNumber: string
   })
 }
 
-export async function notifyPaymentReceived(customerId: string, amount: number, orderNumber: string, orderId: string): Promise<void> {
+export async function notifyPaymentReceived(customerId: string | null, amount: number, orderNumber: string, orderId: string): Promise<void> {
   await notifyCustomer(customerId, {
     type: 'PAYMENT_RECEIVED',
     title: 'পেমেন্ট গৃহীত',
@@ -153,7 +161,7 @@ export async function notifyPaymentSubmitted(amount: number, method: string, ord
 }
 
 /// An admin verified or rejected a customer's manual payment claim.
-export async function notifyPaymentVerified(customerId: string, verified: boolean, amount: number, orderNumber: string, orderId: string): Promise<void> {
+export async function notifyPaymentVerified(customerId: string | null, verified: boolean, amount: number, orderNumber: string, orderId: string): Promise<void> {
   if (verified) {
     await notifyCustomer(customerId, {
       type: 'PAYMENT_VERIFIED',

@@ -173,8 +173,12 @@ export function OrderDetailAdmin() {
         <div className="order-detail__address">
           <h3>{t('গ্রাহক ও ঠিকানা', 'Customer & address')}</h3>
           <p>
-            {order.customer.name} · {order.customer.email}
+            {order.customer.name}
+            {order.customer.email ? ` · ${order.customer.email}` : ''}
             {order.customer.phone ? ` · ${order.customer.phone}` : ''}
+            {order.customer.isGuest && (
+              <span className="status status--cod" style={{ marginLeft: '0.5rem' }}>{t('অতিথি', 'Guest')}</span>
+            )}
           </p>
           <p>
             {order.recipientName} · {order.recipientPhone}

@@ -80,10 +80,12 @@ export interface Order {
 
 export interface AdminOrder extends Order {
   customer: {
-    id: string
+    /// Null for a guest order (no account).
+    id: string | null
     name: string
-    email: string
+    email: string | null
     phone: string | null
+    isGuest: boolean
   }
 }
 
@@ -143,4 +145,16 @@ export interface CheckoutInput {
   notes?: string
   couponCode?: string
   paymentMode?: PaymentMode
+}
+
+/// Guest checkout (no account). Contact + address are inline and required;
+/// payment is always cash on delivery, decided server-side.
+export interface GuestCheckoutInput {
+  items: { productId: string; quantity: number }[]
+  address: AddressInput
+  guestEmail?: string
+  fulfillmentDate: string
+  timeSlot: string
+  notes?: string
+  couponCode?: string
 }

@@ -4,6 +4,7 @@ import { authenticate, requireRole } from '../../middleware/auth.js'
 import {
   addressSchema,
   checkoutSchema,
+  guestCheckoutSchema,
   updateAddressSchema,
   updateOrderingSettingSchema,
   updatePaymentStatusSchema,
@@ -12,13 +13,21 @@ import {
 import * as orderController from './order.controller.js'
 import * as adminOrderController from './admin-order.controller.js'
 
+/// Public ordering routes (no authentication). Guest checkout lets someone
+/// order without an account.
+export const publicOrderRouter = Router()
+// Ordering window (delivery cost, cutoff, earliest date) — needed by guests too.
+publicOrderRouter.get('/ordering/window', asyncHandler(orderController.getWindow))
+publicOrderRouter.post(
+  '/guest/orders',
+  validateBody(guestCheckoutSchema),
+  asyncHandler(orderController.guestCheckout),
+)
+
 /// Customer ordering routes. All require authentication; the controller further
 /// requires a customer profile so admin/kitchen accounts can't place orders.
 export const orderRouter = Router()
 orderRouter.use(authenticate)
-
-// Ordering window (delivery cost, cutoff, earliest date).
-orderRouter.get('/ordering/window', asyncHandler(orderController.getWindow))
 
 // Addresses.
 orderRouter.get('/addresses', asyncHandler(orderController.listAddresses))

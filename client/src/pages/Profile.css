@@ -107,3 +107,46 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+
+.profile__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.profile__saved {
+  color: #4caf50;
+  font-weight: 600;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.profile__phone-warn {
+  background: rgba(245, 179, 0, 0.12);
+  border: 1px solid rgba(245, 179, 0, 0.42);
+  color: #b98600;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+.profile__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.profile__edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.profile__edit-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}

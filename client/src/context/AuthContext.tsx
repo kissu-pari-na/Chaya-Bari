@@ -1,6 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiRequest, getToken, setToken } from '../lib/apiClient'
-import type { AuthResponse, AuthUser, LoginPayload, RegisterPayload, RegisterResult } from '../types/auth'
+import type {
+  AuthResponse,
+  AuthUser,
+  LoginPayload,
+  RegisterPayload,
+  RegisterResult,
+  UpdateProfilePayload,
+} from '../types/auth'
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -13,6 +20,8 @@ interface AuthContextValue {
   verifyEmail: (email: string, code: string) => Promise<AuthUser>
   /// Sign in or register with a Google ID token (credential); logs the user in.
   loginWithGoogle: (credential: string) => Promise<AuthUser>
+  /// Update the signed-in user's own profile (e.g. add a missing phone number).
+  updateProfile: (payload: UpdateProfilePayload) => Promise<AuthUser>
   logout: () => void
 }
 
@@ -88,14 +97,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [handleAuth],
   )
 
+  const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
+    const { user: updated } = await apiRequest<{ user: AuthUser }>('/auth/me', {
+      method: 'PATCH',
+      body: payload,
+      auth: true,
+    })
+    setUser(updated)
+    return updated
+  }, [])
+
   const logout = useCallback(() => {
     setToken(null)
     setUser(null)
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, register, verifyEmail, loginWithGoogle, logout }),
-    [user, loading, login, register, verifyEmail, loginWithGoogle, logout],
+    () => ({ user, loading, login, register, verifyEmail, loginWithGoogle, updateProfile, logout }),
+    [user, loading, login, register, verifyEmail, loginWithGoogle, updateProfile, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

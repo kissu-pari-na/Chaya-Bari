@@ -107,6 +107,76 @@
   padding-top: 0.85rem;
 }
 
+/* Guest checkout: register-benefits banner + inline contact/address grid. */
+.checkout__guest-banner {
+  background: rgba(245, 179, 0, 0.1);
+  border: 1px solid rgba(245, 179, 0, 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.checkout__guest-banner strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.checkout__guest-banner p {
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted-text, #b8b9b2);
+}
+
+.checkout__guest-links {
+  font-weight: 600;
+}
+
+.guest-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.guest-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+}
+
+.guest-grid__full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .guest-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Guest order confirmation + register call-to-action. */
+.checkout__placed {
+  max-width: 640px;
+}
+
+.checkout__register-cta {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: rgba(228, 50, 43, 0.06);
+}
+
+.checkout__register-cta h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.checkout__register-cta p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+
 /* Payment method (prepaid vs cash on delivery) options — same visual language
    as the address options. */
 .pay-mode-options {

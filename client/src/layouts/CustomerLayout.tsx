@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { Header } from '../components/Header'
+import { PhoneNoticeBanner } from '../components/PhoneNoticeBanner'
 import { useAuth } from '../context/AuthContext'
 import { roleHome } from '../components/ProtectedRoute'
 
@@ -18,6 +19,7 @@ export function CustomerLayout() {
     <div className="page">
       <Header variant="customer" />
       <main className="page__content">
+        <PhoneNoticeBanner />
         <Outlet />
       </main>
     </div>

@@ -183,10 +183,16 @@ export async function businessSummary(from: string, to: string): Promise<Busines
     } else {
       ordersMissingActualDelivery += 1
     }
-    const cust = customerSpend.get(order.customerId) ?? { name: order.customer.user.name, spent: 0, orders: 0 }
+    // Guest orders (no account) are grouped under a single "Guest" bucket.
+    const custKey = order.customerId ?? 'guest'
+    const cust = customerSpend.get(custKey) ?? {
+      name: order.customer?.user.name ?? 'Guest (no account)',
+      spent: 0,
+      orders: 0,
+    }
     cust.spent += Number(order.total)
     cust.orders += 1
-    customerSpend.set(order.customerId, cust)
+    customerSpend.set(custKey, cust)
   }
 
   const netFoodSales = foodSales - foodDiscounts
@@ -283,9 +289,11 @@ export async function customerAnalytics(from: string, to: string): Promise<Custo
   const byCustomer = new Map<string, Agg>()
 
   for (const o of orders) {
-    const agg = byCustomer.get(o.customerId) ?? {
-      name: o.customer.user.name,
-      email: o.customer.user.email,
+    // Guest orders (no account) are grouped under a single "Guest" bucket.
+    const custKey = o.customerId ?? 'guest'
+    const agg = byCustomer.get(custKey) ?? {
+      name: o.customer?.user.name ?? 'Guest (no account)',
+      email: o.customer?.user.email ?? '',
       orders: 0,
       spent: 0,
       qty: 0,
@@ -309,7 +317,7 @@ export async function customerAnalytics(from: string, to: string): Promise<Custo
     const netDelivery = Number(o.customerDeliveryCost) - Number(o.deliveryDiscount)
     const actual = o.delivery?.actualDeliveryCost != null ? Number(o.delivery.actualDeliveryCost) : null
     agg.profit += netFood - productCost + (actual != null ? netDelivery - actual : 0)
-    byCustomer.set(o.customerId, agg)
+    byCustomer.set(custKey, agg)
   }
 
   return [...byCustomer.entries()]

@@ -44,6 +44,13 @@ export async function checkout(req: Request, res: Response) {
   res.status(201).json({ order })
 }
 
+// ---- Guest checkout (no account) ----
+
+export async function guestCheckout(req: Request, res: Response) {
+  const order = await orderService.guestCheckout(req.body)
+  res.status(201).json({ order })
+}
+
 export async function listMyOrders(req: Request, res: Response) {
   const customerId = await requireCustomerId(req.user!.id)
   res.json({ orders: await orderService.listMyOrders(customerId) })
