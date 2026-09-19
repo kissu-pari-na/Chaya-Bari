@@ -4,11 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeGuestOrder, placeOrder, previewCoupon } from '../lib/orders'
+import { fetchPaymentInfo } from '../lib/payments'
 import { isOrbitaxEmail } from '../lib/orbitax'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt, formatDateWithDay } from '../lib/format'
 import { TIME_SLOTS, formatSlotLabel, isSlotEnabledForDate, isWeekend, pickDefaultSlot } from '../lib/slots'
 import type { Address, CouponPreview, Order, OrderingWindow } from '../types/order'
+import type { PaymentInfo } from '../types/payment'
 import './Checkout.css'
 
 // Orbitax staff get the free-delivery coupon auto-applied when it is valid.
@@ -50,6 +52,7 @@ export function Checkout() {
     note: '',
   })
   const [placedGuest, setPlacedGuest] = useState<Order | null>(null)
+  const [payInfo, setPayInfo] = useState<PaymentInfo | null>(null)
 
   useEffect(() => {
     fetchOrderingWindow()
@@ -75,10 +78,13 @@ export function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Guests always pay cash on delivery (they can't prepay or track a payment).
+  // Payment-account details (public) — shown to a guest who chooses to pay in
+  // advance, on the confirmation screen.
   useEffect(() => {
-    if (isGuest) setPaymentMode('COD')
-  }, [isGuest])
+    fetchPaymentInfo()
+      .then(setPayInfo)
+      .catch(() => setPayInfo(null))
+  }, [])
 
   // Auto-select the closest available time slot whenever the delivery day
   // changes (a new day can open/close different slots).
@@ -155,12 +161,31 @@ export function Checkout() {
         <p>
           {t('আপনার অর্ডার নম্বর:', 'Your order number:')} <strong>{placedGuest.orderNumber}</strong>
         </p>
-        <p className="muted">
-          {t(
-            'এটি ক্যাশ অন ডেলিভারি অর্ডার — ডেলিভারির সময় নগদে পরিশোধ করবেন। আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।',
-            'This is a cash-on-delivery order — please pay in cash when it arrives. We will contact you shortly to confirm.',
-          )}
-        </p>
+        {placedGuest.paymentMode === 'COD' ? (
+          <p className="muted">
+            {t(
+              'এটি ক্যাশ অন ডেলিভারি অর্ডার — ডেলিভারির সময় নগদে পরিশোধ করবেন। আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।',
+              'This is a cash-on-delivery order — please pay in cash when it arrives. We will contact you shortly to confirm.',
+            )}
+          </p>
+        ) : (
+          <div className="checkout__pay-instructions">
+            <p>
+              {t(
+                `অগ্রিম পেমেন্ট: অনুগ্রহ করে ৳${placedGuest.total} নিচের যেকোনো একটিতে পাঠান এবং রেফারেন্সে অর্ডার নম্বর ${placedGuest.orderNumber} দিন। আমরা যাচাই করে নিশ্চিত করব।`,
+                `Pay in advance: please send ৳${placedGuest.total} to one of the accounts below and use order number ${placedGuest.orderNumber} as the reference. We will verify and confirm.`,
+              )}
+            </p>
+            {payInfo && (payInfo.bkash || payInfo.nagad || payInfo.rocket || payInfo.bankInfo) && (
+              <div className="pay-accounts">
+                {payInfo.bkash && <span>{t('বিকাশ:', 'bKash:')} <strong>{payInfo.bkash}</strong></span>}
+                {payInfo.nagad && <span>{t('নগদ:', 'Nagad:')} <strong>{payInfo.nagad}</strong></span>}
+                {payInfo.rocket && <span>{t('রকেট:', 'Rocket:')} <strong>{payInfo.rocket}</strong></span>}
+                {payInfo.bankInfo && <span>{payInfo.bankInfo}</span>}
+              </div>
+            )}
+          </div>
+        )}
         <div className="checkout__register-cta">
           <h2>{t('একটি অ্যাকাউন্ট তৈরি করুন', 'Create an account')}</h2>
           <p>
@@ -207,6 +232,7 @@ export function Checkout() {
           timeSlot,
           notes: notes || undefined,
           couponCode: coupon ? coupon.coupon.code : undefined,
+          paymentMode,
         }).then((order) => {
           clear()
           setPlacedGuest(order)
@@ -439,40 +465,36 @@ export function Checkout() {
 
         <fieldset>
           <legend>{t('পেমেন্ট পদ্ধতি', 'Payment method')}</legend>
-          {isGuest ? (
-            <p className="hint">
-              {t('অতিথি অর্ডারের জন্য ক্যাশ অন ডেলিভারি — ডেলিভারির সময় নগদে পরিশোধ করুন।', 'Guest orders are cash on delivery — pay in cash when your order arrives.')}
-            </p>
-          ) : (
-            <div className="pay-mode-options">
-              <label className={paymentMode === 'PREPAID' ? 'pay-mode pay-mode--on' : 'pay-mode'}>
-                <input
-                  type="radio"
-                  name="paymentMode"
-                  checked={paymentMode === 'PREPAID'}
-                  onChange={() => setPaymentMode('PREPAID')}
-                />
-                <span>
-                  <strong>{t('অগ্রিম পেমেন্ট', 'Pay in advance')}</strong>
-                  <br />
-                  {t('বিকাশ/নগদ/ব্যাংকে পরিশোধ করে অর্ডার নিশ্চিত করুন।', 'Pay via bKash/Nagad/bank to confirm your order.')}
-                </span>
-              </label>
-              <label className={paymentMode === 'COD' ? 'pay-mode pay-mode--on' : 'pay-mode'}>
-                <input
-                  type="radio"
-                  name="paymentMode"
-                  checked={paymentMode === 'COD'}
-                  onChange={() => setPaymentMode('COD')}
-                />
-                <span>
-                  <strong>{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</strong>
-                  <br />
-                  {t('ডেলিভারির সময় নগদে পরিশোধ করুন।', 'Pay in cash when your order is delivered.')}
-                </span>
-              </label>
-            </div>
-          )}
+          <div className="pay-mode-options">
+            <label className={paymentMode === 'PREPAID' ? 'pay-mode pay-mode--on' : 'pay-mode'}>
+              <input
+                type="radio"
+                name="paymentMode"
+                checked={paymentMode === 'PREPAID'}
+                onChange={() => setPaymentMode('PREPAID')}
+              />
+              <span>
+                <strong>{t('অগ্রিম পেমেন্ট', 'Pay in advance')}</strong>
+                <br />
+                {isGuest
+                  ? t('বিকাশ/নগদ/ব্যাংকে পরিশোধ করুন; অর্ডারের পর নির্দেশনা দেখানো হবে।', 'Pay via bKash/Nagad/bank; instructions are shown after you order.')
+                  : t('বিকাশ/নগদ/ব্যাংকে পরিশোধ করে অর্ডার নিশ্চিত করুন।', 'Pay via bKash/Nagad/bank to confirm your order.')}
+              </span>
+            </label>
+            <label className={paymentMode === 'COD' ? 'pay-mode pay-mode--on' : 'pay-mode'}>
+              <input
+                type="radio"
+                name="paymentMode"
+                checked={paymentMode === 'COD'}
+                onChange={() => setPaymentMode('COD')}
+              />
+              <span>
+                <strong>{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</strong>
+                <br />
+                {t('ডেলিভারির সময় নগদে পরিশোধ করুন।', 'Pay in cash when your order is delivered.')}
+              </span>
+            </label>
+          </div>
         </fieldset>
 
         <fieldset>
@@ -548,9 +570,11 @@ export function Checkout() {
           <p className="hint">{t('অর্ডার করতে একটি ঠিকানা যোগ করুন।', 'Add an address to place your order.')}</p>
         )}
         <p className="hint">
-          {isGuest || paymentMode === 'COD'
+          {paymentMode === 'COD'
             ? t('ক্যাশ অন ডেলিভারি: ডেলিভারির সময় নগদে পরিশোধ করবেন।', 'Cash on delivery: you will pay in cash when the order arrives.')
-            : t('অর্ডারের পর পেমেন্টের ধাপে বিকাশ/নগদ/ব্যাংকে পরিশোধ করে জানাতে পারবেন।', 'After ordering, you can pay via bKash/Nagad/bank and report it on the payment step.')}
+            : isGuest
+              ? t('অগ্রিম পেমেন্ট: অর্ডারের পর পরিশোধের নির্দেশনা দেখানো হবে।', 'Pay in advance: payment instructions are shown after you order.')
+              : t('অর্ডারের পর পেমেন্টের ধাপে বিকাশ/নগদ/ব্যাংকে পরিশোধ করে জানাতে পারবেন।', 'After ordering, you can pay via bKash/Nagad/bank and report it on the payment step.')}
         </p>
       </aside>
     </section>

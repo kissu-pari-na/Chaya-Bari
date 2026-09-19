@@ -128,7 +128,7 @@ async function resolveAddress(
   if (inline) {
     return {
       recipientName: inline.recipientName,
-      recipientPhone: inline.recipientPhone,
+      recipientPhone: inline.recipientPhone ?? '',
       addressLine: inline.addressLine,
       area: inline.area ?? null,
       city: inline.city,
@@ -211,6 +211,21 @@ function itemsCreate(priced: Awaited<ReturnType<typeof priceCheckout>>['priced']
 
 export async function checkout(customerId: string, input: CheckoutInput): Promise<PublicOrder> {
   const address = await resolveAddress(customerId, input.addressId, input.address)
+
+  // If the selected address has no phone, fall back to the customer's profile
+  // number (which, when it was missing, has just been captured at checkout) and
+  // persist it back onto the saved address so it's there next time.
+  if (!address.recipientPhone) {
+    const customer = await prisma.customer.findUnique({ where: { id: customerId }, include: { user: true } })
+    const profilePhone = customer?.user.phone ?? ''
+    if (profilePhone) {
+      address.recipientPhone = profilePhone
+      if (input.addressId) {
+        await prisma.address.update({ where: { id: input.addressId }, data: { recipientPhone: profilePhone } })
+      }
+    }
+  }
+
   const { priced, fulfillmentDate } = await priceCheckout(input)
 
   const order = await prisma.order.create({
@@ -244,8 +259,9 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
 }
 
 /// Guest checkout: places an order without an account. Contact/address come in
-/// inline and payment is cash-on-delivery (guests can't prepay or track a
-/// payment). Only admins are notified — there is no customer account to notify.
+/// inline. A guest can pay in advance (shown manual-payment instructions on the
+/// confirmation) or pick cash on delivery. Only admins are notified — there is
+/// no customer account to notify.
 export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOrder> {
   const { priced, fulfillmentDate } = await priceCheckout(input)
 
@@ -255,7 +271,7 @@ export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOr
       customerId: null,
       guestEmail: input.guestEmail,
       recipientName: input.address.recipientName,
-      recipientPhone: input.address.recipientPhone,
+      recipientPhone: input.address.recipientPhone ?? '',
       addressLine: input.address.addressLine,
       area: input.address.area ?? null,
       city: input.address.city,
@@ -269,7 +285,7 @@ export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOr
       deliveryDiscount: priced.deliveryDiscount,
       total: priced.total,
       couponCode: priced.couponCode,
-      paymentMode: 'COD',
+      paymentMode: input.paymentMode,
       items: itemsCreate(priced),
     },
     include: { items: true },
