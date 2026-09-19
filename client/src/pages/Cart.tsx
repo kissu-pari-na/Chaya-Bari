@@ -1,6 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { useContentLang } from '../context/TranslationContext'
 import { formatBdt } from '../lib/format'
@@ -8,10 +7,8 @@ import './Cart.css'
 
 export function Cart() {
   const { items, subtotal, setQuantity, removeItem } = useCart()
-  const { user } = useAuth()
   const { t } = useI18n()
   const { lc } = useContentLang()
-  const navigate = useNavigate()
 
   if (items.length === 0) {
     return (
@@ -22,14 +19,6 @@ export function Cart() {
         <Link to="/products" className="btn btn--primary">{t('পণ্য দেখুন', 'Browse Products')}</Link>
       </section>
     )
-  }
-
-  function handleCheckout() {
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: '/checkout' } } })
-    } else {
-      navigate('/checkout')
-    }
   }
 
   return (
@@ -64,9 +53,9 @@ export function Cart() {
           <strong>{formatBdt(subtotal)}</strong>
         </div>
         <p className="muted small">{t('ডেলিভারি চার্জ চেকআউটে যোগ হবে।', 'Delivery charge is added at checkout.')}</p>
-        <button className="cart-summary__checkout" onClick={handleCheckout}>
+        <Link to="/checkout" className="cart-summary__checkout">
           {t('চেকআউট', 'Checkout')}
-        </button>
+        </Link>
       </div>
     </section>
   )

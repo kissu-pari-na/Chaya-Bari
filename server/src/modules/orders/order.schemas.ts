@@ -56,6 +56,37 @@ export const checkoutSchema = z.object({
   paymentMode: z.enum(['PREPAID', 'COD']).optional().default('PREPAID'),
 })
 
+// Guest checkout: no account, so contact + delivery details are inline and
+// required. Guest orders are cash-on-delivery only (they can't prepay or track
+// a payment without an account), so paymentMode is fixed server-side.
+export const guestCheckoutSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        productId: z.string().cuid(),
+        quantity: z.number().int().min(1, 'Quantity must be at least 1').max(1000),
+      }),
+    )
+    .min(1, 'Your cart is empty'),
+  address: addressSchema,
+  guestEmail: z
+    .string()
+    .email('A valid email is required')
+    .toLowerCase()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+  fulfillmentDate: dateString,
+  timeSlot: z.enum(SLOT_VALUES as [string, ...string[]], {
+    errorMap: () => ({ message: 'Please choose a delivery time slot' }),
+  }),
+  notes: optionalText(1000),
+  couponCode: z
+    .string()
+    .max(40)
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+})
+
 // ---- Ordering settings ----
 
 export const orderStatuses = [
@@ -85,4 +116,5 @@ export const updateOrderingSettingSchema = z.object({
 export type AddressInput = z.infer<typeof addressSchema>
 export type UpdateAddressInput = z.infer<typeof updateAddressSchema>
 export type CheckoutInput = z.infer<typeof checkoutSchema>
+export type GuestCheckoutInput = z.infer<typeof guestCheckoutSchema>
 export type UpdateOrderingSettingInput = z.infer<typeof updateOrderingSettingSchema>

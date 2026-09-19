@@ -137,6 +137,7 @@
 }
 
 .cart-summary__checkout {
+  display: block;
   width: 100%;
   margin-top: 0.75rem;
   background: var(--accent);
@@ -148,6 +149,8 @@
   font-family: var(--font-body);
   font-weight: 700;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
   box-shadow: var(--glow-accent);
   transition: background 0.14s ease, transform 0.14s ease;
 }
@@ -155,6 +158,8 @@
 .cart-summary__checkout:hover {
   background: var(--red-bright);
   transform: translateY(-1px);
+  color: #fff;
+  text-decoration: none;
 }
 
 .small {

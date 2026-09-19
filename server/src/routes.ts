@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { healthRouter } from './modules/health/health.routes.js'
 import { authRouter } from './modules/auth/auth.routes.js'
 import { publicProductRouter, adminProductRouter } from './modules/products/product.routes.js'
-import { orderRouter, adminOrderingRouter } from './modules/orders/order.routes.js'
+import { orderRouter, adminOrderingRouter, publicOrderRouter } from './modules/orders/order.routes.js'
 import { couponRouter, adminCouponRouter } from './modules/coupons/coupon.routes.js'
 import { kitchenRouter } from './modules/kitchen/kitchen.routes.js'
 import { adminDeliveryRouter } from './modules/delivery/delivery.routes.js'
@@ -45,6 +45,10 @@ apiRouter.use('/', publicPaymentRouter)
 
 // Public business identity (read by every client); same ordering requirement.
 apiRouter.use('/', publicBusinessRouter)
+
+// Public ordering (ordering window + guest checkout). Must precede the
+// authenticated order router so its blanket auth gate doesn't 401 these.
+apiRouter.use('/', publicOrderRouter)
 
 // Ordering: customer addresses/orders under /api, admin settings under /api/admin.
 apiRouter.use('/', orderRouter)

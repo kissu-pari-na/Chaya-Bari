@@ -9,6 +9,18 @@ export const registerSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters').max(200),
 })
 
+// Update the signed-in user's own profile. Only the fields provided are changed;
+// at least one must be present. Phone can be added (when missing at sign-up) or
+// corrected here.
+export const updateProfileSchema = z
+  .object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+    phone: z.string().min(6, 'A valid phone number is required').max(20).optional(),
+  })
+  .refine((v) => v.name !== undefined || v.phone !== undefined, {
+    message: 'Nothing to update',
+  })
+
 // Login by email OR phone: the identifier is matched against whichever it looks
 // like. Either way the account's email must be confirmed.
 export const loginSchema = z.object({
@@ -47,6 +59,7 @@ export const resetPasswordSchema = z.object({
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type LoginInput = z.infer<typeof loginSchema>
 export type GoogleAuthInput = z.infer<typeof googleAuthSchema>
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>

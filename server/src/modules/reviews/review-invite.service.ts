@@ -25,12 +25,15 @@ export async function dispatchReviewInvites(): Promise<number> {
       status: 'DELIVERED',
       reviewInviteSentAt: null,
       deliveredAt: { not: null, lt: cutoff },
+      // Guest orders have no account to notify or email, so skip them.
+      customerId: { not: null },
     },
     include: { customer: { include: { user: { select: { name: true, email: true } } } } },
   })
 
   let sent = 0
   for (const order of orders) {
+    if (!order.customerId || !order.customer) continue
     try {
       await notifyReviewInvite(order.customerId, order.orderNumber, order.id)
 

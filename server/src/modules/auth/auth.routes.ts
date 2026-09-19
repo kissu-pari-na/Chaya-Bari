@@ -9,6 +9,7 @@ import {
   registerSchema,
   resendEmailSchema,
   resetPasswordSchema,
+  updateProfileSchema,
   verifyEmailSchema,
 } from './auth.schemas.js'
 import * as authController from './auth.controller.js'
@@ -34,3 +35,4 @@ authRouter.post('/forgot-password', authThrottle, validateBody(forgotPasswordSch
 authRouter.post('/reset-password', authThrottle, validateBody(resetPasswordSchema), asyncHandler(authController.resetPassword))
 
 authRouter.get('/me', authenticate, asyncHandler(authController.me))
+authRouter.patch('/me', authenticate, validateBody(updateProfileSchema), asyncHandler(authController.updateMe))

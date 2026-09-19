@@ -7,10 +7,12 @@ import { notifyOrderStatus } from '../notifications/notification.service.js'
 
 export interface AdminOrder extends PublicOrder {
   customer: {
-    id: string
+    /// Null for a guest order (no account).
+    id: string | null
     name: string
-    email: string
+    email: string | null
     phone: string | null
+    isGuest: boolean
   }
 }
 
@@ -62,12 +64,23 @@ function toAdminOrder(order: OrderRow): AdminOrder {
       ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
       : null,
     payments: order.payments.map(toPublicPayment),
-    customer: {
-      id: order.customer.id,
-      name: order.customer.user.name,
-      email: order.customer.user.email,
-      phone: order.customer.user.phone,
-    },
+    // Guest orders have no customer account; fall back to the delivery snapshot
+    // and the optional guest email so the admin still sees who to contact.
+    customer: order.customer
+      ? {
+          id: order.customer.id,
+          name: order.customer.user.name,
+          email: order.customer.user.email,
+          phone: order.customer.user.phone,
+          isGuest: false,
+        }
+      : {
+          id: null,
+          name: order.recipientName,
+          email: order.guestEmail,
+          phone: order.recipientPhone,
+          isGuest: true,
+        },
   }
 }
 

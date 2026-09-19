@@ -70,12 +70,13 @@ export default function App() {
               <Route path="/products" element={<ProductList />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              {/* Checkout is public: guests can order without an account. */}
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/invoice" element={<Invoice />} />
 
               {/* Customer, auth required */}
               <Route element={<ProtectedRoute roles={['CUSTOMER']} />}>
-                <Route path="/checkout" element={<Checkout />} />
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
                 <Route path="/orders/:id/review" element={<OrderReview />} />

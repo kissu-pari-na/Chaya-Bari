@@ -1,0 +1,41 @@
+.phone-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(245, 179, 0, 0.12);
+  border: 1px solid rgba(245, 179, 0, 0.42);
+  color: var(--accent-gold, #b98600);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm);
+  margin: 0 auto 1rem;
+  max-width: 1200px;
+  font-size: 0.9rem;
+}
+
+.phone-notice__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.phone-notice__text {
+  flex: 1;
+}
+
+.phone-notice__link {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.phone-notice__close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.15rem 0.3rem;
+  opacity: 0.75;
+}
+
+.phone-notice__close:hover {
+  opacity: 1;
+}

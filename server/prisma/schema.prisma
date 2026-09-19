@@ -220,8 +220,13 @@ model Order {
   id          String @id @default(cuid())
   orderNumber String @unique
 
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
+  // Null for guest orders placed without an account. Guest contact is captured
+  // in the address snapshot below (recipientName/recipientPhone) plus the
+  // optional guestEmail.
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  /// Optional email for a guest order, used to invite them to register.
+  guestEmail String?
 
   // Delivery address snapshot.
   recipientName  String

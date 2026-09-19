@@ -102,7 +102,10 @@ export function OrdersAdmin() {
                   <td>
                     <Link to={`/admin/orders/${o.id}`}>{o.orderNumber}</Link>
                   </td>
-                  <td>{o.customer.name}</td>
+                  <td>
+                    {o.customer.name}
+                    {o.customer.isGuest && <><br /><span className="muted small">{t('অতিথি', 'Guest')}</span></>}
+                  </td>
                   <td>
                     {o.fulfillmentDate}
                     {o.timeSlot && <><br /><span className="muted">{formatSlotValue(o.timeSlot)}</span></>}

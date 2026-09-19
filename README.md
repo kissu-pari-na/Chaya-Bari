@@ -155,6 +155,17 @@ admin/kitchen account. Each role lands on its own area:
 - **My orders**: customers see only their own orders (list + detail with a
   receipt-style breakdown and status). Admin/kitchen accounts cannot place
   orders.
+- **Guest ordering**: anyone can order without an account via a public checkout
+  (`POST /api/guest/orders`). Contact + address are entered inline, payment is
+  cash-on-delivery only (guests can't prepay or track a payment), and only
+  admins are notified. `Order.customerId` is nullable for these; guest orders
+  are grouped under a single "Guest" bucket in analytics and skipped by the
+  review-invite job. The confirmation screen invites the guest to register
+  (track orders, history, faster checkout, reviews).
+- **Missing phone capture**: a phone number is optional on some accounts (e.g.
+  Google sign-in). Customers can add/edit their own name and phone from the
+  profile (`PATCH /api/auth/me`); a storefront-wide banner and a checkout field
+  prompt for a missing number so delivery contact is collected while ordering.
 
 ## Phase 4 — what's implemented
 

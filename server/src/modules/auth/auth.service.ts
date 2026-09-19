@@ -12,6 +12,7 @@ import type {
   RegisterInput,
   ResendEmailInput,
   ResetPasswordInput,
+  UpdateProfileInput,
   VerifyEmailInput,
 } from './auth.schemas.js'
 import { consumeCode, sendEmailCode, sendPasswordResetCode, sendWelcomeEmail } from './verification.service.js'
@@ -297,5 +298,28 @@ export async function expireUnverifiedAccounts(olderThanHours = 48): Promise<num
 export async function getCurrentUser(userId: string): Promise<PublicUser> {
   const user = await prisma.user.findUnique({ where: { id: userId } })
   if (!user) throw HttpError.notFound('User not found')
+  return toPublicUser(user)
+}
+
+/// Update the signed-in user's own profile (name and/or phone). Used mainly to
+/// let users add a phone number they didn't provide at sign-up (e.g. Google
+/// sign-in). A phone is only reserved by a *confirmed* account, so we reject a
+/// phone already held by another confirmed user — mirroring registration.
+export async function updateProfile(userId: string, input: UpdateProfileInput): Promise<PublicUser> {
+  if (input.phone !== undefined) {
+    const clash = await prisma.user.findFirst({
+      where: { phone: input.phone, emailVerifiedAt: { not: null }, id: { not: userId } },
+    })
+    if (clash) {
+      throw HttpError.conflict('An account with this phone number already exists')
+    }
+  }
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.phone !== undefined ? { phone: input.phone } : {}),
+    },
+  })
   return toPublicUser(user)
 }

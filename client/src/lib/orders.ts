@@ -7,6 +7,7 @@ import type {
   Coupon,
   CouponInput,
   CouponPreview,
+  GuestCheckoutInput,
   Order,
   OrderingWindow,
   OrderStatus,
@@ -41,6 +42,11 @@ export function deleteAddress(id: string) {
 
 export function placeOrder(input: CheckoutInput) {
   return apiRequest<{ order: Order }>('/orders', { method: 'POST', body: input, auth: true }).then((r) => r.order)
+}
+
+/// Place an order as a guest (no account). Cash on delivery only.
+export function placeGuestOrder(input: GuestCheckoutInput) {
+  return apiRequest<{ order: Order }>('/guest/orders', { method: 'POST', body: input }).then((r) => r.order)
 }
 
 export function fetchMyOrders() {

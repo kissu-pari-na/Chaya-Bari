@@ -1,13 +1,13 @@
 import { type Delivery, type Order, type OrderItem, type Payment } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
-import type { AddressInput, CheckoutInput } from './order.schemas.js'
+import type { AddressInput, CheckoutInput, GuestCheckoutInput } from './order.schemas.js'
 import { getOrderingSetting, computeWindow } from './ordering.service.js'
 import { isSlotEnabledForDate } from './slots.js'
 import { priceOrder } from './pricing.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
 import { paymentTotals, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
-import { notifyOrderPlaced } from '../notifications/notification.service.js'
+import { notifyOrderPlaced, notifyNewOrderToAdmins } from '../notifications/notification.service.js'
 
 interface AddressSnapshot {
   recipientName: string
@@ -147,7 +147,19 @@ function generateOrderNumber(): string {
   return `CB-${yy}${mm}${dd}-${rand}`
 }
 
-export async function checkout(customerId: string, input: CheckoutInput): Promise<PublicOrder> {
+interface CheckoutItem {
+  productId: string
+  quantity: number
+}
+
+/// Validates the advance-order window + time slot and prices the cart. Shared by
+/// the registered-customer and guest checkout flows.
+async function priceCheckout(input: {
+  items: CheckoutItem[]
+  fulfillmentDate: string
+  timeSlot: string
+  couponCode?: string
+}) {
   const setting = await getOrderingSetting()
   const window = computeWindow(setting)
 
@@ -164,8 +176,6 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
     throw HttpError.badRequest('The selected time slot is not available for that day.')
   }
 
-  const address = await resolveAddress(customerId, input.addressId, input.address)
-
   // Load products; the pricing helper captures list + charged prices and
   // applies per-item sale prices plus an optional coupon (immutability).
   const productIds = input.items.map((i) => i.productId)
@@ -181,6 +191,27 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
 
   const [year, month, day] = input.fulfillmentDate.split('-').map(Number)
   const fulfillmentDate = new Date(Date.UTC(year, month - 1, day))
+
+  return { priced, fulfillmentDate }
+}
+
+/// Build the nested item-create payload from priced lines.
+function itemsCreate(priced: Awaited<ReturnType<typeof priceCheckout>>['priced']) {
+  return {
+    create: priced.lines.map((l) => ({
+      productId: l.productId,
+      productName: l.productName,
+      listUnitPrice: l.listUnitPrice,
+      unitPrice: l.unitPrice,
+      quantity: l.quantity,
+      lineTotal: l.lineTotal,
+    })),
+  }
+}
+
+export async function checkout(customerId: string, input: CheckoutInput): Promise<PublicOrder> {
+  const address = await resolveAddress(customerId, input.addressId, input.address)
+  const { priced, fulfillmentDate } = await priceCheckout(input)
 
   const order = await prisma.order.create({
     data: {
@@ -202,21 +233,49 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
       total: priced.total,
       couponCode: priced.couponCode,
       paymentMode: input.paymentMode,
-      items: {
-        create: priced.lines.map((l) => ({
-          productId: l.productId,
-          productName: l.productName,
-          listUnitPrice: l.listUnitPrice,
-          unitPrice: l.unitPrice,
-          quantity: l.quantity,
-          lineTotal: l.lineTotal,
-        })),
-      },
+      items: itemsCreate(priced),
     },
     include: { items: true },
   })
 
   await notifyOrderPlaced(customerId, order.orderNumber, order.id)
+
+  return toPublicOrder(order)
+}
+
+/// Guest checkout: places an order without an account. Contact/address come in
+/// inline and payment is cash-on-delivery (guests can't prepay or track a
+/// payment). Only admins are notified — there is no customer account to notify.
+export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOrder> {
+  const { priced, fulfillmentDate } = await priceCheckout(input)
+
+  const order = await prisma.order.create({
+    data: {
+      orderNumber: generateOrderNumber(),
+      customerId: null,
+      guestEmail: input.guestEmail,
+      recipientName: input.address.recipientName,
+      recipientPhone: input.address.recipientPhone,
+      addressLine: input.address.addressLine,
+      area: input.address.area ?? null,
+      city: input.address.city,
+      addressNote: input.address.note ?? null,
+      fulfillmentDate,
+      timeSlot: input.timeSlot,
+      notes: input.notes,
+      subtotal: priced.subtotal,
+      productDiscount: priced.productDiscount,
+      customerDeliveryCost: priced.customerDeliveryCost,
+      deliveryDiscount: priced.deliveryDiscount,
+      total: priced.total,
+      couponCode: priced.couponCode,
+      paymentMode: 'COD',
+      items: itemsCreate(priced),
+    },
+    include: { items: true },
+  })
+
+  await notifyNewOrderToAdmins(order.orderNumber, order.id)
 
   return toPublicOrder(order)
 }

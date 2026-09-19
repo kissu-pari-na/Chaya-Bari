@@ -33,3 +33,9 @@ export interface LoginPayload {
   identifier: string
   password: string
 }
+
+/// Fields a signed-in user can change on their own profile.
+export interface UpdateProfilePayload {
+  name?: string
+  phone?: string
+}
