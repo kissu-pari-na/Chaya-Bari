@@ -629,6 +629,10 @@ model Notification {
   type      NotificationType
   title     String
   body      String
+  /// Structured payload for client-side localization: a message key plus its
+  /// parameters (order number, amount, method…). The stored title/body are the
+  /// Bengali fallback used when a client can't localize from `data`.
+  data      Json?
   orderId   String?
   /// In-app path to open when the notification is clicked (e.g. an order or the
   /// order's review page). Null for notifications with no destination.

@@ -7,11 +7,12 @@ import {
   markNotificationRead,
   type AppNotification,
 } from '../lib/notifications'
+import { renderNotification } from '../lib/notificationText'
 import { useI18n } from '../context/LanguageContext'
 import './NotificationBell.css'
 
 export function NotificationBell() {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const [items, setItems] = useState<AppNotification[]>([])
   const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
@@ -90,17 +91,20 @@ export function NotificationBell() {
           </div>
           <div className="notif__list">
             {items.length === 0 && <p className="notif__empty">{t('কোনো নোটিফিকেশন নেই।', 'No notifications.')}</p>}
-            {items.map((n) => (
-              <button
-                key={n.id}
-                className={n.read ? 'notif__item' : 'notif__item notif__item--unread'}
-                onClick={() => handleItem(n)}
-              >
-                <span className="notif__title">{n.title}</span>
-                <span className="notif__body">{n.body}</span>
-                <span className="notif__time">{new Date(n.createdAt).toLocaleString('en-GB')}</span>
-              </button>
-            ))}
+            {items.map((n) => {
+              const text = renderNotification(n)
+              return (
+                <button
+                  key={n.id}
+                  className={n.read ? 'notif__item' : 'notif__item notif__item--unread'}
+                  onClick={() => handleItem(n)}
+                >
+                  <span className="notif__title">{text.title}</span>
+                  <span className="notif__body">{text.body}</span>
+                  <span className="notif__time">{new Date(n.createdAt).toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-GB')}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
