@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDeliveries } from '../../lib/delivery'
 import { deliveryStatusLabel } from '../../lib/deliveryStatus'
-import { formatBdt } from '../../lib/format'
+import { formatBdt, formatDateWithDay } from '../../lib/format'
 import { formatSlotValue } from '../../lib/slots'
 import { useI18n } from '../../context/LanguageContext'
 import type { DeliveryListRow } from '../../types/delivery'
@@ -76,7 +76,7 @@ export function DeliveriesAdmin() {
                       <Link to={`/admin/orders/${r.orderId}`}>{r.orderNumber}</Link>
                     </td>
                     <td>
-                      {r.fulfillmentDate}
+                      {formatDateWithDay(r.fulfillmentDate)}
                       {r.timeSlot && <><br /><span className="muted">{formatSlotValue(r.timeSlot)}</span></>}
                     </td>
                     <td>{r.provider ?? '—'}</td>

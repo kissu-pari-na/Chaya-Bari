@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchOrbitaxAccount, payOrbitax } from '../lib/orbitax'
-import { formatBdt } from '../lib/format'
+import { formatBdt, formatDateWithDay } from '../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { paymentMethodLabel } from '../lib/paymentLabels'
 import { ApiError } from '../lib/apiClient'
@@ -207,7 +207,7 @@ export function OrbitaxBilling() {
                   <span className="status status--payment">{paymentStatusLabel[o.paymentStatus]}</span>
                 </div>
                 <div className="orbitax__order-meta muted">
-                  {o.fulfillmentDate} · {orderStatusLabel[o.status]}
+                  {formatDateWithDay(o.fulfillmentDate)} · {orderStatusLabel[o.status]}
                   {o.paymentMode === 'COD' && <> · {t('ক্যাশ অন ডেলিভারি', 'COD')}</>}
                 </div>
                 <div className="orbitax__order-amounts">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchMyOrders } from '../lib/orders'
-import { formatBdt, toBnDigits } from '../lib/format'
+import { formatBdt, formatDateWithDay, toBnDigits } from '../lib/format'
 import { orderStatusLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
 import { useI18n } from '../context/LanguageContext'
@@ -49,7 +49,7 @@ export function MyOrders() {
                   <span className={`status status--${o.status.toLowerCase()}`}>{orderStatusLabel[o.status]}</span>
                 </div>
                 <div className="order-row__sub">
-                  <span>📅 {o.fulfillmentDate}{o.timeSlot ? ` · ${formatSlotValue(o.timeSlot)}` : ''}</span>
+                  <span>📅 {formatDateWithDay(o.fulfillmentDate)}{o.timeSlot ? ` · ${formatSlotValue(o.timeSlot)}` : ''}</span>
                   <span>· {toBnDigits(count)} {t('আইটেম', 'items')}</span>
                   {preview && <span className="order-row__preview">· {preview}{o.items.length > 2 ? '…' : ''}</span>}
                   {o.status === 'DELIVERED' && <span className="order-row__review">⭐ {t('রিভিউ দিন', 'Leave a review')}</span>}

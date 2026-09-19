@@ -6,7 +6,7 @@ import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeGuestOrder, placeOrder, previewCoupon } from '../lib/orders'
 import { isOrbitaxEmail } from '../lib/orbitax'
 import { ApiError } from '../lib/apiClient'
-import { formatBdt } from '../lib/format'
+import { formatBdt, formatDateWithDay } from '../lib/format'
 import { TIME_SLOTS, formatSlotLabel, isSlotEnabledForDate, isWeekend, pickDefaultSlot } from '../lib/slots'
 import type { Address, CouponPreview, Order, OrderingWindow } from '../types/order'
 import './Checkout.css'
@@ -394,6 +394,9 @@ export function Checkout() {
               required
             />
           </label>
+          {fulfillmentDate && (
+            <p className="checkout__chosen-date">📅 {formatDateWithDay(fulfillmentDate)}</p>
+          )}
           {window && (
             <p className="hint">
               {t(
