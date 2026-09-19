@@ -127,6 +127,7 @@
 .status--delivered { background: #efdcae; color: #7a5410; }
 .status--cancelled { background: #fdecea; color: #b3261e; }
 .status--payment { background: #f0e8d2; color: #6b5f3c; }
+.status--cod { background: #e6f4ea; color: #1f7a44; }
 
 .order-placed {
   background: rgba(245, 179, 0, 0.12);
@@ -220,6 +221,7 @@
 }
 .pay-note--ok { background: #f7edd3; color: #7a5410; border: 1px solid #e6cf97; }
 .pay-note--err { background: var(--danger-bg); color: var(--danger); border: 1px solid #e6b8b3; }
+.pay-note--cod { background: #e6f4ea; color: #1f7a44; border: 1px solid #b7e0c5; }
 
 .pay-history {
   list-style: none;

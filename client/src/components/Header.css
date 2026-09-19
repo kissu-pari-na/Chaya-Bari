@@ -59,6 +59,33 @@
   line-height: 1;
 }
 
+/* Orbitax billing icon — shown to Orbitax staff on every breakpoint (unlike the
+   cart, which has a nav text link on desktop). */
+.app-header__orbitax-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--header-border);
+  background: transparent;
+  color: var(--header-fg);
+  text-decoration: none;
+}
+
+.app-header__orbitax-icon:hover {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+.app-header__orbitax-icon.app-header__link--active,
+.app-header__orbitax-icon.active {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+}
+
 .app-header__toggle {
   display: none;
   align-items: center;

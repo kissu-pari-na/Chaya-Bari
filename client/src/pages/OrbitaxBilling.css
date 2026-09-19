@@ -1,0 +1,148 @@
+.orbitax {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.orbitax__totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.orbitax__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2, rgba(255, 255, 255, 0.03));
+}
+
+.orbitax__stat-label {
+  font-size: 0.78rem;
+  color: var(--header-fg-muted, #b8b9b2);
+}
+
+.orbitax__stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent-gold, #f5b300);
+}
+
+.orbitax__stat-value--due {
+  color: var(--accent-bright, #ff4a3d);
+}
+
+.orbitax__stat-value--ok {
+  color: #4bb377;
+}
+
+.orbitax__pay {
+  border-top: 1px dashed var(--card-border);
+  padding-top: 1rem;
+}
+
+.orbitax__pay h2,
+.orbitax__orders h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem;
+}
+
+.orbitax__pay-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.orbitax__pay label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  flex: 1 1 8rem;
+  margin-bottom: 0.6rem;
+}
+
+.orbitax__full-btn {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--header-fg, #f5f1e7);
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.82rem;
+  margin-bottom: 0.6rem;
+}
+
+.orbitax__full-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-bright);
+}
+
+.orbitax__submit {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.orbitax__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orbitax__order-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.orbitax__order {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+}
+
+.orbitax__order-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.orbitax__order-meta {
+  font-size: 0.78rem;
+  margin: 0.25rem 0;
+}
+
+.orbitax__order-amounts {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.orbitax__order-due {
+  font-weight: 700;
+  color: var(--accent-bright, #ff4a3d);
+}
+
+.orbitax__all-link {
+  display: inline-block;
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 860px) {
+  .orbitax {
+    grid-template-columns: 1fr;
+  }
+}

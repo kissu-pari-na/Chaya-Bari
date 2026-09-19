@@ -80,6 +80,9 @@ export function OrderDetailAdmin() {
           <div className="order-detail__badges">
             <span className={`status status--${order.status.toLowerCase()}`}>{orderStatusLabel[order.status]}</span>
             <span className="status status--payment">{t('পেমেন্ট:', 'Payment:')} {paymentStatusLabel[order.paymentStatus]}</span>
+            {order.paymentMode === 'COD' && (
+              <span className="status status--cod">{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</span>
+            )}
           </div>
         </div>
 

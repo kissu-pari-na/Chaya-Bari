@@ -204,7 +204,15 @@ admin/kitchen account. Each role lands on its own area:
 - **Payment transactions** recorded separately from the order (not a ledger).
   Each has a method (cash, bKash, Nagad, Rocket, card, bank transfer, online),
   amount, transaction status (success / pending / failed / refunded), a source
-  (customer / admin), and an optional reference. **There is no cash-on-delivery.**
+  (customer / admin), and an optional reference.
+- **Payment mode (prepaid vs cash on delivery)**: an order carries a
+  `paymentMode` chosen at checkout. **Prepaid** orders are gated on payment —
+  they auto-confirm once fully paid and can't be confirmed while unpaid.
+  **Cash-on-delivery** orders skip that gate: they can be confirmed and sent to
+  the kitchen while unpaid, and the cash is recorded when they're delivered
+  (payment never auto-confirms/reverts their status). The order tracker adapts
+  to the mode — prepaid shows a "payment completed" gate before confirmation,
+  COD shows the cash payment as the closing milestone after delivery.
 - **Derived order payment status**: the order's status
   (Pending → Partially Paid → Paid, or Refunded) is recomputed from its
   payments — net collected = successful payments minus refunds — along with
@@ -223,6 +231,12 @@ admin/kitchen account. Each role lands on its own area:
   pending claims, and records confirmed payments directly. **Customer**: sees
   paid/due, pays via bKash, reports manual payments, and tracks each claim's
   verification status.
+- **Orbitax combined billing**: staff whose email is on the `orbitax.com` domain
+  (or a subdomain) get a billing shortcut icon in the header linking to
+  `/orbitax`. The page shows their **combined outstanding balance** across all
+  orders and lets them **pay some or a specific amount**; the amount is allocated
+  across their unpaid orders (oldest first) as payment claims that admins verify.
+  Access is gated server-side by the email domain.
 
 ## Phase 8 — what's implemented
 

@@ -15,6 +15,7 @@ import { adminBusinessRouter, publicBusinessRouter } from './modules/business/bu
 import { reviewRouter } from './modules/reviews/review.routes.js'
 import { translateRouter } from './modules/translate/translate.routes.js'
 import { adminUserRouter } from './modules/users/user.routes.js'
+import { orbitaxRouter } from './modules/orbitax/orbitax.routes.js'
 import { maintenanceRouter } from './modules/maintenance/maintenance.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
@@ -80,6 +81,9 @@ apiRouter.use('/admin', adminBusinessRouter)
 
 // User management (ADMIN): create staff/customer accounts with a creator footprint.
 apiRouter.use('/admin', adminUserRouter)
+
+// Orbitax staff self-service billing (own account; gated by email domain).
+apiRouter.use('/', orbitaxRouter)
 
 // Notifications (any authenticated user).
 apiRouter.use('/', notificationRouter)

@@ -51,6 +51,9 @@ export const checkoutSchema = z.object({
     .max(40)
     .optional()
     .or(z.literal('').transform(() => undefined)),
+  /// How the order is settled. Defaults to PREPAID (pay in advance); COD means
+  /// cash is collected on delivery.
+  paymentMode: z.enum(['PREPAID', 'COD']).optional().default('PREPAID'),
 })
 
 // ---- Ordering settings ----

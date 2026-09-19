@@ -16,6 +16,7 @@ import { Cart } from './pages/Cart'
 import { Checkout } from './pages/Checkout'
 import { MyOrders } from './pages/MyOrders'
 import { OrderDetail } from './pages/OrderDetail'
+import { OrbitaxBilling } from './pages/OrbitaxBilling'
 import { OrderReview } from './pages/OrderReview'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { BusinessProfileSettings } from './pages/BusinessProfileSettings'
@@ -78,6 +79,7 @@ export default function App() {
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
                 <Route path="/orders/:id/review" element={<OrderReview />} />
+                <Route path="/orbitax" element={<OrbitaxBilling />} />
               </Route>
             </Route>
 

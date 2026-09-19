@@ -48,6 +48,7 @@ export interface PublicOrder {
   couponCode: string | null
   status: Order['status']
   paymentStatus: Order['paymentStatus']
+  paymentMode: Order['paymentMode']
   amountPaid: number
   amountDue: number
   createdAt: string
@@ -82,6 +83,7 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
     couponCode: order.couponCode,
     status: order.status,
     paymentStatus: order.paymentStatus,
+    paymentMode: order.paymentMode,
     amountPaid: totals.amountPaid,
     amountDue: totals.amountDue,
     createdAt: order.createdAt.toISOString(),
@@ -199,6 +201,7 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
       deliveryDiscount: priced.deliveryDiscount,
       total: priced.total,
       couponCode: priced.couponCode,
+      paymentMode: input.paymentMode,
       items: {
         create: priced.lines.map((l) => ({
           productId: l.productId,

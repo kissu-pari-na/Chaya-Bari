@@ -113,6 +113,9 @@ export function OrdersAdmin() {
                   </td>
                   <td>
                     <span className="status status--payment">{paymentStatusLabel[o.paymentStatus]}</span>
+                    {o.paymentMode === 'COD' && (
+                      <><br /><span className="status status--cod">{t('ক্যাশ অন ডেলিভারি', 'COD')}</span></>
+                    )}
                   </td>
                 </tr>
               ))}
