@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Header } from '../components/Header'
 import { AddressBook } from '../components/AddressBook'
+import { PushToggle } from '../components/PushToggle'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { ApiError } from '../lib/apiClient'
@@ -173,6 +174,8 @@ export function Profile() {
               </dl>
             )}
           </section>
+
+          <PushToggle />
 
           {user.role === 'CUSTOMER' && <AddressBook />}
 

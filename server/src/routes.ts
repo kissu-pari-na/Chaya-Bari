@@ -16,6 +16,7 @@ import { reviewRouter } from './modules/reviews/review.routes.js'
 import { translateRouter } from './modules/translate/translate.routes.js'
 import { adminUserRouter } from './modules/users/user.routes.js'
 import { orbitaxRouter } from './modules/orbitax/orbitax.routes.js'
+import { pushRouter } from './modules/push/push.routes.js'
 import { maintenanceRouter } from './modules/maintenance/maintenance.routes.js'
 
 /// Root API router. Each module mounts its own sub-router here.
@@ -88,6 +89,9 @@ apiRouter.use('/admin', adminUserRouter)
 
 // Orbitax staff self-service billing (own account; gated by email domain).
 apiRouter.use('/', orbitaxRouter)
+
+// Web Push subscriptions (public key + subscribe/unsubscribe).
+apiRouter.use('/', pushRouter)
 
 // Notifications (any authenticated user).
 apiRouter.use('/', notificationRouter)

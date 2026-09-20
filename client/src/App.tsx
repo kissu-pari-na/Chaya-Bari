@@ -6,6 +6,7 @@ import { LanguageProvider } from './context/LanguageContext'
 import { TranslationProvider } from './context/TranslationContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { PushSync } from './components/PushSync'
 import { CustomerLayout } from './layouts/CustomerLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { KitchenLayout } from './layouts/KitchenLayout'
@@ -53,6 +54,7 @@ export default function App() {
           <AuthProvider>
             <BusinessProfileProvider>
               <CartProvider>
+                <PushSync />
                 <Routes>
             {/* Auth */}
             <Route path="/login" element={<Login />} />

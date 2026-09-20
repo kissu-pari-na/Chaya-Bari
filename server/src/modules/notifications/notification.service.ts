@@ -1,6 +1,7 @@
 import { Prisma, type Notification, type NotificationType, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
+import { sendPushToUser } from '../push/push.service.js'
 
 /// Structured payload for client-side localization: a message key and the params
 /// the client needs to render either language. The server also stores a Bengali
@@ -68,6 +69,16 @@ export async function notify(input: NotifyInput): Promise<void> {
   } catch (err) {
     logger.error('Failed to create notification', { message: err instanceof Error ? err.message : String(err) })
   }
+
+  // Also deliver as an OS-level web push (best-effort; no-op if push isn't
+  // configured or the user has no subscribed devices). Never blocks the flow.
+  void sendPushToUser(input.userId, {
+    title: input.title,
+    body: input.body,
+    url: input.link ?? undefined,
+    // Collapse repeated updates for the same order into one notification.
+    tag: input.orderId ? `order-${input.orderId}` : undefined,
+  })
 }
 
 /// Standard click-through paths.
