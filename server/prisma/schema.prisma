@@ -45,6 +45,7 @@ model User {
   customer          Customer?
   notifications     Notification[]
   verificationCodes VerificationCode[]
+  pushSubscriptions PushSubscription[]
 
   @@index([role])
   @@index([createdById])
@@ -621,6 +622,21 @@ enum NotificationType {
   PAYMENT_REJECTED
   NEW_ORDER
   REVIEW_INVITE
+}
+
+/// A browser Web Push subscription for a user's device. One row per device/
+/// browser (keyed by its unique endpoint). Used to deliver OS-level push
+/// notifications alongside the in-app ones. Pruned when the endpoint expires.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 /// An in-app notification for a user. Generated from order/payment events.

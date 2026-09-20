@@ -323,8 +323,16 @@ admin/kitchen account. Each role lands on its own area:
   shows the unread count with a dropdown to read and mark-all-read.
   **Bilingual**: each notification is stored with a message key + params (plus a
   Bengali fallback), and the bell renders the text in the active UI language, so
-  it follows the Bangla/English toggle. Email/SMS/push channels can be layered on
-  the same events later.
+  it follows the Bangla/English toggle.
+- **Web Push (phone notifications)**: the same events are also delivered as
+  OS-level push notifications. A service worker shows them (with the device's
+  standard notification sound/vibration) even when the site is closed; users
+  opt in from Profile → "Phone notifications". Requires a VAPID keypair
+  (`VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`; generate with
+  `npx web-push generate-vapid-keys`) — when unset the feature is simply hidden
+  and everything else works. Subscriptions are stored per device and pruned when
+  they expire. (Note: web push uses the standard notification sound, not a
+  call-style ring, and iOS requires the site be added to the Home Screen.)
 - **Delivery provider integration point** (mock): "dispatch to provider"
   generates a tracking reference and moves the delivery to *assigned* —
   swap the adapter for a real Pathao/pandago client without changing callers.

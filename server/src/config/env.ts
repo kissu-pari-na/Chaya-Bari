@@ -53,6 +53,15 @@ export const env = {
     from: process.env.MAIL_FROM ?? 'ছায়া বাড়ি <no-reply@chayabari.example>',
   },
 
+  // Web Push (VAPID). Generate a keypair with `npx web-push generate-vapid-keys`
+  // and set the two keys. Leave unset to disable push (endpoints become no-ops).
+  // `subject` is a mailto:/https: contact required by the push spec.
+  vapid: {
+    publicKey: process.env.VAPID_PUBLIC_KEY ?? '',
+    privateKey: process.env.VAPID_PRIVATE_KEY ?? '',
+    subject: process.env.VAPID_SUBJECT ?? 'mailto:hello@chayabari.example',
+  },
+
   // bKash Tokenized Checkout (PGW). Leave unset to run in sandbox/mock mode.
   bkash: {
     baseUrl: process.env.BKASH_BASE_URL ?? '',
@@ -70,5 +79,8 @@ export const isBkashLive =
 
 /// True when Google Sign-In is configured (an OAuth client ID is present).
 export const isGoogleAuthEnabled = !!env.google.clientId
+
+/// True when Web Push is configured (a VAPID keypair is present).
+export const isPushEnabled = !!env.vapid.publicKey && !!env.vapid.privateKey
 
 export const isProduction = env.nodeEnv === 'production'
