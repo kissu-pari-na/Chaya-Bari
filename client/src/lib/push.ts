@@ -113,3 +113,29 @@ export async function syncPushSubscription(): Promise<void> {
   if (!pushSupported() || Notification.permission !== 'granted') return
   await enablePush().catch(() => {})
 }
+
+const AUTO_ASK_KEY = 'chaya_bari_push_auto_asked'
+
+/// Auto-prompt to enable push once per browser, right after sign-in, so it is
+/// effectively on by default without the user hunting for the toggle. Browsers
+/// won't let us enable push without a permission grant, so this surfaces the
+/// prompt automatically (works on Chrome/Android; Safari/iOS still needs a tap,
+/// handled by the Profile control). Only asks when permission is still undecided
+/// and push is actually configured on the server, and never asks twice.
+export async function maybeAutoEnablePush(): Promise<void> {
+  if (!pushSupported() || Notification.permission !== 'default') return
+  try {
+    if (localStorage.getItem(AUTO_ASK_KEY) === '1') return
+  } catch {
+    /* ignore */
+  }
+  // Don't consume the one-time ask (or prompt) unless the server has push keys.
+  const key = await fetchVapidKey().catch(() => null)
+  if (!key) return
+  try {
+    localStorage.setItem(AUTO_ASK_KEY, '1')
+  } catch {
+    /* ignore */
+  }
+  await enablePush().catch(() => {})
+}
