@@ -3,6 +3,7 @@ import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useI18n } from '../context/LanguageContext'
 import { useContentLang } from '../context/TranslationContext'
 import { fetchProduction, fetchProductionDates, moveLine, moveProduct, packOrder } from '../lib/kitchen'
+import { usePoll } from '../lib/usePoll'
 import { pick, localeDigits } from '../lib/i18n'
 import { formatSlotValue } from '../lib/slots'
 import type {
@@ -87,6 +88,19 @@ export function KitchenHome() {
   useEffect(() => {
     if (activeDate) loadDay(activeDate)
   }, [activeDate, loadDay])
+
+  // Live updates: quietly refresh the board so newly confirmed orders and other
+  // staff's moves appear without a manual refresh. Paused mid-action / picker.
+  usePoll(() => {
+    if (busy || picker) return
+    fetchProductionDates()
+      .then((d) => {
+        setDates(d)
+        setActiveDate((cur) => cur ?? d[0]?.date ?? null)
+      })
+      .catch(() => {})
+    if (activeDate) fetchProduction(activeDate).then(setDay).catch(() => {})
+  }, 15000)
 
   async function run(fn: () => Promise<ProductionDay>) {
     setBusy(true)

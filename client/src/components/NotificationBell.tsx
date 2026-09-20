@@ -8,6 +8,7 @@ import {
   type AppNotification,
 } from '../lib/notifications'
 import { renderNotification } from '../lib/notificationText'
+import { usePoll } from '../lib/usePoll'
 import { useI18n } from '../context/LanguageContext'
 import './NotificationBell.css'
 
@@ -31,9 +32,12 @@ export function NotificationBell() {
 
   useEffect(() => {
     void load()
-    const t = setInterval(load, 30000)
-    return () => clearInterval(t)
   }, [load])
+
+  // Near-live: poll for new notifications and refetch on focus/visibility.
+  usePoll(() => {
+    void load()
+  }, 20000)
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
