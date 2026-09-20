@@ -1,14 +1,17 @@
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { syncPushSubscription } from '../lib/push'
+import { maybeAutoEnablePush, syncPushSubscription } from '../lib/push'
 
-/// Keeps this device's push subscription registered on the server whenever the
-/// user is signed in and has already granted notification permission. Never
-/// prompts (opt-in happens from the Profile control). Renders nothing.
+/// For a signed-in user: keeps this device's push subscription registered when
+/// permission is already granted, and — so phone notifications are on by default
+/// — auto-prompts to enable them once per browser when permission is still
+/// undecided. Renders nothing.
 export function PushSync() {
   const { user } = useAuth()
   useEffect(() => {
-    if (user) void syncPushSubscription()
+    if (!user) return
+    void syncPushSubscription()
+    void maybeAutoEnablePush()
   }, [user])
   return null
 }

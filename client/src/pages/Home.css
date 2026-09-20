@@ -363,9 +363,9 @@
     order: -1;
   }
   /* Disc sizes scale with the stage via cqw, so only the stage width and the
-     top-orb centring need adjusting at phone widths. */
+     orb insets need adjusting at phone widths. */
   .hero__stage {
-    width: min(420px, 94%);
+    width: min(420px, 92%);
   }
   .hero__orb {
     width: 30cqw;
@@ -373,8 +373,20 @@
   .hero__orb--center {
     width: 34cqw;
   }
+  /* On phones the orbs are wider (30cqw), so the slight desktop overhang would
+     push the top-left orb off the screen. Tuck all three inside the stage. */
   .hero__orb--1 {
-    margin-left: -15cqw;
+    left: 1%;
+    margin-left: 0;
+  }
+  .hero__orb--2 {
+    right: 1%;
+  }
+  .hero__orb--3 {
+    right: 1%;
+  }
+  .hero__orb-name {
+    max-width: 30cqw;
   }
 }
 
