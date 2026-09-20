@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { ApiError } from '../lib/apiClient'
 import { createAddress, deleteAddress, fetchAddresses, updateAddress } from '../lib/orders'
+import { DELIVERY_ZONES, SERVICEABLE_AREAS } from '../lib/deliveryAreas'
 import type { Address, AddressInput } from '../types/order'
 import './AddressBook.css'
 
@@ -241,13 +242,32 @@ export function AddressBook() {
               <div className="addressbook__row">
                 <label>
                   {t('এলাকা', 'Area')}
-                  <input value={form.area ?? ''} onChange={(e) => setForm({ ...form, area: e.target.value })} />
+                  <select value={form.area ?? ''} onChange={(e) => setForm({ ...form, area: e.target.value })} required>
+                    <option value="">{t('এলাকা নির্বাচন করুন', 'Select your area')}</option>
+                    {Object.entries(DELIVERY_ZONES).map(([zone, areas]) => (
+                      <optgroup key={zone} label={zone}>
+                        {areas.map((ar) => (
+                          <option key={ar} value={ar}>
+                            {ar}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                    {/* Preserve an existing area that's outside the current list
+                        (e.g. the Orbitax office) so editing doesn't drop it. */}
+                    {form.area && !SERVICEABLE_AREAS.includes(form.area) && (
+                      <option value={form.area}>{form.area}</option>
+                    )}
+                  </select>
                 </label>
                 <label>
                   {t('শহর', 'City')}
                   <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
                 </label>
               </div>
+              <p className="hint">
+                {t('আমরা শুধু নির্ধারিত এলাকায় ডেলিভারি করি।', 'We currently deliver only to the listed areas.')}
+              </p>
               <label>
                 {t('নোট (ঐচ্ছিক)', 'Note (optional)')}
                 <input value={form.note ?? ''} onChange={(e) => setForm({ ...form, note: e.target.value })} maxLength={300} />

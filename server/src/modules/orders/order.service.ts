@@ -5,6 +5,8 @@ import type { AddressInput, CheckoutInput, GuestCheckoutInput } from './order.sc
 import { getOrderingSetting, computeWindow } from './ordering.service.js'
 import { isSlotEnabledForDate } from './slots.js'
 import { priceOrder } from './pricing.js'
+import { isOrderableArea } from './delivery-areas.js'
+import { isOrbitaxEmail } from '../../utils/orbitax.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
 import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
 import {
@@ -216,12 +218,21 @@ function itemsCreate(priced: Awaited<ReturnType<typeof priceCheckout>>['priced']
 
 export async function checkout(customerId: string, input: CheckoutInput): Promise<PublicOrder> {
   const address = await resolveAddress(customerId, input.addressId, input.address)
+  const customer = await prisma.customer.findUnique({ where: { id: customerId }, include: { user: true } })
+  const userEmail = customer?.user.email ?? null
+
+  // We only deliver to serviceable areas (orbitax.com accounts may also order to
+  // the Mohakhali office). Reject anything outside coverage before creating it.
+  if (!isOrderableArea(address.area, isOrbitaxEmail(userEmail))) {
+    throw HttpError.badRequest(
+      "Sorry, we don't deliver to this area yet. Please choose an address in one of our delivery areas.",
+    )
+  }
 
   // If the selected address has no phone, fall back to the customer's profile
   // number (which, when it was missing, has just been captured at checkout) and
   // persist it back onto the saved address so it's there next time.
   if (!address.recipientPhone) {
-    const customer = await prisma.customer.findUnique({ where: { id: customerId }, include: { user: true } })
     const profilePhone = customer?.user.phone ?? ''
     if (profilePhone) {
       address.recipientPhone = profilePhone
@@ -268,6 +279,13 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
 /// confirmation) or pick cash on delivery. Only admins are notified — there is
 /// no customer account to notify.
 export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOrder> {
+  // Guests can only order to serviceable areas (no orbitax office exception —
+  // that is for signed-in orbitax accounts).
+  if (!isOrderableArea(input.address.area, false)) {
+    throw HttpError.badRequest(
+      "Sorry, we don't deliver to this area yet. Please choose an address in one of our delivery areas.",
+    )
+  }
   const { priced, fulfillmentDate } = await priceCheckout(input)
 
   const order = await prisma.order.create({
