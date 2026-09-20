@@ -6,6 +6,7 @@ import { useI18n } from '../context/LanguageContext'
 import { fetchAddresses, fetchOrderingWindow, placeGuestOrder, placeOrder, previewCoupon } from '../lib/orders'
 import { fetchPaymentInfo } from '../lib/payments'
 import { isOrbitaxEmail } from '../lib/orbitax'
+import { DELIVERY_ZONES, isOrderableArea } from '../lib/deliveryAreas'
 import { ApiError } from '../lib/apiClient'
 import { formatBdt, formatDateWithDay } from '../lib/format'
 import { TIME_SLOTS, formatSlotLabel, isSlotEnabledForDate, isWeekend, pickDefaultSlot } from '../lib/slots'
@@ -129,6 +130,12 @@ export function Checkout() {
     [coupon, subtotal, deliveryCost],
   )
 
+  // Delivery-area coverage. A signed-in customer's selected address must be in a
+  // serviceable area (orbitax accounts may also use their Mohakhali office).
+  const userIsOrbitax = !!user && isOrbitaxEmail(user.email)
+  const selectedAddress = addresses.find((x) => x.id === selectedAddressId) ?? null
+  const selectedUnserviceable = !!selectedAddress && !isOrderableArea(selectedAddress.area, userIsOrbitax)
+
   async function handleApplyCoupon() {
     setCouponError(null)
     if (!couponCode.trim()) return
@@ -229,6 +236,10 @@ export function Checkout() {
         setError(t('অনুগ্রহ করে নাম, ফোন, ঠিকানা ও শহর দিন', 'Please provide your name, phone, address and city'))
         return
       }
+      if (!isOrderableArea(guest.area, false)) {
+        setError(t('অনুগ্রহ করে আমাদের ডেলিভারি এলাকা থেকে একটি এলাকা নির্বাচন করুন।', 'Please select an area within our delivery coverage.'))
+        return
+      }
       setSubmitting(true)
       try {
         await placeGuestOrder({
@@ -263,6 +274,10 @@ export function Checkout() {
     // Signed-in customer.
     if (!selectedAddressId) {
       setError(t('অর্ডার করার আগে একটি ডেলিভারি ঠিকানা নির্বাচন করুন', 'Please set a delivery address before ordering'))
+      return
+    }
+    if (selectedUnserviceable) {
+      setError(t('দুঃখিত, আমরা এখনো এই ঠিকানার এলাকায় ডেলিভারি করি না।', "Sorry, we don't deliver to this address's area yet."))
       return
     }
     const needsPhone = !user?.phone
@@ -344,8 +359,19 @@ export function Checkout() {
                 <input value={guest.addressLine} onChange={(e) => setGuest({ ...guest, addressLine: e.target.value })} maxLength={300} required />
               </label>
               <label>
-                {t('এলাকা (ঐচ্ছিক)', 'Area (optional)')}
-                <input value={guest.area} onChange={(e) => setGuest({ ...guest, area: e.target.value })} maxLength={120} />
+                {t('এলাকা', 'Area')}
+                <select value={guest.area} onChange={(e) => setGuest({ ...guest, area: e.target.value })} required>
+                  <option value="">{t('এলাকা নির্বাচন করুন', 'Select your area')}</option>
+                  {Object.entries(DELIVERY_ZONES).map(([zone, areas]) => (
+                    <optgroup key={zone} label={zone}>
+                      {areas.map((ar) => (
+                        <option key={ar} value={ar}>
+                          {ar}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
               </label>
               <label>
                 {t('শহর', 'City')}
@@ -383,6 +409,19 @@ export function Checkout() {
                 <p className="hint">
                   <Link to="/profile#addresses">{t('ঠিকানা পরিচালনা করুন', 'Manage addresses')} →</Link>
                 </p>
+                {selectedUnserviceable && (
+                  <div className="checkout__area-warn">
+                    <p>
+                      {t(
+                        'দুঃখিত, আমরা এখনো এই ঠিকানার এলাকায় ডেলিভারি করি না। অনুগ্রহ করে আমাদের ডেলিভারি এলাকায় একটি ঠিকানা নির্বাচন করুন।',
+                        "Sorry, we don't deliver to this address's area yet. Please choose an address within our delivery areas.",
+                      )}
+                    </p>
+                    <p className="hint">
+                      <Link to="/contact">{t('আমাদের ডেলিভারি এলাকা দেখুন', 'See our delivery areas')} →</Link>
+                    </p>
+                  </div>
+                )}
               </>
             ) : (
               addressesLoaded && (
@@ -575,7 +614,7 @@ export function Checkout() {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitting || (!isGuest && !selectedAddressId)}
+          disabled={submitting || (!isGuest && (!selectedAddressId || selectedUnserviceable))}
           className="checkout__place"
         >
           {submitting ? t('অর্ডার হচ্ছে…', 'Placing order…') : t('অর্ডার নিশ্চিত করুন', 'Confirm order')}

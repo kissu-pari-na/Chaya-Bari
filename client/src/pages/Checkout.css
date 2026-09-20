@@ -199,6 +199,24 @@
   font-size: 0.9rem;
 }
 
+/* Out-of-coverage warning on the selected delivery address. */
+.checkout__area-warn {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--danger, #b3261e);
+  background: var(--danger-bg, #fdecea);
+  color: var(--danger, #b3261e);
+  border-radius: var(--radius-sm);
+}
+
+.checkout__area-warn p {
+  margin: 0;
+}
+
+.checkout__area-warn .hint {
+  margin-top: 0.35rem;
+}
+
 /* Payment method (prepaid vs cash on delivery) options — same visual language
    as the address options. */
 .pay-mode-options {

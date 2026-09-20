@@ -167,6 +167,13 @@ admin/kitchen account. Each role lands on its own area:
   phone; at checkout a missing address phone is auto-filled from the customer's
   profile number (which itself is captured at checkout when absent) and saved
   back onto the address.
+- **Delivery-area coverage**: orders are only accepted for serviceable areas
+  (grouped into zones — Mirpur 12/DOHS, ECB Chattar/Matikata, Manikdi/Balughat,
+  Baunia). The area is chosen from a zone-grouped selector on saved addresses and
+  guest checkout, checkout warns/blocks an out-of-coverage address, and the
+  server refuses any order outside coverage. Orbitax (`orbitax.com`) accounts may
+  also order to their Mohakhali office. The `/contact` page lists all zones. The
+  area list lives in `delivery-areas.ts` (server) mirrored in the client.
 - **Order cancellation rules**: a customer can cancel their own order only while
   it is still pending (and nothing has been paid); once confirmed or beyond, the
   order page tells them to contact the business, linking a new public **/contact**

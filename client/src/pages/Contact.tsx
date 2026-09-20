@@ -1,6 +1,7 @@
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useI18n } from '../context/LanguageContext'
 import { useContentLang } from '../context/TranslationContext'
+import { DELIVERY_ZONES } from '../lib/deliveryAreas'
 import './Contact.css'
 
 /// Public contact page: shows how customers can reach Chaya Bari (phone, email,
@@ -51,11 +52,26 @@ export function Contact() {
         )}
       </div>
 
-      {profile.deliveryAreas.length > 0 && (
-        <div className="contact__areas">
-          <h2>{t('ডেলিভারি এলাকা', 'Delivery areas')}</h2>
-          <p className="muted">{profile.deliveryAreas.join(' · ')}</p>
+      <div className="contact__areas">
+        <h2>{t('ডেলিভারি এলাকা', 'Delivery areas')}</h2>
+        <p className="muted">
+          {t(
+            'বর্তমানে আমরা নিচের এলাকাগুলোতে ডেলিভারি করি:',
+            'We currently deliver to the following areas:',
+          )}
+        </p>
+        <div className="contact__zones">
+          {Object.entries(DELIVERY_ZONES).map(([zone, areas]) => (
+            <div key={zone} className="contact__zone">
+              <h3>{zone}</h3>
+              <p>{areas.join(', ')}</p>
+            </div>
+          ))}
         </div>
+      </div>
+
+      {profile.deliveryAreas.length > 0 && (
+        <p className="muted">{profile.deliveryAreas.join(' · ')}</p>
       )}
 
       {tagline && <p className="contact__tagline">“{tagline}”</p>}
