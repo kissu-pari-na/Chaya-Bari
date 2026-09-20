@@ -51,6 +51,11 @@ apiRouter.use('/', publicBusinessRouter)
 // authenticated order router so its blanket auth gate doesn't 401 these.
 apiRouter.use('/', publicOrderRouter)
 
+// Web Push. Its /push/public-key is public (subscribe/unsubscribe carry their
+// own auth), so it must precede the routers that mount at '/' with a blanket
+// authenticate — otherwise their gate 401s the public key lookup.
+apiRouter.use('/', pushRouter)
+
 // Ordering: customer addresses/orders under /api, admin settings under /api/admin.
 apiRouter.use('/', orderRouter)
 apiRouter.use('/admin', adminOrderingRouter)
@@ -89,9 +94,6 @@ apiRouter.use('/admin', adminUserRouter)
 
 // Orbitax staff self-service billing (own account; gated by email domain).
 apiRouter.use('/', orbitaxRouter)
-
-// Web Push subscriptions (public key + subscribe/unsubscribe).
-apiRouter.use('/', pushRouter)
 
 // Notifications (any authenticated user).
 apiRouter.use('/', notificationRouter)
