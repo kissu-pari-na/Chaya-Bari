@@ -259,6 +259,18 @@ export async function notifyPaymentReceived(customerId: string | null, amount: n
   })
 }
 
+/// An admin refunded money to the customer.
+export async function notifyPaymentRefunded(customerId: string | null, amount: number, orderNumber: string, orderId: string): Promise<void> {
+  await notifyCustomer(customerId, {
+    type: 'PAYMENT_REFUNDED',
+    title: 'পেমেন্ট ফেরত দেওয়া হয়েছে 💸',
+    body: `আপনার অর্ডার ${orderNumber}-এর ৳${amount} ফেরত দেওয়া হয়েছে।`,
+    data: { key: 'payment.refunded', orderNumber, amount },
+    orderId,
+    link: customerOrderLink(orderId),
+  })
+}
+
 /// A customer submitted a manual payment claim that admins must verify.
 export async function notifyPaymentSubmitted(amount: number, method: string, orderNumber: string, orderId: string): Promise<void> {
   await notifyAdmins({

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchAdminOrders, type OrderFilters } from '../../lib/orders'
+import { usePoll } from '../../lib/usePoll'
 import { formatBdt, formatDateWithDay } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { formatSlotValue } from '../../lib/slots'
@@ -28,6 +29,12 @@ export function OrdersAdmin() {
   useEffect(() => {
     void load(filters)
   }, [load, filters])
+
+  // Live updates: refresh the list so new orders and status/payment changes
+  // appear without a manual refresh.
+  usePoll(() => {
+    void fetchAdminOrders(filters).then(setOrders).catch(() => {})
+  }, 20000)
 
   return (
     <section>

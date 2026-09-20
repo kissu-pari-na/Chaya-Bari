@@ -130,6 +130,13 @@ const catalog: Record<string, (d: NotificationData) => Rendered> = {
       `A customer submitted a ${amt(d)} (${method(d)}) payment for order ${d.orderNumber}. Please verify it.`,
     ),
   }),
+  'payment.refunded': (d) => ({
+    title: pick('পেমেন্ট ফেরত দেওয়া হয়েছে 💸', 'Payment refunded 💸'),
+    body: pick(
+      `আপনার অর্ডার ${d.orderNumber}-এর ${amt(d)} ফেরত দেওয়া হয়েছে।`,
+      `${amt(d)} for your order ${d.orderNumber} has been refunded.`,
+    ),
+  }),
   'payment.verified': (d) => ({
     title: pick('পেমেন্ট নিশ্চিত হয়েছে ✅', 'Payment confirmed ✅'),
     body: pick(

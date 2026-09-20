@@ -6,6 +6,7 @@ import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
 import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { ApiError } from '../lib/apiClient'
+import { usePoll } from '../lib/usePoll'
 import { DocumentHeader } from '../components/DocumentHeader'
 import { OrderTracker } from '../components/OrderTracker'
 import { useI18n } from '../context/LanguageContext'
@@ -33,6 +34,18 @@ export function OrderDetail() {
       .catch(() => setError('__NOT_FOUND__'))
       .finally(() => setLoading(false))
   }, [id])
+
+  // Live updates: quietly refetch the order so status/tracker/payment reflect
+  // admin actions (confirm, prepare, deliver, verify a payment…) without a
+  // manual refresh. Paused while the customer is mid-action or the order is in a
+  // terminal state.
+  usePoll(
+    () => {
+      if (id && !cancelBusy && !modeBusy) fetchMyOrder(id).then(setOrder).catch(() => {})
+    },
+    15000,
+    !!id && !!order && order.status !== 'CANCELLED',
+  )
 
   async function switchPaymentMode(target: 'PREPAID' | 'COD') {
     if (!order) return

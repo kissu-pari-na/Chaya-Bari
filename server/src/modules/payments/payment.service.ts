@@ -6,6 +6,7 @@ import {
   notifyOrderRevertedToPending,
   notifyOrderStatus,
   notifyPaymentReceived,
+  notifyPaymentRefunded,
   notifyPaymentSubmitted,
   notifyPaymentVerified,
 } from '../notifications/notification.service.js'
@@ -233,6 +234,12 @@ export async function refundPayment(
     },
   })
   await recomputeOrderPaymentStatus(original.orderId)
+  await notifyPaymentRefunded(
+    original.order.customerId,
+    Number(refundAmount),
+    original.order.orderNumber,
+    original.orderId,
+  )
   return toPublicPayment(refund)
 }
 

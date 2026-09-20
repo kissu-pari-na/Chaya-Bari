@@ -4,6 +4,7 @@ import { paymentMethodLabel, paymentMethods, paymentSourceLabel, txnStatusLabel,
 import { paymentStatusLabel } from '../../lib/orderStatus'
 import { formatBdt } from '../../lib/format'
 import { ApiError } from '../../lib/apiClient'
+import { usePoll } from '../../lib/usePoll'
 import { useI18n } from '../../context/LanguageContext'
 import type { Payment, PaymentMethod, PaymentTxnStatus } from '../../types/payment'
 import type { AdminOrder } from '../../types/order'
@@ -32,6 +33,12 @@ export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) 
 
   const pendingCount = payments.filter((p) => p.status === 'PENDING').length
   const cancelled = order.status === 'CANCELLED'
+
+  // Live updates: refresh the payments list so a customer's new claim shows up
+  // for verification without a manual refresh (stops once cancelled/locked).
+  usePoll(() => {
+    fetchPayments(order.id).then(setPayments).catch(() => {})
+  }, 15000, !cancelled)
 
   async function handleRecord(event: FormEvent) {
     event.preventDefault()

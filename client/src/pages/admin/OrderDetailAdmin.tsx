@@ -11,6 +11,7 @@ import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { formatSlotValue } from '../../lib/slots'
 import { nextStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { ApiError } from '../../lib/apiClient'
+import { usePoll } from '../../lib/usePoll'
 import { useI18n } from '../../context/LanguageContext'
 import { DeliverySection } from './DeliverySection'
 import { PaymentsSection } from './PaymentsSection'
@@ -34,6 +35,16 @@ export function OrderDetailAdmin() {
       .catch(() => setError(t('অর্ডারটি পাওয়া যায়নি', 'Order not found')))
       .finally(() => setLoading(false))
   }, [id])
+
+  // Live updates: quietly refetch so a new customer payment/claim or another
+  // admin's change shows up without a manual refresh. Paused while acting.
+  usePoll(
+    () => {
+      if (id && !busy) fetchAdminOrder(id).then(setOrder).catch(() => {})
+    },
+    15000,
+    !!id && !!order,
+  )
 
   async function changeStatus(status: AdminOrder['status']) {
     if (!order) return
