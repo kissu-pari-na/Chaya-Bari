@@ -49,7 +49,7 @@ export function Checkout() {
     email: '',
     addressLine: '',
     area: '',
-    city: '',
+    city: 'Dhaka',
     note: '',
   })
   const [placedGuest, setPlacedGuest] = useState<Order | null>(null)
@@ -249,7 +249,7 @@ export function Checkout() {
             recipientPhone: guest.recipientPhone.trim(),
             addressLine: guest.addressLine.trim(),
             area: guest.area.trim() || undefined,
-            city: guest.city.trim(),
+            city: 'Dhaka',
             note: guest.note.trim() || undefined,
           },
           guestEmail: guest.email.trim() || undefined,
@@ -375,7 +375,7 @@ export function Checkout() {
               </label>
               <label>
                 {t('শহর', 'City')}
-                <input value={guest.city} onChange={(e) => setGuest({ ...guest, city: e.target.value })} maxLength={120} required />
+                <input value="Dhaka" disabled readOnly />
               </label>
               <label className="guest-grid__full">
                 {t('ঠিকানা নোট (ঐচ্ছিক)', 'Address note (optional)')}

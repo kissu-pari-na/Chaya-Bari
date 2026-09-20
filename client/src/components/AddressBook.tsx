@@ -81,7 +81,8 @@ export function AddressBook() {
     setError(null)
     // The first address a customer saves is always the default.
     const isFirst = addresses.length === 0
-    const payload: AddressInput = { ...form, isDefault: isFirst ? true : form.isDefault }
+    // City is fixed to Dhaka (all serviceable areas are in Dhaka).
+    const payload: AddressInput = { ...form, city: 'Dhaka', isDefault: isFirst ? true : form.isDefault }
     try {
       if (editingId) {
         await updateAddress(editingId, payload)
@@ -262,7 +263,7 @@ export function AddressBook() {
                 </label>
                 <label>
                   {t('শহর', 'City')}
-                  <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+                  <input value="Dhaka" disabled readOnly />
                 </label>
               </div>
               <p className="hint">
