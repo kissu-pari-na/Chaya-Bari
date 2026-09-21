@@ -21,8 +21,12 @@ export interface AppNotification {
   createdAt: string
 }
 
-export function fetchNotifications() {
-  return apiRequest<{ notifications: AppNotification[]; unread: number }>('/notifications', { auth: true })
+export function fetchNotifications(limit?: number) {
+  const query = limit ? `?limit=${limit}` : ''
+  return apiRequest<{ notifications: AppNotification[]; unread: number; total: number }>(
+    `/notifications${query}`,
+    { auth: true },
+  )
 }
 
 export function markNotificationRead(id: string) {

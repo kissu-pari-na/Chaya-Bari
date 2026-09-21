@@ -93,22 +93,31 @@ interface ListProductOptions {
   /// (sold-out) products are still listed so the UI can show them as sold out;
   /// inactive products are hidden entirely.
   includeHidden: boolean
+  /// Optional pagination window. Omit both to return every match.
+  limit?: number
+  offset?: number
 }
 
-export async function listProducts(options: ListProductOptions): Promise<PublicProduct[]> {
+export async function listProducts(
+  options: ListProductOptions,
+): Promise<{ items: PublicProduct[]; total: number }> {
   const where: Prisma.ProductWhereInput = {}
   if (options.categoryId) where.categoryId = options.categoryId
   if (!options.includeHidden) {
     where.isActive = true
   }
 
-  const products = await prisma.product.findMany({
-    where,
-    include: { category: true },
-    orderBy: [{ createdAt: 'desc' }],
-  })
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: { category: true },
+      orderBy: [{ createdAt: 'desc' }],
+      ...(options.limit !== undefined ? { take: options.limit, skip: options.offset ?? 0 } : {}),
+    }),
+    prisma.product.count({ where }),
+  ])
   const ratings = await getRatingSummariesByProduct(products.map((p) => p.id))
-  return products.map((p) => toPublicProduct(p, ratings.get(p.id) ?? NO_RATING))
+  return { items: products.map((p) => toPublicProduct(p, ratings.get(p.id) ?? NO_RATING)), total }
 }
 
 export async function getProduct(id: string, includeHidden: boolean): Promise<PublicProduct> {

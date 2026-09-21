@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback, type FormEvent } from 'react'
-import { createUser, fetchUsers } from '../../lib/users'
+import { createUser, fetchUsersPage } from '../../lib/users'
 import { ApiError } from '../../lib/apiClient'
+import { Pagination } from '../../components/Pagination'
 import { useI18n } from '../../context/LanguageContext'
 import type { Role } from '../../types/auth'
 import type { AdminUser } from '../../types/user'
 import './Admin.css'
+
+const PAGE_SIZE = 20
 
 const emptyForm = {
   name: '',
@@ -17,6 +20,8 @@ const emptyForm = {
 export function UsersAdmin() {
   const { t } = useI18n()
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -26,18 +31,22 @@ export function UsersAdmin() {
   const roleLabel = (role: Role): string =>
     role === 'ADMIN' ? t('অ্যাডমিন', 'Admin') : role === 'KITCHEN' ? t('কিচেন', 'Kitchen') : t('গ্রাহক', 'Customer')
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (p: number) => {
     setLoading(true)
     try {
-      setUsers(await fetchUsers())
+      const r = await fetchUsersPage({ offset: (p - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+      setUsers(r.users)
+      setTotal(r.total)
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    void reload()
-  }, [reload])
+    void reload(page)
+  }, [reload, page])
+
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault()
@@ -59,7 +68,9 @@ export function UsersAdmin() {
           `${created.name} created — a confirmation email has been sent to them.`,
         ),
       )
-      await reload()
+      // New users sort to the top; jump back to the first page to reveal it.
+      if (page === 1) await reload(1)
+      else setPage(1)
     } catch (err) {
       if (err instanceof ApiError && err.details?.length) setError(err.details.map((d) => d.message).join(' · '))
       else setError(err instanceof ApiError ? err.message : t('ব্যবহারকারী তৈরি করা যায়নি', 'Could not create user'))
@@ -179,6 +190,8 @@ export function UsersAdmin() {
           </table>
         </div>
       )}
+
+      <Pagination page={page} pageCount={pageCount} onChange={setPage} />
     </section>
   )
 }

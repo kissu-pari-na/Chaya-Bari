@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express'
+import { parsePageParams } from '../../lib/pagination.js'
 import { requireCustomerId } from './customer.js'
 import * as addressService from './address.service.js'
 import * as orderService from './order.service.js'
@@ -53,7 +54,9 @@ export async function guestCheckout(req: Request, res: Response) {
 
 export async function listMyOrders(req: Request, res: Response) {
   const customerId = await requireCustomerId(req.user!.id)
-  res.json({ orders: await orderService.listMyOrders(customerId) })
+  const page = parsePageParams(req, { maxLimit: 50 })
+  const { items, total } = await orderService.listMyOrders(customerId, page)
+  res.json({ orders: items, total })
 }
 
 export async function getMyOrder(req: Request, res: Response) {

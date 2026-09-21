@@ -8,6 +8,16 @@ export function fetchProducts(categoryId?: string) {
   return apiRequest<{ products: Product[] }>(`/products${query}`).then((r) => r.products)
 }
 
+/// Paginated browse (infinite scroll). Returns a page of products plus the
+/// total count so the caller knows whether more remain.
+export function fetchProductsPage(opts: { categoryId?: string; offset: number; limit: number }) {
+  const params = new URLSearchParams()
+  if (opts.categoryId) params.set('categoryId', opts.categoryId)
+  params.set('offset', String(opts.offset))
+  params.set('limit', String(opts.limit))
+  return apiRequest<{ products: Product[]; total: number }>(`/products?${params.toString()}`)
+}
+
 export function fetchProduct(id: string) {
   return apiRequest<{ product: Product }>(`/products/${id}`).then((r) => r.product)
 }

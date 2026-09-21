@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchAdminOrders, type OrderFilters } from '../../lib/orders'
+import { fetchAdminOrdersPage, type OrderFilters } from '../../lib/orders'
 import { usePoll } from '../../lib/usePoll'
+import { Pagination } from '../../components/Pagination'
 import { formatBdt, formatDateWithDay } from '../../lib/format'
 import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
 import { formatSlotValue } from '../../lib/slots'
@@ -11,30 +12,49 @@ import type { AdminOrder } from '../../types/order'
 import '../Orders.css'
 import './Admin.css'
 
+const PAGE_SIZE = 15
+
 export function OrdersAdmin() {
   const { t } = useI18n()
   const [orders, setOrders] = useState<AdminOrder[]>([])
+  const [total, setTotal] = useState(0)
   const [filters, setFilters] = useState<OrderFilters>({})
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
-  const load = useCallback(async (f: OrderFilters) => {
+  // Changing a filter always returns to the first page.
+  const updateFilters = useCallback((patch: Partial<OrderFilters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
+    setPage(1)
+  }, [])
+
+  const load = useCallback(async (f: OrderFilters, p: number) => {
     setLoading(true)
     try {
-      setOrders(await fetchAdminOrders(f))
+      const r = await fetchAdminOrdersPage(f, { offset: (p - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+      setOrders(r.orders)
+      setTotal(r.total)
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    void load(filters)
-  }, [load, filters])
+    void load(filters, page)
+  }, [load, filters, page])
 
-  // Live updates: refresh the list so new orders and status/payment changes
-  // appear without a manual refresh.
+  // Live updates: quietly refresh the current page so new orders and
+  // status/payment changes appear without a manual refresh.
   usePoll(() => {
-    void fetchAdminOrders(filters).then(setOrders).catch(() => {})
+    fetchAdminOrdersPage(filters, { offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE })
+      .then((r) => {
+        setOrders(r.orders)
+        setTotal(r.total)
+      })
+      .catch(() => {})
   }, 20000)
+
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   return (
     <section>
@@ -44,11 +64,11 @@ export function OrdersAdmin() {
         <input
           placeholder={t('খুঁজুন (নাম, নম্বর, ইমেইল)', 'Search (name, number, email)')}
           value={filters.search ?? ''}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value || undefined }))}
+          onChange={(e) => updateFilters({ search: e.target.value || undefined })}
         />
         <select
           value={filters.status ?? ''}
-          onChange={(e) => setFilters((f) => ({ ...f, status: (e.target.value || undefined) as OrderFilters['status'] }))}
+          onChange={(e) => updateFilters({ status: (e.target.value || undefined) as OrderFilters['status'] })}
         >
           <option value="">{t('সব স্ট্যাটাস', 'All statuses')}</option>
           {orderStatuses.map((s) => (
@@ -60,7 +80,7 @@ export function OrdersAdmin() {
         <select
           value={filters.paymentStatus ?? ''}
           onChange={(e) =>
-            setFilters((f) => ({ ...f, paymentStatus: (e.target.value || undefined) as OrderFilters['paymentStatus'] }))
+            updateFilters({ paymentStatus: (e.target.value || undefined) as OrderFilters['paymentStatus'] })
           }
         >
           <option value="">{t('সব পেমেন্ট', 'All payments')}</option>
@@ -75,7 +95,7 @@ export function OrdersAdmin() {
           <input
             type="date"
             value={filters.fromDate ?? ''}
-            onChange={(e) => setFilters((f) => ({ ...f, fromDate: e.target.value || undefined }))}
+            onChange={(e) => updateFilters({ fromDate: e.target.value || undefined })}
           />
         </label>
         <label className="date-filter">
@@ -83,7 +103,7 @@ export function OrdersAdmin() {
           <input
             type="date"
             value={filters.toDate ?? ''}
-            onChange={(e) => setFilters((f) => ({ ...f, toDate: e.target.value || undefined }))}
+            onChange={(e) => updateFilters({ toDate: e.target.value || undefined })}
           />
         </label>
       </div>
@@ -140,6 +160,8 @@ export function OrdersAdmin() {
           </table>
         </div>
       )}
+
+      <Pagination page={page} pageCount={pageCount} onChange={setPage} />
     </section>
   )
 }

@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import type { OrderStatus } from '@prisma/client'
+import { parsePageParams } from '../../lib/pagination.js'
 import * as adminOrderService from './admin-order.service.js'
 
 function str(value: unknown): string | undefined {
@@ -7,14 +8,17 @@ function str(value: unknown): string | undefined {
 }
 
 export async function list(req: Request, res: Response) {
-  const orders = await adminOrderService.listOrders({
+  const page = parsePageParams(req, { maxLimit: 100 })
+  const { items, total } = await adminOrderService.listOrders({
     status: str(req.query.status) as OrderStatus | undefined,
     paymentStatus: str(req.query.paymentStatus),
     search: str(req.query.search),
     fromDate: str(req.query.fromDate),
     toDate: str(req.query.toDate),
+    limit: page?.limit,
+    offset: page?.offset,
   })
-  res.json({ orders })
+  res.json({ orders: items, total })
 }
 
 export async function get(req: Request, res: Response) {

@@ -16,19 +16,24 @@ export function NotificationBell() {
   const { t, lang } = useI18n()
   const [items, setItems] = useState<AppNotification[]>([])
   const [unread, setUnread] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [limit, setLimit] = useState(7)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
+  // The panel shows a growing window (offset stays 0, limit grows) so polling
+  // and "load more" don't fight over accumulated state.
   const load = useCallback(async () => {
     try {
-      const { notifications, unread } = await fetchNotifications()
+      const { notifications, unread, total } = await fetchNotifications(limit)
       setItems(notifications)
       setUnread(unread)
+      setTotal(total)
     } catch {
       // ignore transient errors
     }
-  }, [])
+  }, [limit])
 
   useEffect(() => {
     void load()
@@ -54,7 +59,10 @@ export function NotificationBell() {
 
   async function handleClearAll() {
     await clearAllNotifications()
-    await load()
+    setLimit(7)
+    setItems([])
+    setUnread(0)
+    setTotal(0)
   }
 
   async function handleItem(n: AppNotification) {
@@ -109,6 +117,11 @@ export function NotificationBell() {
                 </button>
               )
             })}
+            {items.length < total && (
+              <button className="notif__more" onClick={() => setLimit((l) => l + 10)}>
+                {t('আরও দেখুন', 'Load more')}
+              </button>
+            )}
           </div>
         </div>
       )}

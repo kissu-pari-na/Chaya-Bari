@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { asyncHandler } from '../../middleware/validate.js'
 import { authenticate } from '../../middleware/auth.js'
+import { parsePageParams } from '../../lib/pagination.js'
 import * as notificationService from './notification.service.js'
 
 /// In-app notifications for the authenticated user (any role).
@@ -10,7 +11,8 @@ notificationRouter.use(authenticate)
 notificationRouter.get(
   '/notifications',
   asyncHandler(async (req, res) => {
-    res.json(await notificationService.listForUser(req.user!.id))
+    const page = parsePageParams(req, { maxLimit: 50 })
+    res.json(await notificationService.listForUser(req.user!.id, page))
   }),
 )
 
