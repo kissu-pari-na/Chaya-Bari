@@ -111,6 +111,23 @@
   text-align: center;
 }
 
+.notif__more {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-top: 1px solid var(--card-border);
+  background: transparent;
+  color: var(--link);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.notif__more:hover {
+  background: var(--card-2);
+}
+
 .notif__item {
   display: flex;
   flex-direction: column;

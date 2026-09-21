@@ -1,12 +1,19 @@
 import type { Request, Response } from 'express'
+import { parsePageParams } from '../../lib/pagination.js'
 import * as productService from './product.service.js'
 
 // ---- Public (customer browsing) ----
 
 export async function listPublicProducts(req: Request, res: Response) {
   const categoryId = typeof req.query.categoryId === 'string' ? req.query.categoryId : undefined
-  const products = await productService.listProducts({ categoryId, includeHidden: false })
-  res.json({ products })
+  const page = parsePageParams(req, { maxLimit: 60 })
+  const { items, total } = await productService.listProducts({
+    categoryId,
+    includeHidden: false,
+    limit: page?.limit,
+    offset: page?.offset,
+  })
+  res.json({ products: items, total })
 }
 
 export async function getPublicProduct(req: Request, res: Response) {
@@ -23,8 +30,8 @@ export async function listPublicCategories(_req: Request, res: Response) {
 
 export async function listAdminProducts(req: Request, res: Response) {
   const categoryId = typeof req.query.categoryId === 'string' ? req.query.categoryId : undefined
-  const products = await productService.listProducts({ categoryId, includeHidden: true })
-  res.json({ products })
+  const { items } = await productService.listProducts({ categoryId, includeHidden: true })
+  res.json({ products: items })
 }
 
 export async function getAdminProduct(req: Request, res: Response) {

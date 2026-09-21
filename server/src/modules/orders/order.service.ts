@@ -319,13 +319,21 @@ export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOr
   return toPublicOrder(order)
 }
 
-export async function listMyOrders(customerId: string): Promise<PublicOrder[]> {
-  const orders = await prisma.order.findMany({
-    where: { customerId },
-    include: { items: true, delivery: true, payments: true },
-    orderBy: { createdAt: 'desc' },
-  })
-  return orders.map(toPublicOrder)
+export async function listMyOrders(
+  customerId: string,
+  page?: { limit: number; offset: number },
+): Promise<{ items: PublicOrder[]; total: number }> {
+  const where = { customerId }
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: { items: true, delivery: true, payments: true },
+      orderBy: { createdAt: 'desc' },
+      ...(page ? { take: page.limit, skip: page.offset } : {}),
+    }),
+    prisma.order.count({ where }),
+  ])
+  return { items: orders.map(toPublicOrder), total }
 }
 
 export async function getMyOrder(customerId: string, id: string): Promise<PublicOrder> {

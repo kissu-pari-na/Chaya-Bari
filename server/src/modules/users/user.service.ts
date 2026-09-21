@@ -57,12 +57,18 @@ function toRow(u: RawRow): AdminUserRow {
   }
 }
 
-export async function listUsers(): Promise<AdminUserRow[]> {
-  const rows = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    select: selectRow,
-  })
-  return rows.map(toRow)
+export async function listUsers(
+  page?: { limit: number; offset: number },
+): Promise<{ items: AdminUserRow[]; total: number }> {
+  const [rows, total] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: selectRow,
+      ...(page ? { take: page.limit, skip: page.offset } : {}),
+    }),
+    prisma.user.count(),
+  ])
+  return { items: rows.map(toRow), total }
 }
 
 /// Create a user with an explicit role and record which admin created it.

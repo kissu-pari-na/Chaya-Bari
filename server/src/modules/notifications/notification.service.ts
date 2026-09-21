@@ -308,13 +308,21 @@ export async function notifyPaymentVerified(customerId: string | null, verified:
 
 // ---- Queries ----
 
-export async function listForUser(userId: string): Promise<{ notifications: PublicNotification[]; unread: number }> {
-  const [notifications, unread] = await Promise.all([
-    // Panel shows only the latest few; the unread badge still counts them all.
-    prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 7 }),
+export async function listForUser(
+  userId: string,
+  page?: { limit: number; offset: number },
+): Promise<{ notifications: PublicNotification[]; unread: number; total: number }> {
+  // Panel shows a page at a time (default the latest 7); "load more" grows the
+  // window. The unread badge counts them all; `total` lets the client know when
+  // there are older ones to load.
+  const take = page?.limit ?? 7
+  const skip = page?.offset ?? 0
+  const [notifications, unread, total] = await Promise.all([
+    prisma.notification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take, skip }),
     prisma.notification.count({ where: { userId, read: false } }),
+    prisma.notification.count({ where: { userId } }),
   ])
-  return { notifications: notifications.map(toPublic), unread }
+  return { notifications: notifications.map(toPublic), unread, total }
 }
 
 export async function markRead(userId: string, id: string): Promise<void> {

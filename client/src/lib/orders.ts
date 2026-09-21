@@ -54,6 +54,12 @@ export function fetchMyOrders() {
   return apiRequest<{ orders: Order[] }>('/orders', { auth: true }).then((r) => r.orders)
 }
 
+/// Paginated order history (infinite scroll): a page plus the total count.
+export function fetchMyOrdersPage(opts: { offset: number; limit: number }) {
+  const params = new URLSearchParams({ offset: String(opts.offset), limit: String(opts.limit) })
+  return apiRequest<{ orders: Order[]; total: number }>(`/orders?${params.toString()}`, { auth: true })
+}
+
 export function fetchMyOrder(id: string) {
   return apiRequest<{ order: Order }>(`/orders/${id}`, { auth: true }).then((r) => r.order)
 }
@@ -135,6 +141,15 @@ export function fetchAdminOrders(filters: OrderFilters = {}) {
   for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v)
   const query = params.toString() ? `?${params.toString()}` : ''
   return apiRequest<{ orders: AdminOrder[] }>(`/admin/orders${query}`, { auth: true }).then((r) => r.orders)
+}
+
+/// Numbered pagination for the admin orders table: a page plus the total count.
+export function fetchAdminOrdersPage(filters: OrderFilters, page: { offset: number; limit: number }) {
+  const params = new URLSearchParams()
+  for (const [k, v] of Object.entries(filters)) if (v) params.set(k, v)
+  params.set('offset', String(page.offset))
+  params.set('limit', String(page.limit))
+  return apiRequest<{ orders: AdminOrder[]; total: number }>(`/admin/orders?${params.toString()}`, { auth: true })
 }
 
 export function fetchAdminOrder(id: string) {

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchMyOrders } from '../lib/orders'
+import { fetchMyOrdersPage } from '../lib/orders'
+import { useInfiniteScroll } from '../lib/useInfiniteScroll'
 import { formatBdt, formatDateWithDay, toBnDigits } from '../lib/format'
 import { orderStatusLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
@@ -8,18 +9,45 @@ import { useI18n } from '../context/LanguageContext'
 import type { Order } from '../types/order'
 import './Orders.css'
 
+const PAGE_SIZE = 8
+
 export function MyOrders() {
   const { t } = useI18n()
   const [orders, setOrders] = useState<Order[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(false)
+  const loadingMoreRef = useRef(false)
 
   useEffect(() => {
-    fetchMyOrders()
-      .then(setOrders)
+    fetchMyOrdersPage({ offset: 0, limit: PAGE_SIZE })
+      .then((r) => {
+        setOrders(r.orders)
+        setTotal(r.total)
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
+
+  const loadMore = useCallback(() => {
+    if (loadingMoreRef.current) return
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+    fetchMyOrdersPage({ offset: orders.length, limit: PAGE_SIZE })
+      .then((r) => {
+        setOrders((cur) => [...cur, ...r.orders])
+        setTotal(r.total)
+      })
+      .catch(() => {})
+      .finally(() => {
+        loadingMoreRef.current = false
+        setLoadingMore(false)
+      })
+  }, [orders.length])
+
+  const hasMore = orders.length < total
+  const sentinel = useInfiniteScroll<HTMLDivElement>(loadMore, hasMore && !loading)
 
   if (loading) return <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
 
@@ -63,6 +91,9 @@ export function MyOrders() {
           )
         })}
       </div>
+
+      {hasMore && <div ref={sentinel} className="infinite-sentinel" aria-hidden="true" />}
+      {loadingMore && <p className="muted infinite-status">{t('আরও লোড হচ্ছে…', 'Loading more…')}</p>}
     </section>
   )
 }

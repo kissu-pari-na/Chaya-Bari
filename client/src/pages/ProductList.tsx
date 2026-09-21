@@ -1,35 +1,66 @@
-import { useEffect, useState } from 'react'
-import { fetchCategories, fetchProducts } from '../lib/products'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { fetchCategories, fetchProductsPage } from '../lib/products'
+import { useInfiniteScroll } from '../lib/useInfiniteScroll'
 import { useI18n } from '../context/LanguageContext'
 import { useContentLang } from '../context/TranslationContext'
 import { ProductCard } from '../components/ProductCard'
 import type { Category, Product } from '../types/product'
 import './Products.css'
 
+const PAGE_SIZE = 12
+
 export function ProductList() {
   const { t } = useI18n()
   const { l } = useContentLang()
   const [products, setProducts] = useState<Product[]>([])
+  const [total, setTotal] = useState(0)
   const [categories, setCategories] = useState<Category[]>([])
   const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const loadingMoreRef = useRef(false)
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(() => setCategories([]))
   }, [])
 
+  // Load (or reload) the first page whenever the category filter changes.
   useEffect(() => {
     let active = true
     setLoading(true)
-    fetchProducts(activeCategory)
-      .then((p) => active && setProducts(p))
+    setError(null)
+    fetchProductsPage({ categoryId: activeCategory, offset: 0, limit: PAGE_SIZE })
+      .then((r) => {
+        if (!active) return
+        setProducts(r.products)
+        setTotal(r.total)
+      })
       .catch(() => active && setError('__LOAD_ERROR__'))
       .finally(() => active && setLoading(false))
     return () => {
       active = false
     }
   }, [activeCategory])
+
+  const loadMore = useCallback(() => {
+    if (loadingMoreRef.current) return
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+    fetchProductsPage({ categoryId: activeCategory, offset: products.length, limit: PAGE_SIZE })
+      .then((r) => {
+        setProducts((cur) => [...cur, ...r.products])
+        setTotal(r.total)
+      })
+      .catch(() => {})
+      .finally(() => {
+        loadingMoreRef.current = false
+        setLoadingMore(false)
+      })
+  }, [activeCategory, products.length])
+
+  const hasMore = products.length < total
+  const sentinel = useInfiniteScroll<HTMLDivElement>(loadMore, hasMore && !loading)
 
   return (
     <section>
@@ -62,6 +93,9 @@ export function ProductList() {
           <ProductCard key={p.id} product={p} />
         ))}
       </div>
+
+      {hasMore && <div ref={sentinel} className="infinite-sentinel" aria-hidden="true" />}
+      {loadingMore && <p className="muted infinite-status">{t('আরও লোড হচ্ছে…', 'Loading more…')}</p>}
     </section>
   )
 }

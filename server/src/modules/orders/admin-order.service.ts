@@ -90,9 +90,11 @@ export interface OrderFilters {
   search?: string
   fromDate?: string
   toDate?: string
+  limit?: number
+  offset?: number
 }
 
-export async function listOrders(filters: OrderFilters): Promise<AdminOrder[]> {
+export async function listOrders(filters: OrderFilters): Promise<{ items: AdminOrder[]; total: number }> {
   const where: Prisma.OrderWhereInput = {}
   if (filters.status) where.status = filters.status
   if (filters.paymentStatus) where.paymentStatus = filters.paymentStatus as never
@@ -112,12 +114,16 @@ export async function listOrders(filters: OrderFilters): Promise<AdminOrder[]> {
     ]
   }
 
-  const orders = await prisma.order.findMany({
-    where,
-    include: orderWithRelations,
-    orderBy: { createdAt: 'desc' },
-  })
-  return orders.map(toAdminOrder)
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: orderWithRelations,
+      orderBy: { createdAt: 'desc' },
+      ...(filters.limit !== undefined ? { take: filters.limit, skip: filters.offset ?? 0 } : {}),
+    }),
+    prisma.order.count({ where }),
+  ])
+  return { items: orders.map(toAdminOrder), total }
 }
 
 export async function getOrder(id: string): Promise<AdminOrder> {
