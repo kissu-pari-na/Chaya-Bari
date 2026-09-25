@@ -2,7 +2,7 @@ import { type Delivery, type Order, type OrderItem, type Payment } from '@prisma
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { AddressInput, CheckoutInput, GuestCheckoutInput } from './order.schemas.js'
-import { getOrderingSetting, computeWindow } from './ordering.service.js'
+import { getOrderingSetting, computeWindow, todayInZone } from './ordering.service.js'
 import { isSlotEnabledForDate } from './slots.js'
 import { priceOrder } from './pricing.js'
 import { isOrderableArea } from './delivery-areas.js'
@@ -16,7 +16,7 @@ import {
   notifyOrderCancelledByCustomer,
 } from '../notifications/notification.service.js'
 
-interface AddressSnapshot {
+export interface AddressSnapshot {
   recipientName: string
   recipientPhone: string
   addressLine: string
@@ -113,7 +113,7 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
   }
 }
 
-async function resolveAddress(
+export async function resolveAddress(
   customerId: string,
   addressId?: string,
   inline?: AddressInput,
@@ -145,7 +145,7 @@ async function resolveAddress(
   throw HttpError.badRequest('A delivery address is required')
 }
 
-function generateOrderNumber(): string {
+export function generateOrderNumber(): string {
   const now = new Date()
   const yy = String(now.getUTCFullYear()).slice(2)
   const mm = String(now.getUTCMonth() + 1).padStart(2, '0')
@@ -160,18 +160,27 @@ interface CheckoutItem {
 }
 
 /// Validates the advance-order window + time slot and prices the cart. Shared by
-/// the registered-customer and guest checkout flows.
-async function priceCheckout(input: {
-  items: CheckoutItem[]
-  fulfillmentDate: string
-  timeSlot: string
-  couponCode?: string
-}) {
+/// the registered-customer, guest and admin (on-behalf) checkout flows. An admin
+/// may override the advance-order cutoff (e.g. a same-day phone order the
+/// kitchen has agreed to), but never order for a day that has already passed.
+export async function priceCheckout(
+  input: {
+    items: CheckoutItem[]
+    fulfillmentDate: string
+    timeSlot: string
+    couponCode?: string
+  },
+  opts: { overrideCutoff?: boolean } = {},
+) {
   const setting = await getOrderingSetting()
   const window = computeWindow(setting)
 
-  // Enforce the advance-order cutoff rule.
-  if (input.fulfillmentDate < window.earliestFulfillmentDate) {
+  if (opts.overrideCutoff) {
+    if (input.fulfillmentDate < todayInZone(setting.timezone)) {
+      throw HttpError.badRequest('The delivery date has already passed.')
+    }
+  } else if (input.fulfillmentDate < window.earliestFulfillmentDate) {
+    // Enforce the advance-order cutoff rule.
     throw HttpError.badRequest(
       `Orders must be placed for ${window.earliestFulfillmentDate} or later (cutoff ${window.cutoffTime}).`,
       { earliestFulfillmentDate: window.earliestFulfillmentDate },
@@ -203,7 +212,7 @@ async function priceCheckout(input: {
 }
 
 /// Build the nested item-create payload from priced lines.
-function itemsCreate(priced: Awaited<ReturnType<typeof priceCheckout>>['priced']) {
+export function itemsCreate(priced: Awaited<ReturnType<typeof priceCheckout>>['priced']) {
   return {
     create: priced.lines.map((l) => ({
       productId: l.productId,

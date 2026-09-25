@@ -96,6 +96,47 @@ export const guestCheckoutSchema = z.object({
   paymentMode: z.enum(['PREPAID', 'COD']).optional().default('COD'),
 })
 
+// Admin places an order on a customer's behalf, identified by email. If the
+// email has no account yet, a placeholder account is opened for it and the
+// owner inherits the order when they register / confirm that email.
+export const adminCheckoutSchema = z
+  .object({
+    customer: z.object({
+      email: z.string().trim().email('A valid email is required').max(160).toLowerCase(),
+      name: z.string().trim().min(2, 'Customer name is required').max(150),
+    }),
+    items: z
+      .array(
+        z.object({
+          productId: z.string().cuid(),
+          quantity: z.number().int().min(1, 'Quantity must be at least 1').max(1000),
+        }),
+      )
+      .min(1, 'Add at least one item'),
+    // Either one of the customer's saved addresses or a new one inline.
+    addressId: z.string().cuid().optional(),
+    address: addressSchema.optional(),
+    /// Keep a new inline address in the customer's address book.
+    saveAddress: z.boolean().optional().default(true),
+    fulfillmentDate: dateString,
+    timeSlot: z.enum(SLOT_VALUES as [string, ...string[]], {
+      errorMap: () => ({ message: 'Please choose a delivery time slot' }),
+    }),
+    notes: optionalText(1000),
+    couponCode: z
+      .string()
+      .max(40)
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
+    paymentMode: z.enum(['PREPAID', 'COD']).optional().default('COD'),
+    /// Allow a date inside the advance-order cutoff (never a past date).
+    overrideCutoff: z.boolean().optional().default(false),
+  })
+  .refine((v) => v.addressId || v.address, {
+    message: 'A delivery address is required',
+    path: ['address'],
+  })
+
 // ---- Ordering settings ----
 
 export const orderStatuses = [
@@ -126,5 +167,6 @@ export const updateOrderingSettingSchema = z.object({
 export type AddressInput = z.infer<typeof addressSchema>
 export type UpdateAddressInput = z.infer<typeof updateAddressSchema>
 export type CheckoutInput = z.infer<typeof checkoutSchema>
+export type AdminCheckoutInput = z.infer<typeof adminCheckoutSchema>
 export type GuestCheckoutInput = z.infer<typeof guestCheckoutSchema>
 export type UpdateOrderingSettingInput = z.infer<typeof updateOrderingSettingSchema>

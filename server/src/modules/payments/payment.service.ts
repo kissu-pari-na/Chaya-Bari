@@ -11,6 +11,7 @@ import {
   notifyPaymentVerified,
 } from '../notifications/notification.service.js'
 import * as bkash from './bkash.js'
+import { sendOrderConfirmedEmail } from '../orders/tracking.service.js'
 
 export interface PublicPayment {
   id: string
@@ -110,6 +111,8 @@ export async function recomputeOrderPaymentStatus(orderId: string): Promise<void
       await notifyOrderRevertedToPending(order.customerId, order.orderNumber, order.id)
     } else {
       await notifyOrderStatus(order.customerId, nextStatus, order.orderNumber, order.id)
+      // Auto-confirmed once fully paid: email the tracking link.
+      if (nextStatus === 'CONFIRMED') await sendOrderConfirmedEmail(order.id)
     }
   }
 }

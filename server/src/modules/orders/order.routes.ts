@@ -3,6 +3,7 @@ import { asyncHandler, validateBody } from '../../middleware/validate.js'
 import { authenticate, requireRole } from '../../middleware/auth.js'
 import {
   addressSchema,
+  adminCheckoutSchema,
   checkoutSchema,
   guestCheckoutSchema,
   updateAddressSchema,
@@ -19,6 +20,8 @@ import * as adminOrderController from './admin-order.controller.js'
 export const publicOrderRouter = Router()
 // Ordering window (delivery cost, cutoff, earliest date) — needed by guests too.
 publicOrderRouter.get('/ordering/window', asyncHandler(orderController.getWindow))
+// Order tracking by the secret link emailed on confirmation (no account needed).
+publicOrderRouter.get('/track/:token', asyncHandler(orderController.trackOrder))
 publicOrderRouter.post(
   '/guest/orders',
   validateBody(guestCheckoutSchema),
@@ -62,6 +65,10 @@ adminOrderingRouter.put(
 )
 
 adminOrderingRouter.get('/orders', asyncHandler(adminOrderController.list))
+// Place an order on a customer's behalf, by email (opens a placeholder account
+// when the email has none).
+adminOrderingRouter.post('/orders', validateBody(adminCheckoutSchema), asyncHandler(adminOrderController.create))
+adminOrderingRouter.get('/customers/lookup', asyncHandler(adminOrderController.lookupCustomer))
 adminOrderingRouter.get('/orders/:id', asyncHandler(adminOrderController.get))
 adminOrderingRouter.patch(
   '/orders/:id/status',

@@ -35,11 +35,20 @@ model User {
   phoneVerifiedAt DateTime?
   emailVerifiedAt DateTime?
 
+  /// A customer account an admin opened on someone's behalf (by email) to place
+  /// orders for them. It has no usable password and no one has proven they own
+  /// the email yet. Whoever later registers / signs in with Google / resets the
+  /// password for that email and confirms it takes the account over — with all
+  /// its orders, addresses and history — and this flag is cleared.
+  isPlaceholder Boolean @default(false)
+
   // Footprint: which admin created this account (null for self-registered
   // customers and the seeded owners).
   createdById  String?
   createdBy    User?   @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdUsers User[]  @relation("UserCreatedBy")
+  /// Orders this (admin) user placed on a customer's behalf.
+  placedOrders Order[] @relation("OrderPlacedBy")
 
   // A user with the CUSTOMER role has a linked customer profile.
   customer          Customer?
@@ -228,6 +237,10 @@ model Order {
   customer   Customer? @relation(fields: [customerId], references: [id])
   /// Optional email for a guest order, used to invite them to register.
   guestEmail String?
+  /// Footprint: the admin who placed this order on the customer's behalf (null
+  /// when the customer or a guest ordered themselves).
+  placedById String?
+  placedBy   User?   @relation("OrderPlacedBy", fields: [placedById], references: [id], onDelete: SetNull)
 
   // Delivery address snapshot.
   recipientName  String
@@ -264,6 +277,13 @@ model Order {
 
   /// When the order reached DELIVERED (drives the day-after review invite).
   deliveredAt        DateTime?
+  /// Secret, unguessable token for the public tracking link (/track/<token>)
+  /// emailed when the order is confirmed. Lets anyone holding the link follow
+  /// the order without logging in, e.g. a customer who hasn't registered yet.
+  trackingToken           String?   @unique
+  /// When the "order confirmed" email with the tracking link was sent, so it
+  /// goes out only once even if the order is re-confirmed.
+  confirmationEmailSentAt DateTime?
   /// When the "leave a review" invite (notification + email) was sent, so it
   /// is only sent once per order.
   reviewInviteSentAt DateTime?
@@ -278,6 +298,7 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([fulfillmentDate])
+  @@index([guestEmail])
 }
 
 /// A line in an order. Captures the product name and unit price at order time

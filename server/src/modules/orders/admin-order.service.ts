@@ -1,9 +1,20 @@
 import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
-import type { PublicOrder } from './order.service.js'
+import {
+  generateOrderNumber,
+  itemsCreate,
+  priceCheckout,
+  resolveAddress,
+  type PublicOrder,
+} from './order.service.js'
+import type { AdminCheckoutInput } from './order.schemas.js'
+import { isOrderableArea } from './delivery-areas.js'
+import { isOrbitaxEmail } from '../../utils/orbitax.js'
 import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment } from '../payments/payment.service.js'
-import { notifyOrderStatus } from '../notifications/notification.service.js'
+import { notifyOrderPlaced, notifyOrderStatus } from '../notifications/notification.service.js'
+import { findOrCreateCustomerForEmail } from '../customers/customer-account.service.js'
+import { ensureTrackingToken, sendOrderConfirmedEmail, trackingLink } from './tracking.service.js'
 
 export interface AdminOrder extends PublicOrder {
   customer: {
@@ -13,7 +24,16 @@ export interface AdminOrder extends PublicOrder {
     email: string | null
     phone: string | null
     isGuest: boolean
+    /// An account an admin opened for this email that its owner hasn't claimed
+    /// (registered / confirmed) yet.
+    isPlaceholder: boolean
   }
+  /// The admin who placed this order on the customer's behalf, if any.
+  placedBy: { id: string; name: string } | null
+  /// Public tracking link (no login needed); set once the order is confirmed.
+  trackingUrl: string | null
+  /// When the "order confirmed" email with that link was sent.
+  confirmationEmailSentAt: string | null
 }
 
 const orderWithRelations = {
@@ -21,6 +41,7 @@ const orderWithRelations = {
   customer: { include: { user: true } },
   delivery: true,
   payments: true,
+  placedBy: { select: { id: true, name: true } },
 } satisfies Prisma.OrderInclude
 
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderWithRelations }>
@@ -71,8 +92,10 @@ function toAdminOrder(order: OrderRow): AdminOrder {
           id: order.customer.id,
           name: order.customer.user.name,
           email: order.customer.user.email,
-          phone: order.customer.user.phone,
+          // Placeholders have no phone of their own; the order snapshot does.
+          phone: order.customer.user.phone ?? order.recipientPhone,
           isGuest: false,
+          isPlaceholder: order.customer.user.isPlaceholder,
         }
       : {
           id: null,
@@ -80,7 +103,11 @@ function toAdminOrder(order: OrderRow): AdminOrder {
           email: order.guestEmail,
           phone: order.recipientPhone,
           isGuest: true,
+          isPlaceholder: false,
         },
+    placedBy: order.placedBy,
+    trackingUrl: order.trackingToken ? trackingLink(order.trackingToken) : null,
+    confirmationEmailSentAt: order.confirmationEmailSentAt?.toISOString() ?? null,
   }
 }
 
@@ -111,6 +138,7 @@ export async function listOrders(filters: OrderFilters): Promise<{ items: AdminO
       { recipientPhone: { contains: q, mode: 'insensitive' } },
       { customer: { user: { name: { contains: q, mode: 'insensitive' } } } },
       { customer: { user: { email: { contains: q, mode: 'insensitive' } } } },
+      { guestEmail: { contains: q, mode: 'insensitive' } },
     ]
   }
 
@@ -129,7 +157,79 @@ export async function listOrders(filters: OrderFilters): Promise<{ items: AdminO
 export async function getOrder(id: string): Promise<AdminOrder> {
   const order = await prisma.order.findUnique({ where: { id }, include: orderWithRelations })
   if (!order) throw HttpError.notFound('Order not found')
+  // Orders confirmed before tracking links existed get one on first view.
+  if (!order.trackingToken && order.status !== 'PENDING' && order.status !== 'CANCELLED') {
+    order.trackingToken = await ensureTrackingToken(order.id)
+  }
   return toAdminOrder(order)
+}
+
+/// Admin places an order on a customer's behalf, keyed by their email. The
+/// order belongs to that email's customer account from the start — opening a
+/// placeholder account if there isn't one — so when the person later registers
+/// (or signs in with Google) with that email, it is already in their history.
+export async function createOrderOnBehalf(input: AdminCheckoutInput, adminId: string): Promise<AdminOrder> {
+  const { customerId, user } = await findOrCreateCustomerForEmail(input.customer, adminId)
+  const address = await resolveAddress(customerId, input.addressId, input.address)
+  if (!address.recipientPhone) address.recipientPhone = user.phone ?? ''
+  if (!address.recipientPhone) {
+    throw HttpError.badRequest('A phone number is required for delivery')
+  }
+  if (!isOrderableArea(address.area, isOrbitaxEmail(user.email))) {
+    throw HttpError.badRequest("We don't deliver to this area. Please choose an address in one of our delivery areas.")
+  }
+
+  const { priced, fulfillmentDate } = await priceCheckout(input, { overrideCutoff: input.overrideCutoff })
+
+  // Keep a new address in the customer's address book (once), so it's there
+  // for the next order — and for the owner once they claim the account.
+  if (!input.addressId && input.address && input.saveAddress) {
+    const duplicate = await prisma.address.findFirst({
+      where: { customerId, addressLine: address.addressLine, area: address.area, city: address.city },
+    })
+    if (!duplicate) {
+      const hasAny = (await prisma.address.count({ where: { customerId } })) > 0
+      await prisma.address.create({
+        data: {
+          customerId,
+          label: input.address.label,
+          recipientName: address.recipientName,
+          recipientPhone: address.recipientPhone,
+          addressLine: address.addressLine,
+          area: address.area,
+          city: address.city,
+          note: address.addressNote,
+          isDefault: !hasAny,
+        },
+      })
+    }
+  }
+
+  const order = await prisma.order.create({
+    data: {
+      orderNumber: generateOrderNumber(),
+      customerId,
+      placedById: adminId,
+      ...address,
+      fulfillmentDate,
+      timeSlot: input.timeSlot,
+      notes: input.notes,
+      subtotal: priced.subtotal,
+      productDiscount: priced.productDiscount,
+      customerDeliveryCost: priced.customerDeliveryCost,
+      deliveryDiscount: priced.deliveryDiscount,
+      total: priced.total,
+      couponCode: priced.couponCode,
+      paymentMode: input.paymentMode,
+      items: itemsCreate(priced),
+    },
+  })
+
+  // In-app notification waits in the customer's inbox (a placeholder sees it
+  // once claimed); other admins hear about the new order as usual.
+  await notifyOrderPlaced(customerId, order.orderNumber, order.id)
+
+  return getOrder(order.id)
 }
 
 // Allowed forward transitions. An order can only be CANCELLED while it is still
@@ -184,6 +284,8 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   })
   if (order.status !== status) {
     await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
+    // First confirmation: email the customer their tracking link.
+    if (status === 'CONFIRMED') await sendOrderConfirmedEmail(order.id)
   }
   return getOrder(id)
 }

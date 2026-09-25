@@ -79,6 +79,12 @@ export function computeWindow(setting: OrderingSetting): OrderingWindow {
   }
 }
 
+/// Today's date (YYYY-MM-DD) in the business timezone.
+export function todayInZone(timezone: string): string {
+  const now = nowInZone(timezone)
+  return toDateString(now.year, now.month, now.day)
+}
+
 export async function getOrderingWindow(): Promise<OrderingWindow> {
   return computeWindow(await getOrderingSetting())
 }

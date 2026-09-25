@@ -167,6 +167,10 @@ export function UsersAdmin() {
                   <td>
                     {!u.isActive ? (
                       <span className="user-status user-status--off">{t('নিষ্ক্রিয়', 'Disabled')}</span>
+                    ) : u.isPlaceholder ? (
+                      <span className="user-status user-status--pending">
+                        {t('অর্ডারের জন্য সংরক্ষিত — এখনো নিবন্ধিত নয়', 'Reserved for orders — not registered yet')}
+                      </span>
                     ) : !u.emailVerified ? (
                       <span className="user-status user-status--pending">
                         {t('অপেক্ষমাণ (ইমেইল অনিশ্চিত)', 'Pending — email not confirmed')}

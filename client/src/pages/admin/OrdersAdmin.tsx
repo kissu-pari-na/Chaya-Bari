@@ -58,7 +58,12 @@ export function OrdersAdmin() {
 
   return (
     <section>
-      <h1>{t('অর্ডার ব্যবস্থাপনা', 'Order management')}</h1>
+      <div className="admin-head">
+        <h1>{t('অর্ডার ব্যবস্থাপনা', 'Order management')}</h1>
+        <Link to="/admin/orders/new" className="btn btn--brand">
+          {t('+ গ্রাহকের পক্ষে অর্ডার', '+ Order for a customer')}
+        </Link>
+      </div>
 
       <div className="order-filters">
         <input
@@ -132,6 +137,9 @@ export function OrdersAdmin() {
                   <td>
                     {o.customer.name}
                     {o.customer.isGuest && <><br /><span className="muted small">{t('অতিথি', 'Guest')}</span></>}
+                    {o.customer.isPlaceholder && (
+                      <><br /><span className="muted small">{t('নিবন্ধিত নয়', 'Not registered yet')}</span></>
+                    )}
                   </td>
                   <td>
                     {formatDateWithDay(o.fulfillmentDate)}

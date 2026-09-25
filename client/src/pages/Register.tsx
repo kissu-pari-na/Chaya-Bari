@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { roleHome } from '../components/ProtectedRoute'
@@ -14,7 +14,9 @@ export function Register() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  // Prefilled from links like the order-confirmation email's "Create account".
+  const [searchParams] = useSearchParams()
+  const [email, setEmail] = useState(searchParams.get('email') ?? '')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)

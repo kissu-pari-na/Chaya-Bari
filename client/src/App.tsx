@@ -27,6 +27,8 @@ import { CategoriesAdmin } from './pages/admin/CategoriesAdmin'
 import { OrderingSettingsAdmin } from './pages/admin/OrderingSettingsAdmin'
 import { OrdersAdmin } from './pages/admin/OrdersAdmin'
 import { OrderDetailAdmin } from './pages/admin/OrderDetailAdmin'
+import { NewOrderAdmin } from './pages/admin/NewOrderAdmin'
+import { TrackOrder } from './pages/TrackOrder'
 import { CouponsAdmin } from './pages/admin/CouponsAdmin'
 import { DeliveriesAdmin } from './pages/admin/DeliveriesAdmin'
 import { MaterialsAdmin } from './pages/admin/MaterialsAdmin'
@@ -78,6 +80,8 @@ export default function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/invoice" element={<Invoice />} />
+              {/* Public tracking link emailed on confirmation — no login needed. */}
+              <Route path="/track/:token" element={<TrackOrder />} />
 
               {/* Customer, auth required */}
               <Route element={<ProtectedRoute roles={['CUSTOMER']} />}>
@@ -93,6 +97,7 @@ export default function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="orders" element={<OrdersAdmin />} />
+                <Route path="orders/new" element={<NewOrderAdmin />} />
                 <Route path="orders/:id" element={<OrderDetailAdmin />} />
                 <Route path="deliveries" element={<DeliveriesAdmin />} />
                 <Route path="products" element={<ProductsAdmin />} />
