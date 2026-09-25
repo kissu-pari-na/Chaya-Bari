@@ -69,6 +69,13 @@ export default function App() {
               <Route path="/profile" element={<Profile />} />
             </Route>
 
+            {/* Public tracking link emailed on confirmation: no login needed, and
+                it opens for anyone — including staff, who may be checking a
+                customer's link. */}
+            <Route element={<CustomerLayout allowStaff />}>
+              <Route path="/track/:token" element={<TrackOrder />} />
+            </Route>
+
             {/* Customer (public browsing) */}
             <Route element={<CustomerLayout />}>
               <Route path="/" element={<CustomerHome />} />
@@ -80,8 +87,6 @@ export default function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/invoice" element={<Invoice />} />
-              {/* Public tracking link emailed on confirmation — no login needed. */}
-              <Route path="/track/:token" element={<TrackOrder />} />
 
               {/* Customer, auth required */}
               <Route element={<ProtectedRoute roles={['CUSTOMER']} />}>
