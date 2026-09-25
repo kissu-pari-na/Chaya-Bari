@@ -5,6 +5,7 @@ import type {
   AdminCheckoutInput,
   AdminOrder,
   CustomerLookup,
+  TrackedOrder,
   CheckoutInput,
   Coupon,
   CouponInput,
@@ -50,6 +51,11 @@ export function placeOrder(input: CheckoutInput) {
 /// Place an order as a guest (no account). Cash on delivery only.
 export function placeGuestOrder(input: GuestCheckoutInput) {
   return apiRequest<{ order: Order }>('/guest/orders', { method: 'POST', body: input }).then((r) => r.order)
+}
+
+/// Public order tracking by the secret link emailed on confirmation.
+export function fetchTrackedOrder(token: string) {
+  return apiRequest<{ order: TrackedOrder }>(`/track/${encodeURIComponent(token)}`).then((r) => r.order)
 }
 
 export function fetchMyOrders() {

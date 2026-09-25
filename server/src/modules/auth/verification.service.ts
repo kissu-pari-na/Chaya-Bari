@@ -43,7 +43,7 @@ function appLink(path: string): string {
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
 
-function logoAttachment() {
+export function logoAttachment() {
   return [{ filename: 'chaya-bari.png', content: Buffer.from(emailLogoBase64, 'base64'), cid: 'logo' }]
 }
 
@@ -51,7 +51,7 @@ const font = "font-family:'Segoe UI',Arial,sans-serif"
 
 /// Branded card wrapper shared by every transactional email. `inner` is the
 /// body cell HTML. Email clients need table layout + inline styles.
-function emailShell(inner: string): string {
+export function emailShell(inner: string): string {
   return `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#f4f1ea;">
@@ -92,7 +92,7 @@ function digitsHtml(code: string): string {
     .join('')
 }
 
-function buttonHtml(url: string, label: string, variant: 'primary' | 'gold' = 'primary'): string {
+export function buttonHtml(url: string, label: string, variant: 'primary' | 'gold' = 'primary'): string {
   const bg = variant === 'gold' ? '#f5b300' : '#ea342c'
   const fg = variant === 'gold' ? '#3a2a00' : '#ffffff'
   return `<a href="${url}" style="display:inline-block;background:${bg};color:${fg};text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;font-size:15px;${font};">${label}</a>`
@@ -106,7 +106,7 @@ function verifyEmailUrl(email: string): string {
   return appLink(`/verify-email?email=${encodeURIComponent(email)}`)
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

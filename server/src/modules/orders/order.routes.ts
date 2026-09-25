@@ -20,6 +20,8 @@ import * as adminOrderController from './admin-order.controller.js'
 export const publicOrderRouter = Router()
 // Ordering window (delivery cost, cutoff, earliest date) — needed by guests too.
 publicOrderRouter.get('/ordering/window', asyncHandler(orderController.getWindow))
+// Order tracking by the secret link emailed on confirmation (no account needed).
+publicOrderRouter.get('/track/:token', asyncHandler(orderController.trackOrder))
 publicOrderRouter.post(
   '/guest/orders',
   validateBody(guestCheckoutSchema),

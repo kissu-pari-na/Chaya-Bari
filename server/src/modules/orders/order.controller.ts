@@ -4,6 +4,7 @@ import { requireCustomerId } from './customer.js'
 import * as addressService from './address.service.js'
 import * as orderService from './order.service.js'
 import * as orderingService from './ordering.service.js'
+import { getTrackedOrder } from './tracking.service.js'
 
 // ---- Ordering window (any authenticated user; customers need it at checkout) ----
 
@@ -50,6 +51,11 @@ export async function checkout(req: Request, res: Response) {
 export async function guestCheckout(req: Request, res: Response) {
   const order = await orderService.guestCheckout(req.body)
   res.status(201).json({ order })
+}
+
+/// Public tracking page data: anyone holding the emailed link, no login.
+export async function trackOrder(req: Request, res: Response) {
+  res.json({ order: await getTrackedOrder(req.params.token) })
 }
 
 export async function listMyOrders(req: Request, res: Response) {

@@ -277,6 +277,13 @@ model Order {
 
   /// When the order reached DELIVERED (drives the day-after review invite).
   deliveredAt        DateTime?
+  /// Secret, unguessable token for the public tracking link (/track/<token>)
+  /// emailed when the order is confirmed. Lets anyone holding the link follow
+  /// the order without logging in, e.g. a customer who hasn't registered yet.
+  trackingToken           String?   @unique
+  /// When the "order confirmed" email with the tracking link was sent, so it
+  /// goes out only once even if the order is re-confirmed.
+  confirmationEmailSentAt DateTime?
   /// When the "leave a review" invite (notification + email) was sent, so it
   /// is only sent once per order.
   reviewInviteSentAt DateTime?

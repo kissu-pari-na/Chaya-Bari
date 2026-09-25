@@ -92,6 +92,35 @@ export interface AdminOrder extends Order {
   }
   /// The admin who placed this order on the customer's behalf, if any.
   placedBy: { id: string; name: string } | null
+  /// Public tracking link (no login needed); set once the order is confirmed.
+  trackingUrl: string | null
+  /// When the "order confirmed" email with that link was sent.
+  confirmationEmailSentAt: string | null
+}
+
+/// Public view of an order opened from its emailed tracking link (no login).
+/// Street address and phone are deliberately left out.
+export interface TrackedOrder {
+  orderNumber: string
+  status: OrderStatus
+  paymentStatus: PaymentStatus
+  paymentMode: PaymentMode
+  fulfillmentDate: string
+  timeSlot: string | null
+  recipientName: string
+  area: string | null
+  city: string
+  items: { productName: string; quantity: number; unitPrice: number; lineTotal: number }[]
+  subtotal: number
+  productDiscount: number
+  customerDeliveryCost: number
+  deliveryDiscount: number
+  total: number
+  amountPaid: number
+  amountDue: number
+  createdAt: string
+  delivery: DeliverySummary | null
+  account: { maskedEmail: string | null; registered: boolean }
 }
 
 /// Who an email belongs to, for the admin's "order on behalf" form.

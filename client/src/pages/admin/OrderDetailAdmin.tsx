@@ -228,6 +228,25 @@ export function OrderDetailAdmin() {
               </span>
             )}
           </p>
+          {order.trackingUrl ? (
+            <p className="muted">
+              {t('ট্র্যাকিং লিংক (লগইন ছাড়াই দেখা যায়):', 'Tracking link (works without login):')}{' '}
+              <a href={order.trackingUrl} target="_blank" rel="noreferrer">
+                {order.trackingUrl}
+              </a>
+              {' · '}
+              {order.confirmationEmailSentAt
+                ? t('গ্রাহককে ইমেইল করা হয়েছে', 'emailed to the customer')
+                : t('ইমেইল পাঠানো হয়নি (ইমেইল নেই)', 'not emailed (no email on file)')}
+            </p>
+          ) : (
+            <p className="muted">
+              {t(
+                'অর্ডার নিশ্চিত করলে গ্রাহককে ট্র্যাকিং লিংকসহ ইমেইল পাঠানো হবে।',
+                'Confirming the order emails the customer a tracking link.',
+              )}
+            </p>
+          )}
           {order.placedBy && (
             <p className="muted">
               {t(`${order.placedBy.name} গ্রাহকের পক্ষে অর্ডারটি করেছেন`, `Placed on the customer’s behalf by ${order.placedBy.name}`)}

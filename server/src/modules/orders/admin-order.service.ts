@@ -14,6 +14,7 @@ import { isOrbitaxEmail } from '../../utils/orbitax.js'
 import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment } from '../payments/payment.service.js'
 import { notifyOrderPlaced, notifyOrderStatus } from '../notifications/notification.service.js'
 import { findOrCreateCustomerForEmail } from '../customers/customer-account.service.js'
+import { ensureTrackingToken, sendOrderConfirmedEmail, trackingLink } from './tracking.service.js'
 
 export interface AdminOrder extends PublicOrder {
   customer: {
@@ -29,6 +30,10 @@ export interface AdminOrder extends PublicOrder {
   }
   /// The admin who placed this order on the customer's behalf, if any.
   placedBy: { id: string; name: string } | null
+  /// Public tracking link (no login needed); set once the order is confirmed.
+  trackingUrl: string | null
+  /// When the "order confirmed" email with that link was sent.
+  confirmationEmailSentAt: string | null
 }
 
 const orderWithRelations = {
@@ -101,6 +106,8 @@ function toAdminOrder(order: OrderRow): AdminOrder {
           isPlaceholder: false,
         },
     placedBy: order.placedBy,
+    trackingUrl: order.trackingToken ? trackingLink(order.trackingToken) : null,
+    confirmationEmailSentAt: order.confirmationEmailSentAt?.toISOString() ?? null,
   }
 }
 
@@ -150,6 +157,10 @@ export async function listOrders(filters: OrderFilters): Promise<{ items: AdminO
 export async function getOrder(id: string): Promise<AdminOrder> {
   const order = await prisma.order.findUnique({ where: { id }, include: orderWithRelations })
   if (!order) throw HttpError.notFound('Order not found')
+  // Orders confirmed before tracking links existed get one on first view.
+  if (!order.trackingToken && order.status !== 'PENDING' && order.status !== 'CANCELLED') {
+    order.trackingToken = await ensureTrackingToken(order.id)
+  }
   return toAdminOrder(order)
 }
 
@@ -273,6 +284,8 @@ export async function updateStatus(id: string, status: OrderStatus): Promise<Adm
   })
   if (order.status !== status) {
     await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
+    // First confirmation: email the customer their tracking link.
+    if (status === 'CONFIRMED') await sendOrderConfirmedEmail(order.id)
   }
   return getOrder(id)
 }
