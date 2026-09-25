@@ -8,6 +8,8 @@ export interface AdminUser {
   role: Role
   isActive: boolean
   emailVerified: boolean
+  /** Opened by an admin to order on someone's behalf; not claimed by its owner yet. */
+  isPlaceholder: boolean
   createdAt: string
   /** The admin who created this account (null for self-registered customers). */
   createdBy: { id: string; name: string } | null

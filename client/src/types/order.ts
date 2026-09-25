@@ -86,7 +86,40 @@ export interface AdminOrder extends Order {
     email: string | null
     phone: string | null
     isGuest: boolean
+    /// An account an admin opened for this email that its owner hasn't claimed
+    /// (registered / confirmed) yet.
+    isPlaceholder: boolean
   }
+  /// The admin who placed this order on the customer's behalf, if any.
+  placedBy: { id: string; name: string } | null
+}
+
+/// Who an email belongs to, for the admin's "order on behalf" form.
+export interface CustomerLookup {
+  email: string
+  exists: boolean
+  isStaff: boolean
+  isPlaceholder: boolean
+  isRegistered: boolean
+  name: string | null
+  phone: string | null
+  addresses: Address[]
+  orderCount: number
+}
+
+/// Admin places an order on a customer's behalf, identified by email.
+export interface AdminCheckoutInput {
+  customer: { email: string; name: string }
+  items: { productId: string; quantity: number }[]
+  addressId?: string
+  address?: AddressInput
+  saveAddress?: boolean
+  fulfillmentDate: string
+  timeSlot: string
+  notes?: string
+  couponCode?: string
+  paymentMode?: PaymentMode
+  overrideCutoff?: boolean
 }
 
 export type CouponScope = 'FOOD' | 'DELIVERY'

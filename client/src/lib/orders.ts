@@ -2,7 +2,9 @@ import { apiRequest } from './apiClient'
 import type {
   Address,
   AddressInput,
+  AdminCheckoutInput,
   AdminOrder,
+  CustomerLookup,
   CheckoutInput,
   Coupon,
   CouponInput,
@@ -150,6 +152,22 @@ export function fetchAdminOrdersPage(filters: OrderFilters, page: { offset: numb
   params.set('offset', String(page.offset))
   params.set('limit', String(page.limit))
   return apiRequest<{ orders: AdminOrder[]; total: number }>(`/admin/orders?${params.toString()}`, { auth: true })
+}
+
+/// Who an email belongs to (if anyone) and their saved addresses.
+export function lookupCustomer(email: string) {
+  const params = new URLSearchParams({ email })
+  return apiRequest<{ customer: CustomerLookup }>(`/admin/customers/lookup?${params.toString()}`, {
+    auth: true,
+  }).then((r) => r.customer)
+}
+
+/// Admin places an order on a customer's behalf, by email. An email without an
+/// account gets a placeholder that its owner inherits when they sign up.
+export function placeAdminOrder(input: AdminCheckoutInput) {
+  return apiRequest<{ order: AdminOrder }>('/admin/orders', { method: 'POST', body: input, auth: true }).then(
+    (r) => r.order,
+  )
 }
 
 export function fetchAdminOrder(id: string) {

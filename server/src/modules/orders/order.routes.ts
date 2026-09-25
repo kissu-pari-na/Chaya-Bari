@@ -3,6 +3,7 @@ import { asyncHandler, validateBody } from '../../middleware/validate.js'
 import { authenticate, requireRole } from '../../middleware/auth.js'
 import {
   addressSchema,
+  adminCheckoutSchema,
   checkoutSchema,
   guestCheckoutSchema,
   updateAddressSchema,
@@ -62,6 +63,10 @@ adminOrderingRouter.put(
 )
 
 adminOrderingRouter.get('/orders', asyncHandler(adminOrderController.list))
+// Place an order on a customer's behalf, by email (opens a placeholder account
+// when the email has none).
+adminOrderingRouter.post('/orders', validateBody(adminCheckoutSchema), asyncHandler(adminOrderController.create))
+adminOrderingRouter.get('/customers/lookup', asyncHandler(adminOrderController.lookupCustomer))
 adminOrderingRouter.get('/orders/:id', asyncHandler(adminOrderController.get))
 adminOrderingRouter.patch(
   '/orders/:id/status',

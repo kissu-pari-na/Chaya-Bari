@@ -222,7 +222,17 @@ export function OrderDetailAdmin() {
             {order.customer.isGuest && (
               <span className="status status--cod" style={{ marginLeft: '0.5rem' }}>{t('অতিথি', 'Guest')}</span>
             )}
+            {order.customer.isPlaceholder && (
+              <span className="status status--cod" style={{ marginLeft: '0.5rem' }}>
+                {t('নিবন্ধিত নয়', 'Not registered yet')}
+              </span>
+            )}
           </p>
+          {order.placedBy && (
+            <p className="muted">
+              {t(`${order.placedBy.name} গ্রাহকের পক্ষে অর্ডারটি করেছেন`, `Placed on the customer’s behalf by ${order.placedBy.name}`)}
+            </p>
+          )}
           <p>
             {order.recipientName} · {order.recipientPhone}
             <br />

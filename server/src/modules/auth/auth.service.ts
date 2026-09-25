@@ -18,6 +18,7 @@ import type {
 import { consumeCode, sendEmailCode, sendPasswordResetCode, sendWelcomeEmail } from './verification.service.js'
 import { ensureOrbitaxDefaultAddress } from '../orders/address.service.js'
 import { consumeRateLimit } from '../../lib/rateLimit.js'
+import { activateAccount, releasePhoneFromPlaceholders } from '../customers/customer-account.service.js'
 
 // A single per-recipient email budget shared by EVERY user-triggered send
 // (registration codes, resends, and password-reset codes), so one address can't
@@ -95,6 +96,10 @@ function looksLikeEmail(identifier: string): boolean {
 /// accounts, those are cleared and this registration takes over. This prevents
 /// "squatting", where someone registers with a stranger's email, never
 /// confirms, and locks the real owner out forever.
+///
+/// If an admin already ordered on behalf of this email, the placeholder account
+/// is reused (never deleted): the registration details are written onto it and,
+/// once the email is confirmed, the owner has all of its orders.
 export async function register(
   input: RegisterInput,
 ): Promise<{ user: PublicUser; requiresEmailVerification: true }> {
@@ -116,26 +121,36 @@ export async function register(
 
   // Release the email/phone from any unconfirmed accounts holding them. These
   // have never been confirmed, so no real owner loses anything; cascades remove
-  // their pending codes and empty customer profile.
+  // their pending codes and empty customer profile. Placeholders are kept (they
+  // own orders) and only give up a borrowed phone number.
   await prisma.user.deleteMany({
     where: {
       emailVerifiedAt: null,
+      isPlaceholder: false,
       OR: [{ email: input.email }, { phone: input.phone }],
     },
   })
+  await releasePhoneFromPlaceholders(input.phone, input.email)
 
   const passwordHash = await hashPassword(input.password)
-  const user = await prisma.user.create({
-    data: {
-      name: input.name,
-      email: input.email,
-      phone: input.phone,
-      passwordHash,
-      role: 'CUSTOMER',
-      customer: { create: {} },
-    },
-    include: { customer: true },
-  })
+  const placeholder = await prisma.user.findFirst({ where: { email: input.email, isPlaceholder: true } })
+  const user = placeholder
+    ? await prisma.user.update({
+        where: { id: placeholder.id },
+        data: { name: input.name, phone: input.phone, passwordHash },
+        include: { customer: true },
+      })
+    : await prisma.user.create({
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+          passwordHash,
+          role: 'CUSTOMER',
+          customer: { create: {} },
+        },
+        include: { customer: true },
+      })
 
   // Orbitax staff get their office address pre-filled as the default (no-op for
   // other domains). Never let this block registration if it fails.
@@ -156,10 +171,9 @@ export async function verifyEmail(input: VerifyEmailInput): Promise<{ user: Publ
   if (!user) throw HttpError.badRequest('No account found for this email')
   if (user.emailVerifiedAt == null) {
     await consumeCode(user.id, 'EMAIL', input.code)
-    const confirmed = await prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerifiedAt: new Date() },
-    })
+    // Confirms the email, and takes over any orders placed for it (by an admin
+    // on the owner's behalf, or as a guest).
+    const confirmed = await activateAccount(user.id)
     // Welcome the user now that the account is confirmed. This is where the
     // "Set your own password" link becomes usable (it needs a confirmed email),
     // so admin-created users get it here too — one-time, not an abuse vector.
@@ -182,7 +196,9 @@ export async function resendEmail(input: ResendEmailInput): Promise<void> {
 }
 
 /// Request a password-reset code. Only a confirmed account can reset (an
-/// unconfirmed one is handled by the registration reclaim flow). Silent about
+/// unconfirmed one is handled by the registration reclaim flow) — plus a
+/// placeholder an admin opened for this email, where resetting is how the owner
+/// activates it and sets their first password. Silent about
 /// whether the account exists, and hard-capped so it can't be used to spam an
 /// inbox: at most 2 requests per email in any 2-day window.
 export async function forgotPassword(input: ForgotPasswordInput): Promise<void> {
@@ -192,7 +208,7 @@ export async function forgotPassword(input: ForgotPasswordInput): Promise<void> 
   // overall daily email ceiling.
   await assertEmailSendAllowed(email)
   const user = await prisma.user.findUnique({ where: { email } })
-  if (user && user.emailVerifiedAt != null && user.isActive) {
+  if (user && (user.emailVerifiedAt != null || user.isPlaceholder) && user.isActive) {
     await sendPasswordResetCode(user)
   }
 }
@@ -204,6 +220,8 @@ export async function resetPassword(input: ResetPasswordInput): Promise<void> {
   await consumeCode(user.id, 'PASSWORD_RESET', input.code)
   const passwordHash = await hashPassword(input.password)
   await prisma.user.update({ where: { id: user.id }, data: { passwordHash } })
+  // The emailed code proves ownership, so this also activates a placeholder.
+  if (user.isPlaceholder) await activateAccount(user.id)
 }
 
 export async function login(input: LoginInput): Promise<{ user: PublicUser; token: string }> {
@@ -252,16 +270,15 @@ export async function loginWithGoogle(input: GoogleAuthInput): Promise<{ user: P
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
     if (!existing.isActive) throw HttpError.unauthorized('This account has been disabled')
+    // Confirm a pending email / take over a placeholder (and its orders).
     const user =
-      existing.emailVerifiedAt == null
-        ? await prisma.user.update({ where: { id: existing.id }, data: { emailVerifiedAt: new Date() } })
-        : existing
+      existing.emailVerifiedAt == null || existing.isPlaceholder ? await activateAccount(existing.id) : existing
     return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
   }
 
   // New account. Clear any unconfirmed squatters holding this email (they never
   // proved ownership; Google just did), then create a confirmed customer.
-  await prisma.user.deleteMany({ where: { emailVerifiedAt: null, email } })
+  await prisma.user.deleteMany({ where: { emailVerifiedAt: null, isPlaceholder: false, email } })
   const passwordHash = await hashPassword(randomBytes(32).toString('hex'))
   const name = profile.name.trim() || email.split('@')[0]
   const user = await prisma.user.create({
@@ -280,17 +297,19 @@ export async function loginWithGoogle(input: GoogleAuthInput): Promise<{ user: P
   if (user.customer) {
     await ensureOrbitaxDefaultAddress(user.customer.id, user).catch(() => {})
   }
+  await activateAccount(user.id) // pulls in any guest orders placed with this email
   return { user: toPublicUser(user), token: signAuthToken({ sub: user.id, role: user.role }) }
 }
 
 /// Delete never-confirmed accounts older than `olderThanHours`. These have no
 /// proven owner and (since they can't log in) no orders or reviews, so removing
 /// them keeps pending rows from piling up and frees any email/phone they held.
-/// Cascades clear their codes and empty customer profile.
+/// Cascades clear their codes and empty customer profile. Placeholders opened by
+/// an admin are kept: they hold orders waiting for their owner.
 export async function expireUnverifiedAccounts(olderThanHours = 48): Promise<number> {
   const cutoff = new Date(Date.now() - olderThanHours * 60 * 60_000)
   const res = await prisma.user.deleteMany({
-    where: { emailVerifiedAt: null, createdAt: { lt: cutoff } },
+    where: { emailVerifiedAt: null, isPlaceholder: false, createdAt: { lt: cutoff } },
   })
   return res.count
 }
