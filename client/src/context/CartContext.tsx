@@ -18,6 +18,9 @@ interface CartContextValue {
   setQuantity: (productId: string, quantity: number) => void
   removeItem: (productId: string) => void
   clear: () => void
+  /// Put several products in the cart at once (e.g. "order again"): either
+  /// replacing what's there or adding to it.
+  addMany: (lines: { product: Product; quantity: number }[], mode: 'replace' | 'merge') => void
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
@@ -32,6 +35,18 @@ function loadCart(): CartItem[] {
   }
 }
 
+/// The cart with `quantity` more of a product (added as a new line if absent).
+function withProduct(current: CartItem[], product: Product, quantity: number): CartItem[] {
+  const existing = current.find((i) => i.productId === product.id)
+  if (existing) {
+    return current.map((i) => (i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i))
+  }
+  return [
+    ...current,
+    { productId: product.id, name: product.name, nameEnglish: product.nameEnglish, price: effectivePrice(product), imageUrl: product.imageUrl, quantity },
+  ]
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(loadCart)
 
@@ -44,19 +59,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items])
 
   const value = useMemo<CartContextValue>(() => {
-    const addItem = (product: Product, quantity = 1) =>
-      setItems((current) => {
-        const existing = current.find((i) => i.productId === product.id)
-        if (existing) {
-          return current.map((i) =>
-            i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i,
-          )
-        }
-        return [
-          ...current,
-          { productId: product.id, name: product.name, nameEnglish: product.nameEnglish, price: effectivePrice(product), imageUrl: product.imageUrl, quantity },
-        ]
-      })
+    const addItem = (product: Product, quantity = 1) => setItems((current) => withProduct(current, product, quantity))
+
+    const addMany = (lines: { product: Product; quantity: number }[], mode: 'replace' | 'merge') =>
+      setItems((current) =>
+        lines.reduce((acc, l) => withProduct(acc, l.product, l.quantity), mode === 'replace' ? [] : current),
+      )
 
     const setQuantity = (productId: string, quantity: number) =>
       setItems((current) =>
@@ -76,6 +84,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setQuantity,
       removeItem,
       clear: () => setItems([]),
+      addMany,
     }
   }, [items])
 

@@ -1,0 +1,40 @@
+.reorder {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.reorder--compact {
+  align-items: flex-end;
+}
+
+.reorder__btn {
+  white-space: nowrap;
+}
+
+.reorder--compact .reorder__btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.reorder__choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.75rem;
+}
+
+.reorder__choice-text {
+  font-size: 0.85rem;
+  color: var(--card-muted);
+}
+
+.reorder__choice .btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}

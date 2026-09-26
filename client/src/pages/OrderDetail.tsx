@@ -9,6 +9,7 @@ import { ApiError } from '../lib/apiClient'
 import { usePoll } from '../lib/usePoll'
 import { DocumentHeader } from '../components/DocumentHeader'
 import { OrderTracker } from '../components/OrderTracker'
+import { ReorderButton } from '../components/ReorderButton'
 import { useI18n } from '../context/LanguageContext'
 import { PaymentPanel } from './PaymentPanel'
 import type { Order } from '../types/order'
@@ -106,6 +107,16 @@ export function OrderDetail() {
       </div>
 
       <OrderTracker status={order.status} paymentStatus={order.paymentStatus} paymentMode={order.paymentMode} />
+
+      <div className="order-detail__reorder">
+        <ReorderButton order={order} />
+        <p className="hint">
+          {t(
+            'এই অর্ডারের পণ্যগুলো কার্টে যোগ হবে — চেকআউটের আগে পরিমাণ বদলাতে, সরাতে বা নতুন পণ্য যোগ করতে পারবেন।',
+            'Adds these items to your cart — you can change quantities, remove items or add more before checkout.',
+          )}
+        </p>
+      </div>
 
       {order.status === 'PENDING' && (
         <div className="pay-mode-switch">

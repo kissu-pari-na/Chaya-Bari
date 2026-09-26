@@ -399,3 +399,34 @@
   cursor: pointer;
 }
 .pay-claim__submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* "Order again" on the order detail page. */
+.order-detail__reorder {
+  margin: 1rem 0;
+}
+
+.order-detail__reorder .hint {
+  margin: 0.4rem 0 0;
+}
+
+/* Phones: the "Order again" button and total drop onto their own line so the
+   order details keep the full width. */
+@media (max-width: 560px) {
+  .order-row {
+    flex-wrap: wrap;
+  }
+
+  .order-row__main {
+    flex: 1 1 100%;
+  }
+
+  .order-row__meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .order-row__meta .reorder--compact {
+    align-items: flex-start;
+    margin-right: auto;
+  }
+}
