@@ -5,7 +5,7 @@ import { fetchAdminProducts } from '../../lib/products'
 import { ApiError } from '../../lib/apiClient'
 import { DELIVERY_ZONES, ORBITAX_OFFICE_AREA } from '../../lib/deliveryAreas'
 import { isOrbitaxEmail } from '../../lib/orbitax'
-import { TIME_SLOTS, formatSlotLabel, isSlotEnabledForDate, pickDefaultSlot } from '../../lib/slots'
+import { TIME_SLOTS, formatSlotLabel, pickDefaultSlot } from '../../lib/slots'
 import { formatBdt } from '../../lib/format'
 import { useI18n } from '../../context/LanguageContext'
 import { useContentLang } from '../../context/TranslationContext'
@@ -50,7 +50,6 @@ export function NewOrderAdmin() {
   const [lines, setLines] = useState<Line[]>([{ productId: '', quantity: 1 }])
   const [fulfillmentDate, setFulfillmentDate] = useState('')
   const [timeSlot, setTimeSlot] = useState('')
-  const [overrideCutoff, setOverrideCutoff] = useState(false)
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('COD')
   const [couponCode, setCouponCode] = useState('')
   const [notes, setNotes] = useState('')
@@ -98,16 +97,9 @@ export function NewOrderAdmin() {
     }
   }
 
-  const minDate = orderingWindow ? (overrideCutoff ? todayIn(orderingWindow.timezone) : orderingWindow.earliestFulfillmentDate) : undefined
-  const slots = useMemo(
-    () => (fulfillmentDate ? TIME_SLOTS.filter((s) => isSlotEnabledForDate(fulfillmentDate, s.value)) : []),
-    [fulfillmentDate],
-  )
-
-  function changeDate(value: string) {
-    setFulfillmentDate(value)
-    if (value && !isSlotEnabledForDate(value, timeSlot)) setTimeSlot(pickDefaultSlot(value))
-  }
+  // An admin ordering for a customer has no delivery-time restrictions: any day
+  // from today (no advance-order cutoff) and every slot on every day.
+  const minDate = orderingWindow ? todayIn(orderingWindow.timezone) : undefined
 
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
   const subtotal = lines.reduce((sum, l) => {
@@ -153,7 +145,6 @@ export function NewOrderAdmin() {
         notes: notes || undefined,
         couponCode: couponCode || undefined,
         paymentMode,
-        overrideCutoff,
       })
       navigate(`/admin/orders/${order.id}`)
     } catch (err) {
@@ -352,13 +343,13 @@ export function NewOrderAdmin() {
         <div className="admin-form__row">
           <label>
             {t('তারিখ', 'Date')}
-            <input type="date" value={fulfillmentDate} min={minDate} onChange={(e) => changeDate(e.target.value)} required />
+            <input type="date" value={fulfillmentDate} min={minDate} onChange={(e) => setFulfillmentDate(e.target.value)} required />
           </label>
           <label>
             {t('সময়', 'Time slot')}
             <select value={timeSlot} onChange={(e) => setTimeSlot(e.target.value)} required>
               <option value="">{t('সময় নির্বাচন করুন', 'Select a slot')}</option>
-              {slots.map((s) => (
+              {TIME_SLOTS.map((s) => (
                 <option key={s.value} value={s.value}>
                   {formatSlotLabel(s)}
                 </option>
@@ -366,13 +357,12 @@ export function NewOrderAdmin() {
             </select>
           </label>
         </div>
-        <label className="admin-form__check">
-          <input type="checkbox" checked={overrideCutoff} onChange={(e) => setOverrideCutoff(e.target.checked)} />
+        <p className="hint">
           {t(
-            'অগ্রিম-অর্ডারের কাটঅফ উপেক্ষা করুন (যেমন আজকের ডেলিভারি)',
-            'Ignore the advance-order cutoff (e.g. same-day delivery)',
+            'অ্যাডমিন অর্ডারে কোনো সময়সীমা নেই — আজ থেকে যেকোনো দিন ও যেকোনো সময় বেছে নিতে পারেন।',
+            'No delivery-time limits for admin orders — pick any day from today and any time slot.',
           )}
-        </label>
+        </p>
 
         <div className="admin-form__row">
           <label>

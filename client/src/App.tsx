@@ -76,12 +76,17 @@ export default function App() {
               <Route path="/track/:token" element={<TrackOrder />} />
             </Route>
 
-            {/* Customer (public browsing) */}
-            <Route element={<CustomerLayout />}>
+            {/* Storefront browsing: public, and an admin can preview it exactly
+                as customers see it. */}
+            <Route element={<CustomerLayout adminPreview />}>
               <Route path="/" element={<CustomerHome />} />
               <Route path="/products" element={<ProductList />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/contact" element={<Contact />} />
+            </Route>
+
+            {/* Customer (shopping) — staff are sent to their dashboard */}
+            <Route element={<CustomerLayout />}>
               <Route path="/cart" element={<Cart />} />
               {/* Checkout is public: guests can order without an account. */}
               <Route path="/checkout" element={<Checkout />} />
