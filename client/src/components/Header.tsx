@@ -136,7 +136,7 @@ export function Header({ variant }: HeaderProps) {
 
         {variant === 'customer' && (
           <>
-            {user && (
+            {user?.role === 'CUSTOMER' && (
               <NavLink to="/orders" className={linkClass}>
                 {t('আমার অর্ডার', 'My Orders')}
               </NavLink>

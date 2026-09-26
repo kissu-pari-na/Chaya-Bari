@@ -38,6 +38,8 @@ export function AdminNav() {
   }, [location.pathname])
 
   const dashboard: NavItem = { to: '/admin', label: t('ড্যাশবোর্ড', 'Dashboard'), end: true }
+  // Preview the storefront exactly as customers see it.
+  const storePreview: NavItem = { to: '/', label: t('স্টোর দেখুন', 'View store'), end: true }
 
   const groups: NavGroup[] = [
     {
@@ -88,6 +90,9 @@ export function AdminNav() {
     <div className="admin-nav" ref={ref}>
       <NavLink to={dashboard.to} end={dashboard.end} className={linkClass}>
         {dashboard.label}
+      </NavLink>
+      <NavLink to={storePreview.to} end={storePreview.end} className={linkClass}>
+        {storePreview.label}
       </NavLink>
 
       {groups.map((group) => {

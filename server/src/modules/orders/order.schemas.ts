@@ -129,8 +129,6 @@ export const adminCheckoutSchema = z
       .optional()
       .or(z.literal('').transform(() => undefined)),
     paymentMode: z.enum(['PREPAID', 'COD']).optional().default('COD'),
-    /// Allow a date inside the advance-order cutoff (never a past date).
-    overrideCutoff: z.boolean().optional().default(false),
   })
   .refine((v) => v.addressId || v.address, {
     message: 'A delivery address is required',

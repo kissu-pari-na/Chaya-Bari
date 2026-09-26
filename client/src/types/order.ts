@@ -148,7 +148,6 @@ export interface AdminCheckoutInput {
   notes?: string
   couponCode?: string
   paymentMode?: PaymentMode
-  overrideCutoff?: boolean
 }
 
 export type CouponScope = 'FOOD' | 'DELIVERY'

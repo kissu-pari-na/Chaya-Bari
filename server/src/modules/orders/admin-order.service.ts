@@ -179,7 +179,7 @@ export async function createOrderOnBehalf(input: AdminCheckoutInput, adminId: st
     throw HttpError.badRequest("We don't deliver to this area. Please choose an address in one of our delivery areas.")
   }
 
-  const { priced, fulfillmentDate } = await priceCheckout(input, { overrideCutoff: input.overrideCutoff })
+  const { priced, fulfillmentDate } = await priceCheckout(input, { byAdmin: true })
 
   // Keep a new address in the customer's address book (once), so it's there
   // for the next order — and for the owner once they claim the account.

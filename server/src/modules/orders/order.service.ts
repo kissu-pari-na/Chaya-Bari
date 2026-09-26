@@ -161,8 +161,9 @@ interface CheckoutItem {
 
 /// Validates the advance-order window + time slot and prices the cart. Shared by
 /// the registered-customer, guest and admin (on-behalf) checkout flows. An admin
-/// may override the advance-order cutoff (e.g. a same-day phone order the
-/// kitchen has agreed to), but never order for a day that has already passed.
+/// ordering for a customer has no delivery-time restrictions — no advance-order
+/// cutoff and every slot open on every day — but can't pick a day that has
+/// already passed.
 export async function priceCheckout(
   input: {
     items: CheckoutItem[]
@@ -170,12 +171,12 @@ export async function priceCheckout(
     timeSlot: string
     couponCode?: string
   },
-  opts: { overrideCutoff?: boolean } = {},
+  opts: { byAdmin?: boolean } = {},
 ) {
   const setting = await getOrderingSetting()
   const window = computeWindow(setting)
 
-  if (opts.overrideCutoff) {
+  if (opts.byAdmin) {
     if (input.fulfillmentDate < todayInZone(setting.timezone)) {
       throw HttpError.badRequest('The delivery date has already passed.')
     }
@@ -188,7 +189,7 @@ export async function priceCheckout(
   }
 
   // The chosen slot must be one that is actually open for that weekday.
-  if (!isSlotEnabledForDate(input.fulfillmentDate, input.timeSlot)) {
+  if (!opts.byAdmin && !isSlotEnabledForDate(input.fulfillmentDate, input.timeSlot)) {
     throw HttpError.badRequest('The selected time slot is not available for that day.')
   }
 
