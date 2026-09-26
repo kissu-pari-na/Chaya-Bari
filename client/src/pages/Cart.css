@@ -180,3 +180,16 @@
   .cart-item__total { grid-area: total; }
   .cart-item__remove { grid-area: remove; }
 }
+
+/* Shown after "Order again" on a previous order. */
+.cart-reorder {
+  background: rgba(245, 179, 0, 0.1);
+  border: 1px solid rgba(245, 179, 0, 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.cart-reorder p {
+  margin: 0.15rem 0;
+}

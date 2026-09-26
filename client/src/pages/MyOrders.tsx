@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ReorderButton } from '../components/ReorderButton'
 import { fetchMyOrdersPage } from '../lib/orders'
 import { useInfiniteScroll } from '../lib/useInfiniteScroll'
 import { formatBdt, formatDateWithDay, toBnDigits } from '../lib/format'
@@ -84,6 +85,7 @@ export function MyOrders() {
                 </div>
               </div>
               <div className="order-row__meta">
+                <ReorderButton order={o} compact />
                 <strong className="order-row__total">{formatBdt(o.total)}</strong>
                 <span className="order-row__chev" aria-hidden="true">→</span>
               </div>
