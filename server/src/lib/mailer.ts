@@ -19,6 +19,21 @@ export interface MailMessage {
   html?: string
   /// Optional attachments (e.g. an inline logo referenced by cid).
   attachments?: MailAttachment[]
+  /// Optional extra headers (e.g. List-Unsubscribe on non-essential mail).
+  headers?: Record<string, string>
+}
+
+/// The bare address inside MAIL_FROM (`Name <addr>` or just `addr`).
+export function fromAddress(): string {
+  const m = env.smtp.from.match(/<([^>]+)>/)
+  return (m ? m[1] : env.smtp.from).trim()
+}
+
+/// List-Unsubscribe header for non-essential mail (e.g. review invites). Uses a
+/// mailto: to the sending address — Gmail/Yahoo show an "Unsubscribe" link for
+/// it; requests arrive in that inbox as emails titled "unsubscribe".
+export function listUnsubscribeHeaders(): Record<string, string> {
+  return { 'List-Unsubscribe': `<mailto:${fromAddress()}?subject=unsubscribe>` }
 }
 
 /// True when SMTP credentials are configured; otherwise the mailer runs in
@@ -56,11 +71,13 @@ export async function sendEmail(msg: MailMessage): Promise<void> {
     }
     await getTransport().sendMail({
       from: env.smtp.from,
+      replyTo: env.smtp.replyTo || undefined,
       to: msg.to,
       subject: msg.subject,
       text: msg.text,
       html: msg.html,
       attachments: msg.attachments,
+      headers: msg.headers,
     })
     logger.info('Email dispatched', { to: msg.to, subject: msg.subject, from: env.smtp.from })
   } catch (err) {

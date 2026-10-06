@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
-import { appLink, sendEmail } from '../../lib/mailer.js'
+import { appLink, listUnsubscribeHeaders, sendEmail } from '../../lib/mailer.js'
 import { notifyReviewInvite } from '../notifications/notification.service.js'
 
 // Asia/Dhaka is a fixed UTC+6 offset (no DST); the business operates there.
@@ -51,6 +51,7 @@ export async function dispatchReviewInvites(): Promise<number> {
           `খাবার কেমন লেগেছে জানিয়ে রিভিউ ও রেটিং দিন:</p>` +
           `<p><a href="${url}">রিভিউ দিন</a></p>` +
           `<p>ধন্যবাদ,<br/>ছায়া বাড়ি</p>`,
+        headers: listUnsubscribeHeaders(),
       })
 
       await prisma.order.update({ where: { id: order.id }, data: { reviewInviteSentAt: new Date() } })

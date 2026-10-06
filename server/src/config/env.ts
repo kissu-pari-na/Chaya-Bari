@@ -51,6 +51,8 @@ export const env = {
     user: process.env.SMTP_USER ?? '',
     pass: process.env.SMTP_PASS ?? '',
     from: process.env.MAIL_FROM ?? 'ছায়া বাড়ি <no-reply@chayabari.example>',
+    // Optional Reply-To. When unset, replies go to the From address.
+    replyTo: process.env.MAIL_REPLY_TO ?? '',
   },
 
   // Web Push (VAPID). Generate a keypair with `npx web-push generate-vapid-keys`
