@@ -1,45 +1,102 @@
-export type PaymentMethod = 'CASH' | 'BKASH' | 'NAGAD' | 'ROCKET' | 'CARD' | 'BANK' | 'ONLINE'
-export type PaymentTxnStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'VOID'
-export type PaymentSource = 'ADMIN' | 'CUSTOMER'
+// Wallet & payment types (vault node: wallet). Money lives in one signed ledger
+// per customer: + credits (money in), − debits (money owed).
 
-export interface Payment {
+export type PaymentMethod = 'CASH' | 'BKASH' | 'NAGAD' | 'ROCKET' | 'CARD' | 'BANK' | 'ONLINE'
+export type PaymentSource = 'ADMIN' | 'CUSTOMER' | 'SYSTEM'
+export type WalletEntryType = 'ORDER_CHARGE' | 'ORDER_REFUND' | 'PAYMENT' | 'ADJUSTMENT'
+export type WalletEntryStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED'
+
+/// A wallet entry as shown on an order.
+export interface OrderPayment {
   id: string
-  orderId: string
-  method: PaymentMethod
+  type: WalletEntryType
+  status: WalletEntryStatus
+  /// Signed: + money in, − charged.
   amount: number
-  status: PaymentTxnStatus
-  source: PaymentSource
+  method: PaymentMethod | null
   reference: string | null
   note: string | null
+  source: PaymentSource
   createdAt: string
-  /// Audit trail.
-  recordedByName: string | null
-  voidedByName: string | null
-  voidedAt: string | null
-  voidReason: string | null
+  createdByName: string | null
+  reviewedByName: string | null
+  reviewNote: string | null
+}
+
+/// A wallet timeline entry.
+export interface WalletEntry extends OrderPayment {
+  orderId: string | null
+  orderNumber: string | null
+  reviewedAt: string | null
+  /// Balance right after this entry (confirmed entries only).
+  balanceAfter: number | null
+}
+
+export interface LimitGrant {
+  id: string
+  code: string
+  amount: number
+  expiresAt: string
+  createdAt: string
+  active: boolean
+}
+
+export interface WalletSummary {
+  customerId: string
+  balance: number
+  owed: number
+  credit: number
+  baseLimit: number
+  limit: number
+  /// How much a pay-later order may cost right now.
+  available: number
+  pendingClaims: { count: number; amount: number }
+  grants: LimitGrant[]
+}
+
+export interface ClaimInput {
+  amount: number
+  method: PaymentMethod
+  reference: string
+  note?: string
+  orderId?: string
+}
+
+/// Admin adjustment: signed amount, reference required.
+export interface AdjustInput {
+  amount: number
+  reference: string
+  note?: string
+  method?: PaymentMethod
 }
 
 export interface RecordPaymentInput {
-  method: PaymentMethod
   amount: number
-  status?: PaymentTxnStatus
-  reference?: string
+  method: PaymentMethod
+  reference: string
   note?: string
 }
 
-/// A customer's manual payment claim (cash / transfer), pending admin review.
-export interface ClaimPaymentInput {
-  method: PaymentMethod
-  amount: number
-  reference?: string
-  note?: string
+export interface PendingClaim extends WalletEntry {
+  customer: { id: string | null; name: string; email: string | null; phone: string | null }
 }
 
-export interface BkashStart {
-  paymentID: string
-  bkashURL: string
-  mock: boolean
-  mode: 'live' | 'sandbox'
+export interface WalletRow {
+  customerId: string
+  name: string
+  email: string
+  phone: string | null
+  balance: number
+  limit: number
+  pendingClaims: number
+  lastActivity: string | null
+}
+
+export interface WalletTotals {
+  owed: number
+  credit: number
+  pendingClaims: number
+  pendingAmount: number
 }
 
 /// Public payment-account details customers send manual payments to.

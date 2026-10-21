@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
@@ -9,24 +9,21 @@ import { PrefControls } from '../components/PrefControls'
 import { GoogleSignInButton, isGoogleEnabled } from '../components/GoogleSignInButton'
 import './Auth.css'
 
+/**
+ * The single sign-in / sign-up screen. Sign-in is Google only (vault
+ * D-AUTH-004): the first Google sign-in creates the account, and a missing phone
+ * number is asked for at checkout. Staff sign in the same way with the Google
+ * account for their registered email.
+ */
 export function Login() {
-  const { login, loginWithGoogle } = useAuth()
+  const { loginWithGoogle } = useAuth()
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
-  const [identifier, setIdentifier] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  // One-off notice passed from another screen (e.g. after a password reset).
-  const notice = (location.state as { notice?: string } | null)?.notice ?? null
-  // When the account exists but the email isn't confirmed yet, offer a link to
-  // the confirmation screen instead of a dead-end error.
-  const [needsEmail, setNeedsEmail] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
 
   async function handleGoogle(credential: string) {
     setError(null)
-    setNeedsEmail(false)
     try {
       const user = await loginWithGoogle(credential)
       const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
@@ -36,90 +33,43 @@ export function Login() {
     }
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    setError(null)
-    setNeedsEmail(false)
-    setSubmitting(true)
-    try {
-      const user = await login({ identifier, password })
-      const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname
-      navigate(from ?? roleHome[user.role], { replace: true })
-    } catch (err) {
-      if (err instanceof ApiError && err.code === 'EMAIL_UNVERIFIED') {
-        setNeedsEmail(true)
-        setError(
-          t(
-            'আপনার ইমেইল এখনও নিশ্চিত করা হয়নি।',
-            'Your email has not been confirmed yet.',
-          ),
-        )
-      } else {
-        setError(err instanceof ApiError ? err.message : t('কিছু একটা সমস্যা হয়েছে', 'Something went wrong'))
-      }
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   return (
     <div className="auth-page">
       <div className="auth-prefs">
         <PrefControls />
       </div>
-      <form className="auth-card" onSubmit={handleSubmit}>
+      <div className="auth-card">
         <div className="auth-card__logo">
           <Logo size={48} />
         </div>
-        <h1>{t('লগইন', 'Log in')}</h1>
-        {notice && <div className="auth-notice">{notice}</div>}
+        <h1>{t('সাইন ইন', 'Sign in')}</h1>
+        <p className="auth-lede">
+          {t(
+            'আপনার গুগল অ্যাকাউন্ট দিয়ে এক ক্লিকে সাইন ইন করুন। নতুন হলে অ্যাকাউন্ট নিজে থেকেই তৈরি হবে, কোনো পাসওয়ার্ড লাগবে না।',
+            'Sign in with your Google account in one tap. New here? Your account is created automatically, with no password to remember.',
+          )}
+        </p>
         {error && <div className="auth-error">{error}</div>}
-        {isGoogleEnabled && (
-          <>
-            <GoogleSignInButton text="signin_with" onCredential={handleGoogle} onError={setError} />
-            <div className="auth-divider">
-              <span>{t('অথবা', 'or')}</span>
-            </div>
-          </>
+        {isGoogleEnabled ? (
+          <GoogleSignInButton text="continue_with" onCredential={handleGoogle} onError={setError} />
+        ) : (
+          <div className="auth-error">
+            {t(
+              'গুগল সাইন-ইন এখনো চালু করা হয়নি। অনুগ্রহ করে পরে চেষ্টা করুন।',
+              'Google sign-in is not set up yet. Please try again later.',
+            )}
+          </div>
         )}
-        {needsEmail && (
-          <p className="auth-alt">
-            <Link to="/verify-email" state={{ email: identifier }}>
-              {t('ইমেইল নিশ্চিত করুন', 'Confirm your email')}
-            </Link>
-          </p>
-        )}
-        <label>
-          {t('ইমেইল বা মোবাইল নম্বর', 'Email or mobile number')}
-          <input
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            required
-            autoComplete="username"
-          />
-        </label>
-        <label>
-          {t('পাসওয়ার্ড', 'Password')}
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </label>
-        <p className="auth-alt" style={{ textAlign: 'right', marginTop: 0 }}>
-          <Link to="/forgot-password" state={{ email: identifier }}>
-            {t('পাসওয়ার্ড ভুলে গেছেন?', 'Forgot password?')}
-          </Link>
-        </p>
-        <button type="submit" disabled={submitting}>
-          {submitting ? t('অপেক্ষা করুন…', 'Please wait…') : t('লগইন', 'Log in')}
-        </button>
+        <ul className="auth-perks">
+          <li>{t('অর্ডার ট্র্যাক ও আগের অর্ডার দেখুন', 'Track orders and see your order history')}</li>
+          <li>{t('এক ক্লিকে আবার অর্ডার করুন', 'Reorder in one tap')}</li>
+          <li>{t('রিভিউ দিন ও নোটিফিকেশন পান', 'Leave reviews and get notifications')}</li>
+        </ul>
         <p className="auth-alt">
-          {t('অ্যাকাউন্ট নেই?', "Don't have an account?")} <Link to="/register">{t('রেজিস্টার করুন', 'Register')}</Link>
+          {t('অ্যাকাউন্ট ছাড়াই অর্ডার করতে চান?', 'Want to order without an account?')}{' '}
+          <Link to="/products">{t('মেনু দেখুন', 'Browse the menu')}</Link>
         </p>
-      </form>
+      </div>
     </div>
   )
 }

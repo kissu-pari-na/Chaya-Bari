@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { BusinessProfileProvider } from './context/BusinessProfileContext'
 import { CartProvider } from './context/CartContext'
@@ -7,6 +7,7 @@ import { TranslationProvider } from './context/TranslationContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { PushSync } from './components/PushSync'
+import { Backdrop } from './components/Backdrop'
 import { CustomerLayout } from './layouts/CustomerLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { KitchenLayout } from './layouts/KitchenLayout'
@@ -17,7 +18,7 @@ import { Cart } from './pages/Cart'
 import { Checkout } from './pages/Checkout'
 import { MyOrders } from './pages/MyOrders'
 import { OrderDetail } from './pages/OrderDetail'
-import { OrbitaxBilling } from './pages/OrbitaxBilling'
+import { Wallet } from './pages/Wallet'
 import { Contact } from './pages/Contact'
 import { OrderReview } from './pages/OrderReview'
 import { AdminDashboard } from './pages/AdminDashboard'
@@ -39,18 +40,18 @@ import { ExpensesAdmin } from './pages/admin/ExpensesAdmin'
 import { ReportsAdmin } from './pages/admin/ReportsAdmin'
 import { AnalyticsAdmin } from './pages/admin/AnalyticsAdmin'
 import { UsersAdmin } from './pages/admin/UsersAdmin'
+import { WalletsAdmin } from './pages/admin/WalletsAdmin'
+import { WalletDetailAdmin } from './pages/admin/WalletDetailAdmin'
 import { OrderConfirmation } from './pages/OrderConfirmation'
 import { Invoice } from './pages/Invoice'
 import { KitchenHome } from './pages/KitchenHome'
 import { Login } from './pages/Login'
-import { Register } from './pages/Register'
-import { VerifyEmail } from './pages/VerifyEmail'
-import { ForgotPassword } from './pages/ForgotPassword'
 import { Profile } from './pages/Profile'
 
 export default function App() {
   return (
     <ThemeProvider>
+      <Backdrop />
       <LanguageProvider>
         <TranslationProvider>
           <AuthProvider>
@@ -60,9 +61,11 @@ export default function App() {
                 <Routes>
             {/* Auth */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* Sign-in is Google only (vault D-AUTH-004). Old register / email-code /
+                password links (e.g. in past emails) land on the sign-in screen. */}
+            <Route path="/register" element={<Navigate to="/login" replace />} />
+            <Route path="/verify-email" element={<Navigate to="/login" replace />} />
+            <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
 
             {/* Account profile — any signed-in user (renders its own header). */}
             <Route element={<ProtectedRoute />}>
@@ -98,7 +101,9 @@ export default function App() {
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
                 <Route path="/orders/:id/review" element={<OrderReview />} />
-                <Route path="/orbitax" element={<OrbitaxBilling />} />
+                <Route path="/wallet" element={<Wallet />} />
+                {/* Orbitax combined billing moved into the wallet (vault D-ORB-002). */}
+                <Route path="/orbitax" element={<Navigate to="/wallet" replace />} />
               </Route>
             </Route>
 
@@ -123,6 +128,8 @@ export default function App() {
                 <Route path="ordering-settings" element={<OrderingSettingsAdmin />} />
                 <Route path="business-profile" element={<BusinessProfileSettings />} />
                 <Route path="users" element={<UsersAdmin />} />
+                <Route path="wallets" element={<WalletsAdmin />} />
+                <Route path="wallets/:customerId" element={<WalletDetailAdmin />} />
               </Route>
             </Route>
 

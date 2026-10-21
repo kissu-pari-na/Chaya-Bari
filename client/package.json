@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "palettes": "node scripts/palettes.mjs",
+    "check:design": "node scripts/palettes.mjs --check && node scripts/check-colors.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

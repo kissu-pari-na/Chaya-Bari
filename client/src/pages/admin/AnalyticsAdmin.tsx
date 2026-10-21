@@ -22,7 +22,7 @@ const quadrantMeta: Record<ProductQuadrant, { title: string; hint: string; color
     get hint() {
       return pick('এগুলো প্রমোট করুন', 'Promote these')
     },
-    color: '#c8901a',
+    color: 'var(--success)',
   },
   OPTIMIZE: {
     get title() {
@@ -31,7 +31,7 @@ const quadrantMeta: Record<ProductQuadrant, { title: string; hint: string; color
     get hint() {
       return pick('দাম/খরচ পর্যালোচনা করুন', 'Review price/cost')
     },
-    color: '#b5651d',
+    color: 'var(--warning)',
   },
   MARKETING: {
     get title() {
@@ -40,7 +40,7 @@ const quadrantMeta: Record<ProductQuadrant, { title: string; hint: string; color
     get hint() {
       return pick('প্রচার বাড়ান', 'Increase promotion')
     },
-    color: '#1a5b8a',
+    color: 'var(--info)',
   },
   REVIEW: {
     get title() {
@@ -49,7 +49,7 @@ const quadrantMeta: Record<ProductQuadrant, { title: string; hint: string; color
     get hint() {
       return pick('পরিবর্তন/বাদ দেওয়ার কথা ভাবুন', 'Consider changing/dropping')
     },
-    color: '#b3261e',
+    color: 'var(--danger)',
   },
 }
 

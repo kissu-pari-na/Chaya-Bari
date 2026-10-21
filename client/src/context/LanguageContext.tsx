@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { flushSync } from 'react-dom'
+import { withViewTransition } from '../lib/appearance'
 import { LANG_STORAGE_KEY, setModuleLang, type Lang } from '../lib/i18n'
 
 interface LanguageValue {
@@ -50,10 +52,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang === 'bn' ? 'bn' : 'en'
   }, [lang])
 
+  // Language changes crossfade (design.md §7); the swap itself stays synchronous.
+  const setLang = (next: Lang) => {
+    if (next === lang) return
+    withViewTransition(
+      () => {
+        document.documentElement.lang = next
+        flushSync(() => setLangState(next))
+      },
+      null,
+      'fade',
+    )
+  }
+
   const value: LanguageValue = {
     lang,
-    setLang: setLangState,
-    toggle: () => setLangState((prev) => (prev === 'bn' ? 'en' : 'bn')),
+    setLang,
+    toggle: () => setLang(lang === 'bn' ? 'en' : 'bn'),
     t: (bn, en) => (lang === 'bn' ? bn : en),
     tc: (bangla, english) => {
       const bn = bangla && bangla.trim() ? bangla : undefined

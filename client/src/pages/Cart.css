@@ -48,7 +48,7 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: linear-gradient(160deg, #241617, #0d0b0c);
+  background: radial-gradient(circle at 34% 26%, var(--gloss-sheen), transparent 55%), var(--accent-soft);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
@@ -84,7 +84,7 @@
   width: 30px;
   height: 30px;
   border: 1px solid var(--glass-border);
-  background: rgba(127, 127, 127, 0.12);
+  background: var(--glass-inset);
   color: var(--card-text);
   border-radius: 8px;
   font-size: 1rem;
@@ -140,8 +140,8 @@
   display: block;
   width: 100%;
   margin-top: 0.75rem;
-  background: var(--accent);
-  color: #fff;
+  background: var(--btn-grad);
+  color: var(--on-accent);
   border: none;
   padding: 0.85rem;
   border-radius: var(--radius-md);
@@ -156,9 +156,9 @@
 }
 
 .cart-summary__checkout:hover {
-  background: var(--red-bright);
+  background: var(--btn-grad);
   transform: translateY(-1px);
-  color: #fff;
+  color: var(--on-accent);
   text-decoration: none;
 }
 
@@ -183,8 +183,8 @@
 
 /* Shown after "Order again" on a previous order. */
 .cart-reorder {
-  background: rgba(245, 179, 0, 0.1);
-  border: 1px solid rgba(245, 179, 0, 0.4);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
   margin: 0 0 1rem;

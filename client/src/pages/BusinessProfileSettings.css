@@ -28,7 +28,7 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-inset);
   color: var(--card-text);
 }
 
@@ -76,8 +76,8 @@
 }
 
 .profile-form__actions button {
-  background: var(--accent);
-  color: #fff;
+  background: var(--btn-grad);
+  color: var(--on-accent);
   border: none;
   padding: 0.7rem 1.6rem;
   border-radius: var(--radius-md);

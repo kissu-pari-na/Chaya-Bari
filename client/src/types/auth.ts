@@ -15,25 +15,6 @@ export interface AuthResponse {
   token: string
 }
 
-export interface RegisterPayload {
-  name: string
-  email: string
-  phone: string
-  password: string
-}
-
-/// Registration no longer logs the user in — the email address must be
-/// confirmed first.
-export interface RegisterResult {
-  user: AuthUser
-  requiresEmailVerification: boolean
-}
-
-export interface LoginPayload {
-  identifier: string
-  password: string
-}
-
 /// Fields a signed-in user can change on their own profile.
 export interface UpdateProfilePayload {
   name?: string

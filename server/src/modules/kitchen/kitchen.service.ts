@@ -3,21 +3,23 @@ import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import { notifyOrderStatus } from '../notifications/notification.service.js'
 
-/// Orders that are the kitchen's responsibility (CONFIRMED..PACKED).
-export const KITCHEN_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'READY', 'PACKED']
+/// Orders that are the kitchen's responsibility. With the five-step flow
+/// (vault D-ORD-003) that is CONFIRMED (not started) and PREPARING (cooking or
+/// packed); "packed & ready to dispatch" is Order.readyAt, not a status.
+export const KITCHEN_STATUSES: OrderStatus[] = ['CONFIRMED', 'PREPARING']
 
 export const STAGES: KitchenLineStage[] = ['TO_COOK', 'PREPARING', 'READY']
 const STAGE_IDX: Record<KitchenLineStage, number> = { TO_COOK: 0, PREPARING: 1, READY: 2 }
-const ORDER_IDX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1, READY: 2, PACKED: 3 }
+const ORDER_IDX: Record<string, number> = { CONFIRMED: 0, PREPARING: 1 }
 
-/// Derives an order's cooking status from its line stages. Note this only
-/// reaches READY (all items cooked); PACKED is a separate, explicit step the
-/// kitchen takes once a ready order is physically packed.
+/// Derives an order's status from its line stages: nothing started yet →
+/// CONFIRMED; any progress (including all cooked) → PREPARING.
 function deriveStatus(stages: KitchenLineStage[]): OrderStatus {
-  if (stages.length > 0 && stages.every((s) => s === 'READY')) return 'READY'
   if (stages.every((s) => s === 'TO_COOK')) return 'CONFIRMED'
   return 'PREPARING'
 }
+
+const allReady = (stages: KitchenLineStage[]) => stages.length > 0 && stages.every((s) => s === 'READY')
 
 // ---- Payload types ----
 
@@ -47,6 +49,8 @@ export interface KitchenOrder {
   orderNumber: string
   recipientName: string
   status: OrderStatus
+  /// Packed and ready to dispatch (Order.readyAt set).
+  packed: boolean
   timeSlot: string | null
   createdAt: string
   note: string | null
@@ -68,18 +72,19 @@ function toUtcDate(dateStr: string): Date {
 // ---- Order status sync ----
 
 /// Recomputes an order's status from its line stages; updates and (on forward
-/// progress only) notifies the customer. A PACKED order stays packed while all
-/// its lines remain READY; if a line is sent back, it drops to the derived
-/// cooking status (i.e. it un-packs automatically).
+/// progress only) notifies the customer. If a line is sent back from READY, a
+/// packed order un-packs automatically.
 async function syncOrderStatus(orderId: string): Promise<void> {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })
   if (!order || !KITCHEN_STATUSES.includes(order.status)) return
-  const derived = deriveStatus(order.items.map((i) => i.kitchenStage))
-  // Packing is a manual state on top of all-lines-READY; keep it unless a line
-  // is no longer READY.
-  const next = order.status === 'PACKED' && derived === 'READY' ? 'PACKED' : derived
-  if (next === order.status) return
-  await prisma.order.update({ where: { id: orderId }, data: { status: next } })
+  const stages = order.items.map((i) => i.kitchenStage)
+  const next = deriveStatus(stages)
+  const unpack = order.readyAt != null && !allReady(stages)
+  if (next === order.status && !unpack) return
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { status: next, ...(unpack ? { readyAt: null } : {}) },
+  })
   if (ORDER_IDX[next] > ORDER_IDX[order.status]) {
     await notifyOrderStatus(order.customerId, next, order.orderNumber, order.id)
   }
@@ -92,19 +97,12 @@ export async function packOrder(orderId: string, packed: boolean): Promise<Produ
   if (!KITCHEN_STATUSES.includes(order.status)) {
     throw HttpError.badRequest(`Order is not in the kitchen (status: ${order.status})`)
   }
-  const derived = deriveStatus(order.items.map((i) => i.kitchenStage))
-
   if (packed) {
-    if (derived !== 'READY') throw HttpError.badRequest('All items must be ready before packing')
-    if (order.status !== 'PACKED') {
-      await prisma.order.update({ where: { id: orderId }, data: { status: 'PACKED' } })
-      await notifyOrderStatus(order.customerId, 'PACKED', order.orderNumber, order.id)
-    }
-  } else {
-    // Un-pack back to its cooking status (READY) — a silent correction.
-    if (order.status === 'PACKED') {
-      await prisma.order.update({ where: { id: orderId }, data: { status: derived } })
-    }
+    if (!allReady(order.items.map((i) => i.kitchenStage))) throw HttpError.badRequest('All items must be ready before packing')
+    if (!order.readyAt) await prisma.order.update({ where: { id: orderId }, data: { readyAt: new Date() } })
+  } else if (order.readyAt) {
+    // Un-pack: a silent correction (the customer still sees "Preparing").
+    await prisma.order.update({ where: { id: orderId }, data: { readyAt: null } })
   }
   return getProductionDay(order.fulfillmentDate.toISOString().slice(0, 10))
 }
@@ -116,7 +114,7 @@ export async function listProductionDates(): Promise<{ date: string; orderCount:
   const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
   const orders = await prisma.order.findMany({
     where: { status: { in: KITCHEN_STATUSES }, fulfillmentDate: { gte: todayUtc } },
-    select: { fulfillmentDate: true, status: true },
+    select: { fulfillmentDate: true, readyAt: true },
     orderBy: { fulfillmentDate: 'asc' },
   })
   const byDate = new Map<string, { orderCount: number; toCook: number }>()
@@ -124,7 +122,7 @@ export async function listProductionDates(): Promise<{ date: string; orderCount:
     const key = o.fulfillmentDate.toISOString().slice(0, 10)
     const e = byDate.get(key) ?? { orderCount: 0, toCook: 0 }
     e.orderCount += 1
-    if (o.status !== 'PACKED') e.toCook += 1
+    if (!o.readyAt) e.toCook += 1
     byDate.set(key, e)
   }
   return [...byDate.entries()].map(([date, v]) => ({ date, ...v }))
@@ -176,9 +174,8 @@ export async function getProductionDay(dateStr: string): Promise<ProductionDay> 
       id: o.id,
       orderNumber: o.orderNumber,
       recipientName: o.recipientName,
-      // The stored status is kept in sync with the lines and also carries the
-      // manual PACKED state, so use it directly.
       status: o.status,
+      packed: o.readyAt != null,
       timeSlot: o.timeSlot,
       createdAt: o.createdAt.toISOString(),
       note: o.notes,

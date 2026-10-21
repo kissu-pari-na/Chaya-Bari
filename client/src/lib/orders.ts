@@ -94,6 +94,8 @@ export interface OrderingSetting {
   minAdvanceDays: number
   defaultDeliveryCost: number
   timezone: string
+  /// Default pay-later limit (BDT) for every wallet.
+  walletCreditLimit: number
 }
 
 export function fetchOrderingSetting() {
@@ -180,24 +182,25 @@ export function fetchAdminOrder(id: string) {
   return apiRequest<{ order: AdminOrder }>(`/admin/orders/${id}`, { auth: true }).then((r) => r.order)
 }
 
-export function updateOrderStatus(id: string, status: OrderStatus) {
+/// Extra details for a status step: dispatching may name who delivers; a
+/// cash-on-delivery order records the cash collected when delivered.
+export interface StatusExtras {
+  provider?: string
+  trackingRef?: string
+  collected?: number
+  collectMethod?: 'CASH' | 'BKASH' | 'NAGAD' | 'ROCKET' | 'BANK'
+  collectReference?: string
+}
+
+export function updateOrderStatus(id: string, status: OrderStatus, extras: StatusExtras = {}) {
   return apiRequest<{ order: AdminOrder }>(`/admin/orders/${id}/status`, {
     method: 'PATCH',
-    body: { status },
+    body: { status, ...extras },
     auth: true,
   }).then((r) => r.order)
 }
 
-export function updateOrderPaymentStatus(id: string, paymentStatus: PaymentStatus) {
-  return apiRequest<{ order: AdminOrder }>(`/admin/orders/${id}/payment-status`, {
-    method: 'PATCH',
-    body: { paymentStatus },
-    auth: true,
-  }).then((r) => r.order)
-}
-
-/// Admin switches an order between pay-in-advance and cash-on-delivery (allowed
-/// only while the order is still pending confirmation).
+/// Admin switches an order's payment method (only while it is still pending).
 export function updateOrderPaymentMode(id: string, paymentMode: PaymentMode) {
   return apiRequest<{ order: AdminOrder }>(`/admin/orders/${id}/payment-mode`, {
     method: 'PATCH',

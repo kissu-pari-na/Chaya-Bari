@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { fetchCategories, fetchProductsPage } from '../lib/products'
 import { useInfiniteScroll } from '../lib/useInfiniteScroll'
 import { useI18n } from '../context/LanguageContext'
@@ -15,7 +16,9 @@ export function ProductList() {
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
   const [categories, setCategories] = useState<Category[]>([])
-  const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined)
+  // ?category= (from the home menu's "see all") pre-selects a category.
+  const [params] = useSearchParams()
+  const [activeCategory, setActiveCategory] = useState<string | undefined>(params.get('category') ?? undefined)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)

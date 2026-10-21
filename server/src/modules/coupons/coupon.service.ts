@@ -13,6 +13,8 @@ export interface PublicCoupon {
   minOrderSubtotal: number
   isActive: boolean
   expiresAt: string | null
+  limitDays: number | null
+  maxRedemptions: number | null
 }
 
 export function toPublicCoupon(c: Coupon): PublicCoupon {
@@ -26,6 +28,8 @@ export function toPublicCoupon(c: Coupon): PublicCoupon {
     minOrderSubtotal: Number(c.minOrderSubtotal),
     isActive: c.isActive,
     expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+    limitDays: c.limitDays,
+    maxRedemptions: c.maxRedemptions,
   }
 }
 
@@ -39,6 +43,8 @@ function toData(input: CreateCouponInput) {
     minOrderSubtotal: new Prisma.Decimal(input.minOrderSubtotal ?? 0),
     isActive: input.isActive ?? true,
     expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+    limitDays: input.scope === 'WALLET_LIMIT' ? (input.limitDays ?? null) : null,
+    maxRedemptions: input.scope === 'WALLET_LIMIT' ? (input.maxRedemptions ?? null) : null,
   }
 }
 
@@ -63,9 +69,13 @@ export async function deleteCoupon(id: string) {
   await prisma.coupon.delete({ where: { id } })
 }
 
-/// Looks up an active coupon by code for use at checkout / preview.
+/// Looks up an active coupon by code for use at checkout / preview. Wallet-limit
+/// codes are redeemed in the wallet, never applied to an order.
 export async function findUsableCoupon(code: string): Promise<Coupon> {
   const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } })
   if (!coupon) throw HttpError.badRequest('Invalid coupon code')
+  if (coupon.scope === 'WALLET_LIMIT') {
+    throw HttpError.badRequest('This is a pay-later limit code. Redeem it in your wallet instead.')
+  }
   return coupon
 }

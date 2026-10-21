@@ -32,13 +32,13 @@ export function ContributionSection({ orderId, refreshKey }: { orderId: string; 
         </div>
         <div className="profit-line profit-line--strong">
           <span>{t('কন্ট্রিবিউশন', 'Contribution')}</span>
-          <span style={{ color: c.contribution != null && c.contribution >= 0 ? '#b07d10' : c.contribution != null ? '#b3261e' : undefined }}>
+          <span style={{ color: c.contribution != null && c.contribution >= 0 ? 'var(--success)' : c.contribution != null ? 'var(--danger)' : undefined }}>
             {c.contribution != null ? formatBdt(c.contribution) : t('অসম্পূর্ণ', 'Incomplete')}
           </span>
         </div>
       </div>
       {!c.complete && (
-        <p className="hint" style={{ color: '#b3541e' }}>
+        <p className="hint" style={{ color: 'var(--warning)' }}>
           {t('প্রকৃত ডেলিভারি খরচ যোগ করলে চূড়ান্ত কন্ট্রিবিউশন হিসাব হবে।', 'Add the actual delivery cost to compute the final contribution.')}
         </p>
       )}

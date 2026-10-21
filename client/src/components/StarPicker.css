@@ -10,7 +10,7 @@
   font-size: 1.7rem;
   line-height: 1;
   padding: 0 0.05rem;
-  color: color-mix(in srgb, var(--card-muted, #b8b9b2) 45%, transparent);
+  color: color-mix(in srgb, var(--card-muted) 45%, transparent);
   transition: color 0.1s ease, transform 0.1s ease;
 }
 
@@ -19,5 +19,5 @@
 }
 
 .starpick__star.is-on {
-  color: #f2b01e;
+  color: var(--rating);
 }

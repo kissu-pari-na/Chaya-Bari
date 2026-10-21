@@ -1,23 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { createOrderDelivery, dispatchDelivery, fetchOrderDelivery, updateDelivery } from '../../lib/delivery'
-import { deliveryStatusLabel, deliveryStatuses } from '../../lib/deliveryStatus'
+import { createOrderDelivery, fetchOrderDelivery, updateDelivery } from '../../lib/delivery'
 import { formatBdt } from '../../lib/format'
 import { ApiError } from '../../lib/apiClient'
 import { useI18n } from '../../context/LanguageContext'
-import type { Delivery, DeliveryStatus } from '../../types/delivery'
+import type { Delivery } from '../../types/delivery'
 import './Admin.css'
 
-/// Delivery panel embedded in the admin order detail. Exactly two cost values:
-/// the customer delivery cost (fixed at checkout) and the actual delivery cost
-/// (entered here); the difference is shown, never an estimate.
-export function DeliverySection({ orderId }: { orderId: string }) {
+/// Delivery details for an order: who delivers it and what it cost. Progress
+/// (on the way / delivered) is the order's own status — set from the next-step
+/// card — so there is no separate delivery status here (vault D-DLV-002). Two
+/// cost values only: what the customer paid and what we paid; the difference is
+/// derived, never an estimate.
+export function DeliverySection({ orderId, refreshKey }: { orderId: string; refreshKey?: string }) {
   const { t } = useI18n()
   const [delivery, setDelivery] = useState<Delivery | null>(null)
   const [loading, setLoading] = useState(true)
   const [provider, setProvider] = useState('')
   const [trackingRef, setTrackingRef] = useState('')
   const [actualCost, setActualCost] = useState('')
-  const [status, setStatus] = useState<DeliveryStatus>('PENDING')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
@@ -25,150 +25,80 @@ export function DeliverySection({ orderId }: { orderId: string }) {
     fetchOrderDelivery(orderId)
       .then((d) => {
         setDelivery(d)
-        if (d) syncForm(d)
+        if (d) sync(d)
       })
       .finally(() => setLoading(false))
-  }, [orderId])
+  }, [orderId, refreshKey])
 
-  function syncForm(d: Delivery) {
+  function sync(d: Delivery) {
     setProvider(d.provider ?? '')
     setTrackingRef(d.trackingRef ?? '')
     setActualCost(d.actualDeliveryCost != null ? String(d.actualDeliveryCost) : '')
-    setStatus(d.status)
   }
 
-  async function handleCreate() {
-    setError(null)
-    try {
-      const d = await createOrderDelivery(orderId)
-      setDelivery(d)
-      syncForm(d)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('ডেলিভারি তৈরি করা যায়নি', 'Could not create delivery'))
-    }
-  }
-
-  async function handleDispatch() {
-    if (!delivery) return
-    setError(null)
-    try {
-      const d = await dispatchDelivery(delivery.id, provider || 'Pathao')
-      setDelivery(d)
-      syncForm(d)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('ডিসপ্যাচ করা যায়নি', 'Could not dispatch'))
-    }
-  }
-
-  async function handleSave(event: FormEvent) {
-    event.preventDefault()
-    if (!delivery) return
+  async function save(e: FormEvent) {
+    e.preventDefault()
     setError(null)
     setSaved(false)
     try {
-      const d = await updateDelivery(delivery.id, {
-        provider: provider || undefined,
-        trackingRef: trackingRef || undefined,
-        actualDeliveryCost: actualCost.trim() === '' ? null : Number(actualCost),
-        status,
+      const d = delivery ?? (await createOrderDelivery(orderId))
+      const updated = await updateDelivery(d.id, {
+        provider: provider.trim() || undefined,
+        trackingRef: trackingRef.trim() || undefined,
+        actualDeliveryCost: actualCost === '' ? null : Number(actualCost),
       })
-      setDelivery(d)
-      syncForm(d)
+      setDelivery(updated)
+      sync(updated)
       setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
     } catch (err) {
-      if (err instanceof ApiError && err.details?.length) setError(err.details.map((x) => x.message).join(' · '))
-      else setError(err instanceof ApiError ? err.message : t('সংরক্ষণ করা যায়নি', 'Could not save'))
+      setError(err instanceof ApiError ? err.message : t('সংরক্ষণ করা যায়নি', 'Could not save'))
     }
   }
 
-  if (loading) return <p className="muted">{t('ডেলিভারি লোড হচ্ছে…', 'Loading delivery…')}</p>
-
-  if (!delivery) {
-    return (
-      <div className="delivery-panel">
-        <h3>{t('ডেলিভারি', 'Delivery')}</h3>
-        <p className="muted">{t('এই অর্ডারের জন্য এখনো ডেলিভারি তৈরি হয়নি।', 'No delivery has been created for this order yet.')}</p>
-        <button className="btn-ghost" onClick={handleCreate}>{t('ডেলিভারি তৈরি করুন', 'Create delivery')}</button>
-      </div>
-    )
-  }
+  if (loading) return <div className="skeleton" style={{ height: 120 }} />
 
   return (
-    <form className="delivery-panel" onSubmit={handleSave}>
-      <h3>{t('ডেলিভারি', 'Delivery')}</h3>
-      {error && <div className="auth-error">{error}</div>}
-
-      <div className="delivery-costs">
-        <div>
-          <span className="delivery-costs__label">{t('কাস্টমার ডেলিভারি খরচ', 'Customer delivery cost')}</span>
-          <span className="delivery-costs__value">{formatBdt(delivery.customerDeliveryCost)}</span>
-        </div>
-        <div>
-          <span className="delivery-costs__label">{t('প্রকৃত ডেলিভারি খরচ', 'Actual delivery cost')}</span>
-          <span className="delivery-costs__value">
-            {delivery.actualDeliveryCost != null ? formatBdt(delivery.actualDeliveryCost) : '—'}
-          </span>
-        </div>
-        <div>
-          <span className="delivery-costs__label">{t('পার্থক্য', 'Difference')}</span>
-          <span
-            className={
-              delivery.difference == null
-                ? 'delivery-costs__value muted'
-                : delivery.difference >= 0
-                  ? 'delivery-costs__value delivery-gain'
-                  : 'delivery-costs__value delivery-loss'
-            }
-          >
-            {delivery.difference == null
-              ? t('অসম্পূর্ণ', 'Incomplete')
-              : `${delivery.difference >= 0 ? '+' : '−'}${formatBdt(Math.abs(delivery.difference))}`}
-          </span>
-        </div>
-      </div>
-
-      <div className="admin-form__row">
+    <section className="admin-card">
+      <h2>{t('ডেলিভারি', 'Delivery')}</h2>
+      {error && <p className="pay-note pay-note--err">{error}</p>}
+      <form className="admin-form admin-form--compact" onSubmit={save}>
         <label>
-          {t('প্রোভাইডার', 'Provider')}
-          <input value={provider} onChange={(e) => setProvider(e.target.value)} placeholder="Pathao / pandago…" />
+          {t('কে ডেলিভারি করছেন', 'Delivered by')}
+          <input value={provider} onChange={(e) => setProvider(e.target.value)} placeholder={t('যেমন: Pathao, রাইডার রহিম', 'e.g. Pathao, rider Rahim')} />
         </label>
         <label>
-          {t('ট্র্যাকিং রেফারেন্স', 'Tracking reference')}
+          {t('ট্র্যাকিং / ফোন', 'Tracking / phone')}
           <input value={trackingRef} onChange={(e) => setTrackingRef(e.target.value)} />
         </label>
-      </div>
-      <div className="admin-form__row">
         <label>
-          {t('প্রকৃত ডেলিভারি খরচ (৳)', 'Actual delivery cost (৳)')}
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={actualCost}
-            onChange={(e) => setActualCost(e.target.value)}
-            placeholder={t('পরে প্রবেশ করান', 'Enter later')}
-          />
+          {t('আসল ডেলিভারি খরচ (৳)', 'Actual delivery cost (৳)')}
+          <input type="number" min={0} step="any" value={actualCost} onChange={(e) => setActualCost(e.target.value)} />
         </label>
-        <label>
-          {t('স্ট্যাটাস', 'Status')}
-          <select value={status} onChange={(e) => setStatus(e.target.value as DeliveryStatus)}>
-            {deliveryStatuses.map((s) => (
-              <option key={s} value={s}>
-                {deliveryStatusLabel[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="admin-form__actions">
-        <button type="submit">{t('সংরক্ষণ করুন', 'Save')}</button>
-        <button type="button" className="btn-ghost" onClick={handleDispatch}>
-          {t('প্রোভাইডারে পাঠান (মক)', 'Send to provider (mock)')}
-        </button>
-        {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>{t('সংরক্ষিত হয়েছে', 'Saved')}</span>}
-      </div>
-      <p className="hint">{t('প্রোভাইডারে পাঠালে মক ট্র্যাকিং আইডি তৈরি হবে ও স্ট্যাটাস "অ্যাসাইনড" হবে (Pathao/pandago ইন্টিগ্রেশন পয়েন্ট)।', 'Sending to a provider creates a mock tracking ID and sets status to "Assigned" (Pathao/pandago integration point).')}</p>
-    </form>
+        <div className="admin-form__actions">
+          <button type="submit" className="btn btn--soft btn--sm">
+            {t('সংরক্ষণ', 'Save')}
+          </button>
+          {saved && <span className="tone-gain">✓ {t('সংরক্ষিত', 'Saved')}</span>}
+        </div>
+      </form>
+      {delivery && (
+        <dl className="facts">
+          <div>
+            <dt>{t('গ্রাহক দিয়েছেন', 'Customer paid')}</dt>
+            <dd className="num">{formatBdt(delivery.customerDeliveryCost)}</dd>
+          </div>
+          <div>
+            <dt>{t('আমরা দিয়েছি', 'We paid')}</dt>
+            <dd className="num">{delivery.actualDeliveryCost != null ? formatBdt(delivery.actualDeliveryCost) : '—'}</dd>
+          </div>
+          <div>
+            <dt>{t('লাভ/ক্ষতি', 'Gain / loss')}</dt>
+            <dd className={delivery.difference == null ? 'num' : delivery.difference >= 0 ? 'num tone-gain' : 'num tone-loss'}>
+              {delivery.difference == null ? t('আসল খরচ দিন', 'enter actual cost') : formatBdt(delivery.difference)}
+            </dd>
+          </div>
+        </dl>
+      )}
+    </section>
   )
 }

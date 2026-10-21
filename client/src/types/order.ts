@@ -1,20 +1,14 @@
 import type { DeliverySummary } from './delivery'
-import type { Payment } from './payment'
+import type { OrderPayment } from './payment'
 
-export type OrderStatus =
-  | 'PENDING'
-  | 'CONFIRMED'
-  | 'PREPARING'
-  | 'READY'
-  | 'PACKED'
-  | 'OUT_FOR_DELIVERY'
-  | 'DELIVERED'
-  | 'CANCELLED'
+/// The five steps everyone sees (+ cancelled). "Packed & ready" is readyAt.
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
 
-export type PaymentStatus = 'PENDING' | 'PAID' | 'PARTIALLY_PAID' | 'REFUNDED' | 'FAILED'
+export type PaymentStatus = 'PENDING' | 'PAID' | 'PARTIALLY_PAID' | 'REFUNDED' | 'FAILED' | 'ON_WALLET'
 
-/// How an order is settled: PREPAID (pay in advance) or COD (cash on delivery).
-export type PaymentMode = 'PREPAID' | 'COD'
+/// Pay first (manual payment or wallet credit), pay later (charged to the
+/// wallet within its limit) or cash on delivery.
+export type PaymentMode = 'PAY_FIRST' | 'PAY_LATER' | 'COD'
 
 export interface Address {
   id: string
@@ -72,10 +66,16 @@ export interface Order {
   paymentMode: PaymentMode
   amountPaid: number
   amountDue: number
+  /// Part of the order charged to the wallet (pay later, or cash collected short).
+  onWallet: number
   createdAt: string
+  /// Kitchen packed it; ready to dispatch (status stays PREPARING).
+  readyAt: string | null
+  dispatchedAt: string | null
+  deliveredAt: string | null
   items: OrderItem[]
   delivery: DeliverySummary | null
-  payments: Payment[]
+  payments: OrderPayment[]
 }
 
 export interface AdminOrder extends Order {
@@ -118,7 +118,11 @@ export interface TrackedOrder {
   total: number
   amountPaid: number
   amountDue: number
+  onWallet: number
   createdAt: string
+  readyAt: string | null
+  dispatchedAt: string | null
+  deliveredAt: string | null
   delivery: DeliverySummary | null
   account: { maskedEmail: string | null; registered: boolean }
 }
@@ -150,7 +154,8 @@ export interface AdminCheckoutInput {
   paymentMode?: PaymentMode
 }
 
-export type CouponScope = 'FOOD' | 'DELIVERY'
+/// WALLET_LIMIT codes raise a customer's pay-later limit (redeemed in the wallet).
+export type CouponScope = 'FOOD' | 'DELIVERY' | 'WALLET_LIMIT'
 export type CouponKind = 'PERCENT' | 'FIXED' | 'FREE_DELIVERY'
 
 export interface Coupon {
@@ -163,6 +168,8 @@ export interface Coupon {
   minOrderSubtotal: number
   isActive: boolean
   expiresAt: string | null
+  limitDays: number | null
+  maxRedemptions: number | null
 }
 
 export interface CouponInput {
@@ -174,6 +181,8 @@ export interface CouponInput {
   minOrderSubtotal?: number
   isActive?: boolean
   expiresAt?: string
+  limitDays?: number
+  maxRedemptions?: number
 }
 
 export interface CouponPreview {
@@ -209,7 +218,7 @@ export interface CheckoutInput {
 }
 
 /// Guest checkout (no account). Contact + address are inline and required;
-/// payment is always cash on delivery, decided server-side.
+/// guests can pay first or cash on delivery (no wallet, so no pay later).
 export interface GuestCheckoutInput {
   items: { productId: string; quantity: number }[]
   address: AddressInput

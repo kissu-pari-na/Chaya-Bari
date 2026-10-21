@@ -33,6 +33,22 @@ export function formatDateWithDay(dateStr: string | null | undefined): string {
   })
 }
 
+/// A timestamp as a short date + time in the business timezone (Asia/Dhaka),
+/// e.g. "21 Oct, 2:05 pm", in the active language.
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const locale = getLang() === 'bn' ? 'bn-BD' : 'en-GB'
+  return date.toLocaleString(locale, {
+    timeZone: 'Asia/Dhaka',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 /// Just the weekday name (long) for a "YYYY-MM-DD" date, in the active language.
 export function formatWeekday(dateStr: string | null | undefined): string {
   if (!dateStr) return ''

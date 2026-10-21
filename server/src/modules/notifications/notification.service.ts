@@ -11,6 +11,10 @@ export interface NotificationData {
   orderNumber?: string
   amount?: number
   method?: string
+  /// Wallet events: customer name, admin reference, rejection reason.
+  name?: string
+  reference?: string
+  reason?: string
 }
 
 export interface PublicNotification {
@@ -124,20 +128,6 @@ function statusMessage(
         key: 'order.preparing',
         title: 'রান্না শুরু হয়েছে 👨‍🍳',
         body: `আপনার অর্ডার ${orderNumber}-এর খাবার এখন আমাদের রান্নাঘরে তৈরি হচ্ছে।`,
-      }
-    case 'READY':
-      return {
-        type: 'ORDER_READY',
-        key: 'order.ready',
-        title: 'খাবার প্রস্তুত 🍱',
-        body: `আপনার অর্ডার ${orderNumber}-এর খাবার তৈরি হয়ে গেছে। এখন প্যাক করা হবে।`,
-      }
-    case 'PACKED':
-      return {
-        type: 'ORDER_PACKED',
-        key: 'order.packed',
-        title: 'প্যাকিং সম্পন্ন 📦',
-        body: `আপনার অর্ডার ${orderNumber} প্যাক করা হয়েছে এবং ডেলিভারির জন্য প্রস্তুত।`,
       }
     case 'OUT_FOR_DELIVERY':
       return {
@@ -304,6 +294,53 @@ export async function notifyPaymentVerified(customerId: string | null, verified:
       link: customerOrderLink(orderId),
     })
   }
+}
+
+// ---- Wallet ----
+
+const WALLET_LINK = '/wallet'
+const adminWalletLink = (customerId: string | null) => (customerId ? `/admin/wallets/${customerId}` : '/admin/wallets')
+
+/// A customer reported a manual payment into their wallet; admins must review it.
+export async function notifyWalletClaimSubmitted(name: string, amount: number, method: string, customerId: string): Promise<void> {
+  await notifyAdmins({
+    type: 'PAYMENT_SUBMITTED',
+    title: 'পেমেন্ট যাচাই করুন',
+    body: `${name} ৳${amount} (${method}) পরিশোধের তথ্য জমা দিয়েছেন। অনুগ্রহ করে যাচাই করুন।`,
+    data: { key: 'wallet.claim.submitted', name, amount, method },
+    link: adminWalletLink(customerId),
+  })
+}
+
+/// An admin confirmed or rejected the customer's payment claim.
+export async function notifyWalletClaimReviewed(customerId: string | null, confirmed: boolean, amount: number, reason?: string): Promise<void> {
+  await notifyCustomer(customerId, confirmed
+    ? {
+        type: 'PAYMENT_VERIFIED',
+        title: 'পেমেন্ট নিশ্চিত হয়েছে ✅',
+        body: `আপনার ৳${amount} পেমেন্ট যাচাই করে ওয়ালেটে যোগ করা হয়েছে। ধন্যবাদ!`,
+        data: { key: 'wallet.claim.confirmed', amount },
+        link: WALLET_LINK,
+      }
+    : {
+        type: 'PAYMENT_REJECTED',
+        title: 'পেমেন্ট যাচাই করা যায়নি',
+        body: `আপনার ৳${amount} পেমেন্ট যাচাই করা যায়নি${reason ? `: ${reason}` : ''}। অনুগ্রহ করে সঠিক রেফারেন্স দিয়ে আবার জমা দিন।`,
+        data: { key: 'wallet.claim.rejected', amount, reason: reason ?? '' },
+        link: WALLET_LINK,
+      })
+}
+
+/// An admin adjusted the customer's wallet (credit or debit) with a reference.
+export async function notifyWalletAdjusted(customerId: string, amount: number, reference: string): Promise<void> {
+  const credit = amount > 0
+  await notifyCustomer(customerId, {
+    type: credit ? 'PAYMENT_RECEIVED' : 'PAYMENT_REFUNDED',
+    title: credit ? 'ওয়ালেটে জমা হয়েছে' : 'ওয়ালেট থেকে কাটা হয়েছে',
+    body: `আপনার ওয়ালেটে ৳${Math.abs(amount)} ${credit ? 'যোগ' : 'কাটা'} হয়েছে (রেফারেন্স: ${reference})।`,
+    data: { key: credit ? 'wallet.adjusted.credit' : 'wallet.adjusted.debit', amount: Math.abs(amount), reference },
+    link: WALLET_LINK,
+  })
 }
 
 // ---- Queries ----

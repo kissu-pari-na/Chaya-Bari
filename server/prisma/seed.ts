@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'node:crypto'
 
 const prisma = new PrismaClient()
 
-// Seed the initial Admin (business owner) and Kitchen accounts. Passwords come
-// from env so real secrets are never committed; the printed defaults are for
-// local development only.
+// Seed the initial Admin (business owner) and Kitchen accounts. Sign-in is
+// Google only (vault D-AUTH-004), so set SEED_ADMIN_EMAIL / SEED_KITCHEN_EMAIL to
+// the Google accounts those people sign in with. The accounts have no usable
+// password (a random hash fills the legacy column).
 async function main() {
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@chayabari.local'
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'admin12345'
-  const kitchenEmail = process.env.SEED_KITCHEN_EMAIL ?? 'kitchen@chayabari.local'
-  const kitchenPassword = process.env.SEED_KITCHEN_PASSWORD ?? 'kitchen12345'
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@chayabari.local').toLowerCase()
+  const kitchenEmail = (process.env.SEED_KITCHEN_EMAIL ?? 'kitchen@chayabari.local').toLowerCase()
+  const noPassword = () => bcrypt.hash(randomBytes(32).toString('hex'), 10)
 
   await prisma.user.upsert({
     where: { email: adminEmail },
@@ -20,7 +21,7 @@ async function main() {
       email: adminEmail,
       phone: null,
       role: 'ADMIN',
-      passwordHash: await bcrypt.hash(adminPassword, 10),
+      passwordHash: await noPassword(),
       phoneVerifiedAt: new Date(),
       emailVerifiedAt: new Date(),
     },
@@ -34,15 +35,15 @@ async function main() {
       email: kitchenEmail,
       phone: null,
       role: 'KITCHEN',
-      passwordHash: await bcrypt.hash(kitchenPassword, 10),
+      passwordHash: await noPassword(),
       phoneVerifiedAt: new Date(),
       emailVerifiedAt: new Date(),
     },
   })
 
   console.log('Seeded accounts:')
-  console.log(`  ADMIN   -> ${adminEmail} / ${adminPassword}`)
-  console.log(`  KITCHEN -> ${kitchenEmail} / ${kitchenPassword}`)
+  console.log(`  ADMIN   -> ${adminEmail} (sign in with this Google account)`)
+  console.log(`  KITCHEN -> ${kitchenEmail} (sign in with this Google account)`)
 
   await seedCatalog()
   await seedExpenseCategories()
@@ -138,7 +139,7 @@ async function seedReviews() {
         name: d.name,
         email: d.email,
         role: 'CUSTOMER',
-        passwordHash: await bcrypt.hash('demo12345', 10),
+        passwordHash: await bcrypt.hash(randomBytes(32).toString('hex'), 10), // demo data: no password sign-in
         phoneVerifiedAt: new Date(),
         emailVerifiedAt: new Date(),
         customer: { create: {} },
@@ -152,7 +153,9 @@ async function seedReviews() {
 
     const orderNumber = `CB-SEED-${String(i + 1).padStart(3, '0')}`
     const price = Number(product.price)
-    // Idempotent: recreate the demo order fresh each seed run.
+    // Idempotent: recreate the demo order (and its wallet entries) fresh each seed run.
+    const previous = await prisma.order.findUnique({ where: { orderNumber } })
+    if (previous) await prisma.walletEntry.deleteMany({ where: { orderId: previous.id } })
     await prisma.order.deleteMany({ where: { orderNumber } })
     const order = await prisma.order.create({
       data: {
@@ -167,6 +170,8 @@ async function seedReviews() {
         customerDeliveryCost: 60,
         total: price + 60,
         status: 'DELIVERED',
+        paymentMode: 'PAY_FIRST',
+        paymentStatus: 'PAID',
         deliveredAt: twoDaysAgo,
         // Already invited so the boot dispatcher does not re-notify demo users.
         reviewInviteSentAt: twoDaysAgo,
@@ -182,6 +187,14 @@ async function seedReviews() {
           },
         },
       },
+    })
+
+    // Paid in advance: a confirmed payment and the matching charge net to zero.
+    await prisma.walletEntry.createMany({
+      data: [
+        { customerId: customer.id, orderId: order.id, type: 'PAYMENT', amount: price + 60, method: 'BKASH', reference: `DEMO-${orderNumber}`, source: 'CUSTOMER', createdAt: twoDaysAgo },
+        { customerId: customer.id, orderId: order.id, type: 'ORDER_CHARGE', amount: -(price + 60), note: `Order ${orderNumber}`, source: 'SYSTEM', createdAt: twoDaysAgo },
+      ],
     })
 
     await prisma.review.create({

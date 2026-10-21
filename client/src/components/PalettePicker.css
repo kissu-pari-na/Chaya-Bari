@@ -1,0 +1,181 @@
+/* Palette picker — trigger orb + body-level popover (design.md §6) */
+.palette-trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--edge);
+  background: var(--glass);
+  box-shadow: inset 0 1px 0 var(--gloss-top), var(--shadow);
+  cursor: pointer;
+}
+.palette-trigger__orb {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--grad);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 4px 10px -4px var(--btn-glow);
+  transition: transform 700ms var(--ease-spring);
+}
+.palette-trigger__orb::after,
+.palette__orb::after {
+  content: '';
+  position: absolute;
+  inset: 8% 22% 50% 22%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), transparent);
+}
+.palette-trigger:hover .palette-trigger__orb,
+.palette-trigger[aria-expanded='true'] .palette-trigger__orb {
+  transform: rotate(90deg);
+}
+
+.palette-pop {
+  position: fixed;
+  z-index: 150;
+  width: min(348px, calc(100vw - 24px));
+  padding: 1rem;
+  border-radius: var(--radius-pop);
+  background: var(--popover-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--gloss-top), var(--shadow-lift);
+  color: var(--text);
+  animation: pop-in 520ms var(--ease-spring) both;
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+}
+.palette-pop__head {
+  margin-bottom: 0.75rem;
+}
+.palette-pop__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.palette-pop__hint,
+.palette-pop__note {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.palette-pop__note {
+  margin-top: 0.85rem;
+}
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+.palette {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 52px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 14px;
+  border: 1px solid var(--edge-low);
+  background: var(--glass-inset);
+  color: var(--text);
+  font: 600 0.85rem/1.2 var(--font-body);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out);
+}
+.palette:hover {
+  border-color: var(--edge);
+}
+.palette[aria-checked='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.palette__orb {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.25), 0 6px 12px -6px rgba(0, 0, 0, 0.4);
+}
+.palette__name {
+  flex: 1;
+  min-width: 0;
+}
+.palette__check {
+  color: var(--accent-ink);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--dur-ui) var(--ease-out),
+    transform 520ms var(--ease-spring);
+}
+.palette[aria-checked='true'] .palette__check {
+  opacity: 1;
+  transform: none;
+}
+
+.palette-pop__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--outline);
+}
+.palette-pop__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Random: a colour wheel of every palette with a shuffle glyph */
+.palette__orb--wheel {
+  display: grid;
+  place-items: center;
+}
+.palette__orb-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--glass-strong);
+  color: var(--text);
+}
+.palette--random[aria-checked='true'] .palette__orb--wheel {
+  animation: wheel-spin 12s linear infinite;
+}
+.palette--random[aria-checked='true'] .palette__orb-icon {
+  animation: wheel-spin 12s linear infinite reverse; /* keep the glyph upright */
+}
+@keyframes wheel-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.palette__sub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+html.low-motion .palette__orb--wheel,
+html.low-motion .palette__orb-icon {
+  animation: none;
+}

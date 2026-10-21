@@ -369,7 +369,8 @@ export function NewOrderAdmin() {
             {t('পেমেন্ট', 'Payment')}
             <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}>
               <option value="COD">{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</option>
-              <option value="PREPAID">{t('অগ্রিম পেমেন্ট', 'Pay in advance')}</option>
+              <option value="PAY_FIRST">{t('আগে পেমেন্ট', 'Pay first')}</option>
+              <option value="PAY_LATER">{t('পরে পেমেন্ট (ওয়ালেটে)', 'Pay later (on wallet)')}</option>
             </select>
           </label>
           <label>

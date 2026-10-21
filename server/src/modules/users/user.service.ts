@@ -1,7 +1,8 @@
+import { randomBytes } from 'node:crypto'
 import { prisma } from '../../lib/prisma.js'
 import { hashPassword } from '../../utils/password.js'
 import { HttpError } from '../../utils/httpError.js'
-import { sendAdminCreatedEmail } from '../auth/verification.service.js'
+import { sendAdminCreatedEmail } from '../auth/account-email.service.js'
 import type { CreateUserInput } from './user.schemas.js'
 import { releasePhoneFromPlaceholders } from '../customers/customer-account.service.js'
 
@@ -12,7 +13,7 @@ export interface AdminUserRow {
   phone: string | null
   role: 'CUSTOMER' | 'KITCHEN' | 'ADMIN'
   isActive: boolean
-  /// Whether the account has confirmed its email. Until then it can't log in.
+  /// Whether the account is confirmed. Becomes true on its owner's first Google sign-in.
   emailVerified: boolean
   /// Opened by an admin to order on someone's behalf; not claimed by its owner yet.
   isPlaceholder: boolean
@@ -114,10 +115,11 @@ export async function createUser(input: CreateUserInput, createdById: string): P
   })
   await releasePhoneFromPlaceholders(input.phone, email)
 
-  const passwordHash = await hashPassword(input.password)
-  // Like self-registration, an admin-created account must confirm its email
-  // before it can log in — so a confirmation code is sent below. Confirming it
-  // also takes over a placeholder's orders.
+  // Sign-in is Google only: the account has no usable password (a random hash
+  // fills the legacy column) and is confirmed the first time its owner signs in
+  // with the Google account for this email, which also takes over a
+  // placeholder's orders.
+  const passwordHash = await hashPassword(randomBytes(32).toString('hex'))
   const user = placeholder
     ? await prisma.user.update({
         where: { id: placeholder.id },
@@ -137,9 +139,7 @@ export async function createUser(input: CreateUserInput, createdById: string): P
         },
         select: selectRow,
       })
-  // Email the new user their account details + the confirmation code. The
-  // admin-set password is never emailed; once they confirm, the welcome email
-  // gives them a link to set their own password.
+  // Tell the new user their account exists and to sign in with Google.
   const full = await prisma.user.findUniqueOrThrow({ where: { id: user.id } })
   await sendAdminCreatedEmail(full)
   return toRow(user)

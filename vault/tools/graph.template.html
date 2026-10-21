@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chaya Bari Knowledge Vault</title>
+<style>
+  :root {
+    --bg: #f6f4f1; --panel: #ffffff; --text: #1d1a17; --muted: #6b645c; --line: #ddd6cc;
+    --edge: rgba(29, 26, 23, 0.22); --accent: #c22d27;
+    --k-feature: #c22d27; --k-cross: #2f5bc2; --k-integration: #1c7d62; --k-meta: #8a5a06;
+    --must: #b91c1c; --should: #a44a06; --ok: #15803d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0d0c; --panel: #1a1614; --text: #f2ede6; --muted: #a79e94; --line: #2e2825;
+      --edge: rgba(242, 237, 230, 0.2); --accent: #ff8a7a;
+      --k-feature: #ff8a7a; --k-cross: #83b0f6; --k-integration: #56ce9e; --k-meta: #ebbd56;
+      --must: #f87171; --should: #fbbf24; --ok: #4ade80;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--text); display: grid; grid-template-columns: 1fr minmax(320px, 420px); height: 100vh; }
+  @media (max-width: 800px) { body { grid-template-columns: 1fr; grid-template-rows: 55vh 45vh; } }
+  #stage { position: relative; overflow: hidden; }
+  svg { width: 100%; height: 100%; cursor: grab; touch-action: none; }
+  .toolbar { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .toolbar input { flex: 1 1 180px; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; }
+  .legend { display: flex; gap: 10px; font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); padding: 6px 10px; border-radius: 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+  line { stroke: var(--edge); stroke-width: 1.2; }
+  line.hot { stroke: var(--accent); stroke-width: 2; }
+  .node circle { stroke: var(--panel); stroke-width: 2; cursor: pointer; }
+  .node text { font-size: 11px; fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
+  .node.dim { opacity: 0.18; }
+  .node.sel circle { stroke: var(--text); stroke-width: 3; }
+  aside { background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 20px; }
+  aside h1 { font-size: 20px; margin: 0 0 4px; }
+  aside h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 20px 0 6px; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-right: 4px; }
+  ul { padding-left: 0; list-style: none; margin: 0; }
+  li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  li b { font-family: ui-monospace, monospace; font-size: 12px; }
+  .must { color: var(--must); } .should { color: var(--should); } .confirmed { color: var(--ok); }
+  a.rel { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  .hint { color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Search nodes, rules, decisions, ideas…" aria-label="Search the vault" />
+    <div class="legend"><span><i style="background:var(--k-feature)"></i>feature</span><span><i style="background:var(--k-cross)"></i>cross-cutting</span><span><i style="background:var(--k-integration)"></i>integration</span><span><i style="background:var(--k-meta)"></i>meta</span></div>
+  </div>
+  <svg id="svg" role="img" aria-label="Feature graph"><g id="viewport"><g id="edges"></g><g id="nodes"></g></g></svg>
+</div>
+<aside id="panel"><h1>Knowledge vault</h1><p class="hint">Select a node to see its rules, decisions, open questions and ideas. Drag to move, scroll to zoom.</p><div id="stats"></div></aside>
+<script>
+const G = /*__GRAPH__*/null
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim()
+const kindColor = { feature: '--k-feature', 'cross-cutting': '--k-cross', integration: '--k-integration', meta: '--k-meta' }
+const svg = document.getElementById('svg'), vp = document.getElementById('viewport')
+const NS = 'http://www.w3.org/2000/svg'
+const W = () => svg.clientWidth, H = () => svg.clientHeight
+const deg = {}
+G.edges.forEach((e) => { deg[e.from] = (deg[e.from] || 0) + 1; deg[e.to] = (deg[e.to] || 0) + 1 })
+const nodes = G.nodes.map((n, i) => ({ ...n, x: W() / 2 + Math.cos(i) * 200, y: H() / 2 + Math.sin(i) * 200, vx: 0, vy: 0, r: 7 + Math.sqrt(deg[n.id] || 1) * 3 }))
+const byId = Object.fromEntries(nodes.map((n) => [n.id, n]))
+const links = G.edges.filter((e) => byId[e.from] && byId[e.to]).map((e) => ({ ...e, s: byId[e.from], t: byId[e.to] }))
+document.getElementById('stats').innerHTML = `<p>${nodes.length} nodes · ${links.length} relations · ${nodes.reduce((s, n) => s + n.rules.length, 0)} rules · ${nodes.reduce((s, n) => s + n.ideas.length, 0)} ideas</p>`
+
+const lineEls = links.map((l) => { const el = document.createElementNS(NS, 'line'); document.getElementById('edges').append(el); return el })
+const nodeEls = nodes.map((n) => {
+  const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'node'); g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button'); g.setAttribute('aria-label', n.title)
+  const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', n.r); c.setAttribute('fill', css(kindColor[n.kind] || '--k-feature'))
+  const t = document.createElementNS(NS, 'text'); t.setAttribute('x', n.r + 4); t.setAttribute('y', 4); t.textContent = n.id
+  g.append(c, t); document.getElementById('nodes').append(g)
+  g.addEventListener('click', () => select(n.id)); g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') select(n.id) })
+  g.addEventListener('pointerdown', (e) => { e.stopPropagation(); drag = n; n.fixed = true })
+  return g
+})
+
+// --- tiny force simulation
+let alpha = 1
+function tick() {
+  const cx = W() / 2, cy = H() / 2
+  for (const a of nodes) for (const b of nodes) {
+    if (a === b) continue
+    const dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + 0.01, f = (2600 / d2) * alpha
+    a.vx += dx * f / Math.sqrt(d2); a.vy += dy * f / Math.sqrt(d2)
+  }
+  for (const l of links) {
+    const dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, d = Math.hypot(dx, dy) || 1, f = (d - 120) * 0.02 * alpha
+    l.s.vx += dx / d * f; l.s.vy += dy / d * f; l.t.vx -= dx / d * f; l.t.vy -= dy / d * f
+  }
+  for (const n of nodes) {
+    n.vx += (cx - n.x) * 0.004 * alpha; n.vy += (cy - n.y) * 0.004 * alpha
+    if (!n.fixed) { n.x += n.vx; n.y += n.vy }
+    n.vx *= 0.6; n.vy *= 0.6
+  }
+  alpha = Math.max(alpha * 0.985, 0.02)
+}
+function draw() {
+  links.forEach((l, i) => { const el = lineEls[i]; el.setAttribute('x1', l.s.x); el.setAttribute('y1', l.s.y); el.setAttribute('x2', l.t.x); el.setAttribute('y2', l.t.y) })
+  nodes.forEach((n, i) => nodeEls[i].setAttribute('transform', `translate(${n.x},${n.y})`))
+}
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+if (reduce) { for (let i = 0; i < 400; i++) tick(); draw() } else (function loop() { tick(); draw(); requestAnimationFrame(loop) })()
+
+// --- pan / zoom / drag
+let drag = null, pan = null, view = { x: 0, y: 0, k: 1 }
+const apply = () => vp.setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`)
+svg.addEventListener('pointerdown', (e) => { pan = { x: e.clientX - view.x, y: e.clientY - view.y } })
+addEventListener('pointermove', (e) => {
+  if (drag) { const r = svg.getBoundingClientRect(); drag.x = (e.clientX - r.left - view.x) / view.k; drag.y = (e.clientY - r.top - view.y) / view.k; alpha = Math.max(alpha, 0.3); if (reduce) draw() }
+  else if (pan) { view.x = e.clientX - pan.x; view.y = e.clientY - pan.y; apply() }
+})
+addEventListener('pointerup', () => { if (drag) drag.fixed = false; drag = null; pan = null })
+svg.addEventListener('wheel', (e) => { e.preventDefault(); const k = Math.min(3, Math.max(0.3, view.k * (e.deltaY < 0 ? 1.1 : 0.9))); const r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; view.x = mx - (mx - view.x) * k / view.k; view.y = my - (my - view.y) * k / view.k; view.k = k; apply() }, { passive: false })
+
+// --- panel
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const entry = (e) => `<li><b class="${esc(e.meta.tokens[0] || '')}">${esc(e.id)}</b> <span class="tag">${esc([...e.meta.tokens, e.meta.date, e.meta.impact && 'impact:' + e.meta.impact, e.meta.effort && 'effort:' + e.meta.effort].filter(Boolean).join(' · '))}</span><br>${esc(e.text)}${e.more.length ? '<br><span class="hint">' + e.more.map(esc).join('<br>') + '</span>' : ''}</li>`
+const list = (title, arr) => arr.length ? `<h2>${title} (${arr.length})</h2><ul>${arr.map(entry).join('')}</ul>` : ''
+function select(id) {
+  const n = byId[id]; if (!n) return
+  const near = new Set([id, ...links.filter((l) => l.from === id || l.to === id).flatMap((l) => [l.from, l.to])])
+  nodes.forEach((m, i) => { nodeEls[i].classList.toggle('dim', !near.has(m.id)); nodeEls[i].classList.toggle('sel', m.id === id) })
+  links.forEach((l, i) => lineEls[i].classList.toggle('hot', l.from === id || l.to === id))
+  const rel = [...n.relations.map((r) => `<li>→ ${esc(r.type)} <a class="rel" data-id="${esc(r.to)}">${esc(r.to)}</a> — ${esc(r.note)}</li>`), ...links.filter((l) => l.to === id).map((l) => `<li>← <a class="rel" data-id="${esc(l.from)}">${esc(l.from)}</a> ${esc(l.type)} — ${esc(l.note)}</li>`)]
+  document.getElementById('panel').innerHTML = `<h1>${esc(n.title)}</h1><span class="tag">${esc(n.id)}</span><span class="tag">${esc(n.kind)}</span><span class="tag">${esc(n.status)}</span><span class="tag">reviewed ${esc(n.reviewed)}</span><p>${esc(n.summary)}</p><p class="hint">${esc(n.file)}</p>${list('Rules', n.rules)}${list('Decisions', n.decisions)}${list('Open questions', n.questions)}${list('Ideas', n.ideas)}<h2>Relations</h2><ul>${rel.join('')}</ul>${n.code.length ? `<h2>Code</h2><ul>${n.code.map((c) => `<li><code>${esc(c)}</code></li>`).join('')}</ul>` : ''}`
+  document.querySelectorAll('a.rel').forEach((a) => a.addEventListener('click', () => select(a.dataset.id)))
+}
+document.getElementById('q').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase().trim()
+  nodes.forEach((n, i) => nodeEls[i].classList.toggle('dim', !!q && !JSON.stringify(n).toLowerCase().includes(q)))
+})
+if (location.hash) select(location.hash.slice(1))
+</script>
+</body>
+</html>

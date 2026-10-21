@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDeliveries } from '../../lib/delivery'
-import { deliveryStatusLabel } from '../../lib/deliveryStatus'
+import { orderStatusLabel } from '../../lib/orderStatus'
 import { formatBdt, formatDateWithDay } from '../../lib/format'
 import { formatSlotValue } from '../../lib/slots'
 import { useI18n } from '../../context/LanguageContext'
@@ -49,7 +49,7 @@ export function DeliveriesAdmin() {
             </div>
             <div className="stat">
               <span className="stat__label">{t('ডেলিভারি লাভ/ক্ষতি', 'Delivery gain/loss')}</span>
-              <span className="stat__value" style={{ color: totals.difference >= 0 ? '#b07d10' : '#b3261e' }}>
+              <span className="stat__value" style={{ color: totals.difference >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                 {totals.difference >= 0 ? '+' : '−'}
                 {formatBdt(Math.abs(totals.difference))}
               </span>
@@ -86,14 +86,14 @@ export function DeliveriesAdmin() {
                       {r.difference == null ? (
                         <span className="muted">{t('অসম্পূর্ণ', 'Incomplete')}</span>
                       ) : (
-                        <span style={{ color: r.difference >= 0 ? '#b07d10' : '#b3261e' }}>
+                        <span style={{ color: r.difference >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                           {r.difference >= 0 ? '+' : '−'}
                           {formatBdt(Math.abs(r.difference))}
                         </span>
                       )}
                     </td>
                     <td>
-                      <span className="status status--payment">{deliveryStatusLabel[r.status]}</span>
+                      <span className={`status status--${r.orderStatus.toLowerCase()}`}>{orderStatusLabel[r.orderStatus]}</span>
                     </td>
                   </tr>
                 ))}

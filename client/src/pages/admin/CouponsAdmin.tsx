@@ -13,6 +13,9 @@ const scopeLabel: Record<CouponScope, string> = {
   get DELIVERY() {
     return pick('ডেলিভারি', 'Delivery')
   },
+  get WALLET_LIMIT() {
+    return pick('পরে-পেমেন্টের সীমা', 'Pay-later limit')
+  },
 }
 const kindLabel: Record<CouponKind, string> = {
   get PERCENT() {
@@ -33,6 +36,8 @@ const emptyForm = {
   value: '',
   minOrderSubtotal: '',
   description: '',
+  limitDays: '30',
+  maxRedemptions: '',
 }
 
 export function CouponsAdmin() {
@@ -64,7 +69,9 @@ export function CouponsAdmin() {
         scope: form.scope,
         kind: form.kind,
         value: form.kind === 'FREE_DELIVERY' ? undefined : Number(form.value),
-        minOrderSubtotal: form.minOrderSubtotal ? Number(form.minOrderSubtotal) : undefined,
+        minOrderSubtotal: form.scope !== 'WALLET_LIMIT' && form.minOrderSubtotal ? Number(form.minOrderSubtotal) : undefined,
+        limitDays: form.scope === 'WALLET_LIMIT' ? Number(form.limitDays) : undefined,
+        maxRedemptions: form.scope === 'WALLET_LIMIT' && form.maxRedemptions ? Number(form.maxRedemptions) : undefined,
         description: form.description || undefined,
       })
       setForm(emptyForm)
@@ -95,14 +102,22 @@ export function CouponsAdmin() {
           </label>
           <label>
             {t('স্কোপ', 'Scope')}
-            <select value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value as CouponScope })}>
+            <select
+              value={form.scope}
+              onChange={(e) => {
+                const scope = e.target.value as CouponScope
+                // A wallet-limit code is always a fixed amount (+৳ to the limit).
+                setForm({ ...form, scope, kind: scope === 'WALLET_LIMIT' ? 'FIXED' : form.kind })
+              }}
+            >
               <option value="FOOD">{t('ফুড', 'Food')}</option>
               <option value="DELIVERY">{t('ডেলিভারি', 'Delivery')}</option>
+              <option value="WALLET_LIMIT">{t('পরে-পেমেন্টের সীমা বাড়ানো', 'Raise pay-later limit')}</option>
             </select>
           </label>
           <label>
             {t('ধরন', 'Type')}
-            <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as CouponKind })}>
+            <select value={form.kind} disabled={form.scope === 'WALLET_LIMIT'} onChange={(e) => setForm({ ...form, kind: e.target.value as CouponKind })}>
               <option value="PERCENT">{t('শতাংশ (%)', 'Percent (%)')}</option>
               <option value="FIXED">{t('নির্দিষ্ট (৳)', 'Fixed (৳)')}</option>
               <option value="FREE_DELIVERY">{t('ফ্রি ডেলিভারি', 'Free delivery')}</option>
@@ -137,6 +152,24 @@ export function CouponsAdmin() {
             {t('বিবরণ', 'Description')}
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </label>
+          {form.scope === 'WALLET_LIMIT' && (
+            <>
+              <label>
+                {t('কত দিন থাকবে', 'Lasts (days)')}
+                <input type="number" min={1} max={365} value={form.limitDays} onChange={(e) => setForm({ ...form, limitDays: e.target.value })} required />
+              </label>
+              <label>
+                {t('সর্বোচ্চ ব্যবহার (ঐচ্ছিক)', 'Max redemptions (optional)')}
+                <input type="number" min={1} value={form.maxRedemptions} onChange={(e) => setForm({ ...form, maxRedemptions: e.target.value })} />
+              </label>
+              <p className="hint">
+                {t(
+                  'গ্রাহক ওয়ালেটে কোডটি দিলে তার পরে-পেমেন্টের সীমা "মান" পরিমাণ বাড়বে, নির্দিষ্ট দিনের জন্য। প্রতি গ্রাহক একবার।',
+                  'When a customer enters this code in their wallet, their pay-later limit rises by "Value" for the given days. Once per customer.',
+                )}
+              </p>
+            </>
+          )}
         </div>
         <div className="admin-form__actions">
           <button type="submit">{t('তৈরি করুন', 'Create')}</button>
@@ -165,7 +198,15 @@ export function CouponsAdmin() {
                   <td><strong>{c.code}</strong></td>
                   <td>{scopeLabel[c.scope]}</td>
                   <td>{kindLabel[c.kind]}</td>
-                  <td>{c.kind === 'FREE_DELIVERY' ? '—' : c.kind === 'PERCENT' ? `${c.value}%` : `৳${c.value}`}</td>
+                  <td>
+                    {c.scope === 'WALLET_LIMIT'
+                      ? t(`+৳${c.value} সীমা, ${c.limitDays ?? 30} দিন`, `+৳${c.value} limit for ${c.limitDays ?? 30} days`)
+                      : c.kind === 'FREE_DELIVERY'
+                        ? '—'
+                        : c.kind === 'PERCENT'
+                          ? `${c.value}%`
+                          : `৳${c.value}`}
+                  </td>
                   <td>{c.minOrderSubtotal > 0 ? `৳${c.minOrderSubtotal}` : '—'}</td>
                   <td>{c.isActive ? t('হ্যাঁ', 'Yes') : t('না', 'No')}</td>
                   <td className="admin-table__actions">

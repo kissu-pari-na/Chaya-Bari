@@ -30,8 +30,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Account confirmation. Phone confirmation is mandatory to use the account;
-  // email confirmation is optional and only required to log in by email.
+  // Account confirmation. Sign-in is Google only, so an account is confirmed
+  // (emailVerifiedAt) the first time its owner signs in with Google.
+  // phoneVerifiedAt and passwordHash are legacy columns kept for old rows.
   phoneVerifiedAt DateTime?
   emailVerifiedAt DateTime?
 
@@ -100,14 +101,16 @@ model RateLimit {
 /// Customer profile (1-1 with a User). Holds ordering-related info and, later,
 /// derived analytics.
 model Customer {
-  id        String    @id @default(cuid())
-  userId    String    @unique
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  addresses Address[]
-  orders    Order[]
-  reviews   Review[]
+  id            String             @id @default(cuid())
+  userId        String             @unique
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  walletEntries WalletEntry[]
+  walletGrants  WalletLimitGrant[]
 }
 
 // -----------------------------------------------------------------------------
@@ -176,22 +179,28 @@ model ProductPriceHistory {
 // -----------------------------------------------------------------------------
 
 enum OrderStatus {
+  /// Placed; waiting for payment (pay first) or admin confirmation.
   PENDING
   CONFIRMED
+  /// In the kitchen. Order.readyAt marks "packed & ready to dispatch".
   PREPARING
-  READY
-  PACKED
+  /// On the way to the customer.
   OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
 }
 
 enum PaymentStatus {
+  /// Not paid yet (pay first awaiting payment, or COD before delivery).
   PENDING
+  /// Fully settled.
   PAID
   PARTIALLY_PAID
+  /// A charge was reversed (order cancelled); any money paid stays as wallet credit.
   REFUNDED
   FAILED
+  /// Charged to the customer's wallet (pay later, or COD collected short).
+  ON_WALLET
 }
 
 /// How the customer settles an order. PREPAID orders pay in advance (cash/
@@ -199,7 +208,11 @@ enum PaymentStatus {
 /// paid. COD (cash on delivery) orders are collected at the door, so they do
 /// not wait on prepayment — payment is recorded when the order is delivered.
 enum PaymentMode {
-  PREPAID
+  /// Pay before the order is confirmed (manual bKash/bank + claim, or wallet credit).
+  PAY_FIRST
+  /// Charged to the wallet at once, within the customer's credit limit.
+  PAY_LATER
+  /// Cash on delivery: charged and collected when delivered.
   COD
 }
 
@@ -240,7 +253,7 @@ model Order {
   /// Footprint: the admin who placed this order on the customer's behalf (null
   /// when the customer or a guest ordered themselves).
   placedById String?
-  placedBy   User?   @relation("OrderPlacedBy", fields: [placedById], references: [id], onDelete: SetNull)
+  placedBy   User?     @relation("OrderPlacedBy", fields: [placedById], references: [id], onDelete: SetNull)
 
   // Delivery address snapshot.
   recipientName  String
@@ -261,22 +274,25 @@ model Order {
   /// Gross food total (sum of list prices × quantity).
   subtotal             Decimal @db.Decimal(10, 2)
   /// Food discount total (per-item sale reductions + any food coupon).
-  productDiscount      Decimal @db.Decimal(10, 2) @default(0)
+  productDiscount      Decimal @default(0) @db.Decimal(10, 2)
   customerDeliveryCost Decimal @db.Decimal(10, 2)
   /// Delivery discount (from a delivery coupon), kept separate from food.
-  deliveryDiscount     Decimal @db.Decimal(10, 2) @default(0)
+  deliveryDiscount     Decimal @default(0) @db.Decimal(10, 2)
   /// Customer payable: (subtotal - productDiscount) + delivery - deliveryDiscount.
   total                Decimal @db.Decimal(10, 2)
   couponCode           String?
 
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
-  /// How this order is settled. COD orders are collected on delivery and are
-  /// not gated on prepayment; PREPAID orders must be paid before confirmation.
-  paymentMode   PaymentMode   @default(PREPAID)
+  /// How this order is settled (see PaymentMode and the wallet node in vault/).
+  paymentMode   PaymentMode   @default(PAY_FIRST)
 
+  /// Kitchen marked the order packed and ready to dispatch (status stays PREPARING).
+  readyAt                 DateTime?
+  /// When the order went OUT_FOR_DELIVERY.
+  dispatchedAt            DateTime?
   /// When the order reached DELIVERED (drives the day-after review invite).
-  deliveredAt        DateTime?
+  deliveredAt             DateTime?
   /// Secret, unguessable token for the public tracking link (/track/<token>)
   /// emailed when the order is confirmed. Lets anyone holding the link follow
   /// the order without logging in, e.g. a customer who hasn't registered yet.
@@ -286,14 +302,14 @@ model Order {
   confirmationEmailSentAt DateTime?
   /// When the "leave a review" invite (notification + email) was sent, so it
   /// is only sent once per order.
-  reviewInviteSentAt DateTime?
+  reviewInviteSentAt      DateTime?
 
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  items     OrderItem[]
-  delivery  Delivery?
-  payments  Payment[]
-  reviews   Review[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         OrderItem[]
+  delivery      Delivery?
+  walletEntries WalletEntry[]
+  reviews       Review[]
 
   @@index([customerId])
   @@index([status])
@@ -304,19 +320,19 @@ model Order {
 /// A line in an order. Captures the product name and unit price at order time
 /// so historical orders stay correct even if the product changes later.
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productName String
+  id            String           @id @default(cuid())
+  orderId       String
+  order         Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName   String
   /// Original list price at order time (before any sale price).
-  listUnitPrice Decimal @db.Decimal(10, 2)
+  listUnitPrice Decimal          @db.Decimal(10, 2)
   /// Charged unit price (sale price when the item was on sale).
-  unitPrice     Decimal @db.Decimal(10, 2)
+  unitPrice     Decimal          @db.Decimal(10, 2)
   quantity      Int
   /// Charged line total (unitPrice × quantity).
-  lineTotal     Decimal @db.Decimal(10, 2)
+  lineTotal     Decimal          @db.Decimal(10, 2)
   /// Kitchen preparation stage of this specific line (per-order, per-product).
   /// The order's overall status is derived from its lines.
   kitchenStage  KitchenLineStage @default(TO_COOK)
@@ -336,6 +352,8 @@ enum KitchenLineStage {
 enum CouponScope {
   FOOD
   DELIVERY
+  /// Not a discount: raises the redeemer's pay-later limit by `value` for `limitDays` days.
+  WALLET_LIMIT
 }
 
 enum CouponKind {
@@ -347,19 +365,24 @@ enum CouponKind {
 /// A promotion code. FOOD coupons reduce the food total; DELIVERY coupons
 /// reduce the delivery charge. Keeps food and delivery discounts separate.
 model Coupon {
-  id               String      @id @default(cuid())
-  code             String      @unique
+  id               String             @id @default(cuid())
+  code             String             @unique
   description      String?
   scope            CouponScope
   kind             CouponKind
   /// Percent (0-100) for PERCENT, fixed amount for FIXED, ignored for FREE_DELIVERY.
-  value            Decimal     @db.Decimal(10, 2) @default(0)
+  value            Decimal            @default(0) @db.Decimal(10, 2)
   /// Minimum net food amount required to use the coupon.
-  minOrderSubtotal Decimal     @db.Decimal(10, 2) @default(0)
-  isActive         Boolean     @default(true)
+  minOrderSubtotal Decimal            @default(0) @db.Decimal(10, 2)
+  isActive         Boolean            @default(true)
   expiresAt        DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  /// WALLET_LIMIT only: how many days the raised limit lasts after redeeming.
+  limitDays        Int?
+  /// Optional cap on total redemptions (WALLET_LIMIT).
+  maxRedemptions   Int?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  limitGrants      WalletLimitGrant[]
 }
 
 /// Single-row configuration for the advance-order rules. Admin-editable so the
@@ -371,8 +394,10 @@ model OrderingSetting {
   /// Minimum days ahead an order must be placed (1 = order for tomorrow).
   minAdvanceDays      Int      @default(1)
   /// Default customer delivery charge applied at checkout.
-  defaultDeliveryCost Decimal  @db.Decimal(10, 2) @default(60)
+  defaultDeliveryCost Decimal  @default(60) @db.Decimal(10, 2)
   timezone            String   @default("Asia/Dhaka")
+  /// Default pay-later limit: how far below zero a wallet may go (BDT).
+  walletCreditLimit   Decimal  @default(100) @db.Decimal(10, 2)
   updatedAt           DateTime @updatedAt
 }
 
@@ -389,33 +414,21 @@ model OrderingSetting {
 // Phase 6 — Delivery
 // -----------------------------------------------------------------------------
 
-enum DeliveryStatus {
-  PENDING
-  ASSIGNED
-  PICKED_UP
-  DELIVERED
-  FAILED
-  CANCELLED
-}
-
 /// A delivery record for one order. There are exactly two cost values:
 /// `customerDeliveryCost` (what the customer was charged, net of any delivery
 /// discount) and `actualDeliveryCost` (what the business pays the third-party
 /// provider, entered later). The difference is derived, never stored, and there
 /// is deliberately NO estimated delivery cost.
 model Delivery {
-  id                   String         @id @default(cuid())
-  orderId              String         @unique
-  order                Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id                   String   @id @default(cuid())
+  orderId              String   @unique
+  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   provider             String?
   trackingRef          String?
-  customerDeliveryCost Decimal        @db.Decimal(10, 2)
-  actualDeliveryCost   Decimal?       @db.Decimal(10, 2)
-  status               DeliveryStatus @default(PENDING)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-
-  @@index([status])
+  customerDeliveryCost Decimal  @db.Decimal(10, 2)
+  actualDeliveryCost   Decimal? @db.Decimal(10, 2)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 // -----------------------------------------------------------------------------
@@ -432,12 +445,23 @@ enum PaymentMethod {
   ONLINE
 }
 
-enum PaymentTxnStatus {
+/// Review state of a wallet entry. Only CONFIRMED entries count toward the balance.
+enum WalletEntryStatus {
   PENDING
-  SUCCESS
-  FAILED
-  REFUNDED
-  VOID
+  CONFIRMED
+  REJECTED
+}
+
+/// What a wallet entry is.
+enum WalletEntryType {
+  /// −total: an order charged to the wallet.
+  ORDER_CHARGE
+  /// +total: a charge reversed because the order was cancelled.
+  ORDER_REFUND
+  /// +amount: money the customer paid (claim, cash on delivery, admin-recorded).
+  PAYMENT
+  /// ±amount: an admin adjustment with a reference (corrections, cash paid back…).
+  ADJUSTMENT
 }
 
 /// Who created the payment record. CUSTOMER rows start as PENDING claims that an
@@ -445,6 +469,8 @@ enum PaymentTxnStatus {
 enum PaymentSource {
   ADMIN
   CUSTOMER
+  /// Created automatically by the system (order charges and reversals).
+  SYSTEM
 }
 
 /// Public payment-account details shown to customers for manual payments.
@@ -471,29 +497,57 @@ model BusinessProfileSetting {
 /// (not a full ledger) so gateway integration can be added later. The order's
 /// paymentStatus is recomputed from these rows. Refunds are recorded as a row
 /// with status REFUNDED and a positive amount.
-model Payment {
-  id        String           @id @default(cuid())
-  orderId   String
-  order     Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  method    PaymentMethod
-  amount    Decimal          @db.Decimal(10, 2)
-  status    PaymentTxnStatus @default(SUCCESS)
-  source    PaymentSource    @default(ADMIN)
-  reference String?
-  note      String?
-  createdAt DateTime         @default(now())
+/// One entry in a customer's wallet: the platform-wide ledger of what they owe
+/// and have paid. Amounts are signed (+ credits the wallet, − debits it); the
+/// balance is the sum of CONFIRMED entries. Entries are never deleted or edited
+/// after review: corrections are new ADJUSTMENT entries, so the timeline is a
+/// complete audit trail. customerId is null only for guest orders (no account);
+/// those rows move to the account if the guest later signs in with that email.
+model WalletEntry {
+  id         String            @id @default(cuid())
+  customerId String?
+  customer   Customer?         @relation(fields: [customerId], references: [id])
+  orderId    String?
+  order      Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type       WalletEntryType
+  status     WalletEntryStatus @default(CONFIRMED)
+  amount     Decimal           @db.Decimal(10, 2)
+  method     PaymentMethod?
+  /// Proof: the bKash/Nagad trx id, bank ref, or an admin reference.
+  reference  String?
+  note       String?
+  source     PaymentSource
+  createdAt  DateTime          @default(now())
 
-  // Audit trail (snapshots, so they stay correct even if the user is later
-  // renamed or removed). Payments are never hard-deleted — a mistaken payment
-  // is VOIDed and a returned one gets an offsetting REFUNDED row.
-  recordedById   String?
-  recordedByName String?
-  voidedAt       DateTime?
-  voidedById     String?
-  voidedByName   String?
-  voidReason     String?
+  // Audit trail (name snapshots stay correct if the user is renamed or removed).
+  createdById    String?
+  createdByName  String?
+  reviewedAt     DateTime?
+  reviewedById   String?
+  reviewedByName String?
+  /// Why a claim was rejected.
+  reviewNote     String?
 
+  @@index([customerId, createdAt])
   @@index([orderId])
+  @@index([status])
+}
+
+/// A temporary raise of a customer's pay-later limit, from redeeming a
+/// WALLET_LIMIT promo code. Active while expiresAt is in the future.
+model WalletLimitGrant {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  couponId   String?
+  coupon     Coupon?  @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  code       String
+  amount     Decimal  @db.Decimal(10, 2)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, couponId])
+  @@index([customerId, expiresAt])
 }
 
 // -----------------------------------------------------------------------------
@@ -513,8 +567,8 @@ model Material {
   name        String       @unique
   kind        MaterialKind
   unit        String
-  stockQty    Decimal      @db.Decimal(12, 3) @default(0)
-  avgUnitCost Decimal      @db.Decimal(12, 4) @default(0)
+  stockQty    Decimal      @default(0) @db.Decimal(12, 3)
+  avgUnitCost Decimal      @default(0) @db.Decimal(12, 4)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 

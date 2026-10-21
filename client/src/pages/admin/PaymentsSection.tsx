@@ -1,255 +1,166 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { fetchPayments, recordPayment, refundPayment, verifyPayment, voidPayment } from '../../lib/payments'
-import { paymentMethodLabel, paymentMethods, paymentSourceLabel, txnStatusLabel, txnStatuses } from '../../lib/paymentLabels'
-import { paymentStatusLabel } from '../../lib/orderStatus'
+import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
+import { recordOrderPayment, reviewClaim } from '../../lib/wallet'
+import { updateOrderPaymentMode } from '../../lib/orders'
 import { formatBdt } from '../../lib/format'
+import { paymentModeLabel, paymentStatusClass, paymentStatusLabel } from '../../lib/orderStatus'
+import { paymentModes } from '../../lib/orderEnums'
+import { paymentMethodLabel, paymentMethods } from '../../lib/paymentLabels'
 import { ApiError } from '../../lib/apiClient'
-import { usePoll } from '../../lib/usePoll'
 import { useI18n } from '../../context/LanguageContext'
-import type { Payment, PaymentMethod, PaymentTxnStatus } from '../../types/payment'
-import type { AdminOrder } from '../../types/order'
+import { WalletTimeline } from '../../components/WalletTimeline'
+import type { AdminOrder, PaymentMode } from '../../types/order'
+import type { PaymentMethod } from '../../types/payment'
 import './Admin.css'
 
-interface PaymentsSectionProps {
-  order: AdminOrder
-  onOrderChange: (order: AdminOrder) => void
-}
-
-export function PaymentsSection({ order, onOrderChange }: PaymentsSectionProps) {
+/// Money for one order: method (changeable while pending), paid / due / on
+/// wallet, claims to review, a form to record money received, and the order's
+/// payment history. Customer-level adjustments live on their wallet page.
+export function PaymentsSection({ order, onOrderChange, onRefresh }: { order: AdminOrder; onOrderChange: (o: AdminOrder) => void; onRefresh: () => void }) {
   const { t } = useI18n()
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [method, setMethod] = useState<PaymentMethod>('CASH')
-  const [amount, setAmount] = useState(String(order.amountDue || ''))
-  const [status, setStatus] = useState<PaymentTxnStatus>('SUCCESS')
+  const [method, setMethod] = useState<PaymentMethod>('BKASH')
+  const [amount, setAmount] = useState('')
   const [reference, setReference] = useState('')
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchPayments(order.id)
-      .then(setPayments)
-      .finally(() => setLoading(false))
-  }, [order.id])
-
-  const pendingCount = payments.filter((p) => p.status === 'PENDING').length
   const cancelled = order.status === 'CANCELLED'
+  const pendingClaims = order.payments.filter((p) => p.type === 'PAYMENT' && p.status === 'PENDING')
 
-  // Live updates: refresh the payments list so a customer's new claim shows up
-  // for verification without a manual refresh (stops once cancelled/locked).
-  usePoll(() => {
-    fetchPayments(order.id).then(setPayments).catch(() => {})
-  }, 15000, !cancelled)
-
-  async function handleRecord(event: FormEvent) {
-    event.preventDefault()
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
     setError(null)
-    const amt = Number(amount)
-    if (!Number.isFinite(amt) || amt <= 0) {
-      setError(t('পরিমাণ ০-এর বেশি হতে হবে', 'Amount must be greater than 0'))
-      return
-    }
     try {
-      const { payment, order: updated } = await recordPayment(order.id, {
-        method,
-        amount: amt,
-        status,
-        reference: reference || undefined,
-      })
-      setPayments((ps) => [...ps, payment])
-      onOrderChange(updated)
+      await fn()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('কাজটি করা যায়নি', 'Could not complete that'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function record(e: FormEvent) {
+    e.preventDefault()
+    void run(async () => {
+      onOrderChange(await recordOrderPayment(order.id, { amount: Number(amount), method, reference: reference.trim() }))
+      setAmount('')
       setReference('')
-      setAmount(String(updated.amountDue || ''))
-    } catch (err) {
-      if (err instanceof ApiError && err.details?.length) setError(err.details.map((d) => d.message).join(' · '))
-      else setError(err instanceof ApiError ? err.message : t('পেমেন্ট রেকর্ড করা যায়নি', 'Could not record payment'))
-    }
+    })
   }
 
-  async function handleVerify(payment: Payment, action: 'verify' | 'reject') {
-    setError(null)
-    try {
-      const { payment: updated, order: refreshed } = await verifyPayment(payment.id, action)
-      setPayments((ps) => ps.map((p) => (p.id === updated.id ? updated : p)))
-      onOrderChange(refreshed)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('যাচাই করা যায়নি', 'Could not verify'))
-    }
-  }
-
-  // Payments are never deleted. A payment recorded in error is VOIDed; money
-  // returned to the customer is a REFUND. Both keep the row for audit and stamp
-  // who did it.
-  async function handleVoid(payment: Payment) {
-    const reason = window.prompt(t('বাতিলের কারণ (ঐচ্ছিক):', 'Reason for voiding (optional):'))
-    if (reason === null) return // cancelled
-    setError(null)
-    try {
-      const { order: refreshed } = await voidPayment(payment.id, reason || undefined)
-      setPayments(await fetchPayments(order.id))
-      onOrderChange(refreshed)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('বাতিল করা যায়নি', 'Could not void the payment'))
-    }
-  }
-
-  async function handleRefund(payment: Payment) {
-    const amtStr = window.prompt(t('ফেরতের পরিমাণ (৳):', 'Refund amount (৳):'), String(payment.amount))
-    if (amtStr === null) return
-    const amt = Number(amtStr)
-    if (!Number.isFinite(amt) || amt <= 0) {
-      setError(t('পরিমাণ ০-এর বেশি হতে হবে', 'Amount must be greater than 0'))
-      return
-    }
-    const reason = window.prompt(t('ফেরতের কারণ (ঐচ্ছিক):', 'Reason for refund (optional):'))
-    if (reason === null) return
-    setError(null)
-    try {
-      const { order: refreshed } = await refundPayment(payment.id, amt, reason || undefined)
-      setPayments(await fetchPayments(order.id))
-      onOrderChange(refreshed)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t('ফেরত দেওয়া যায়নি', 'Could not refund the payment'))
-    }
+  function review(id: string, action: 'confirm' | 'reject') {
+    const note = action === 'reject' ? window.prompt(t('বাতিলের কারণ লিখুন', 'Reason for rejecting')) ?? '' : undefined
+    if (action === 'reject' && !note) return
+    void run(async () => {
+      await reviewClaim(id, action, note)
+      onRefresh()
+    })
   }
 
   return (
-    <div className="payments-panel">
-      <h3>
-        {t('পেমেন্ট', 'Payment')}
-        {pendingCount > 0 && <span className="pay-pending-badge">{pendingCount} {t('যাচাইয়ের অপেক্ষায়', 'awaiting verification')}</span>}
-      </h3>
-
-      <div className="pay-summary">
-        <div>
-          <span className="delivery-costs__label">{t('পরিশোধিত', 'Paid')}</span>
-          <span className="delivery-costs__value">{formatBdt(order.amountPaid)}</span>
-        </div>
-        <div>
-          <span className="delivery-costs__label">{t('বাকি', 'Due')}</span>
-          <span className={order.amountDue > 0 ? 'delivery-costs__value delivery-loss' : 'delivery-costs__value delivery-gain'}>
-            {formatBdt(order.amountDue)}
-          </span>
-        </div>
-        <div>
-          <span className="delivery-costs__label">{t('স্ট্যাটাস', 'Status')}</span>
-          <span className="delivery-costs__value">{paymentStatusLabel[order.paymentStatus]}</span>
-        </div>
+    <section className="admin-card">
+      <div className="admin-card__head">
+        <h2>{t('পেমেন্ট', 'Payment')}</h2>
+        <span className={paymentStatusClass[order.paymentStatus]}>{paymentStatusLabel[order.paymentStatus]}</span>
       </div>
+      {error && <p className="pay-note pay-note--err">{error}</p>}
 
-      {loading ? (
-        <p className="muted">{t('লোড হচ্ছে…', 'Loading…')}</p>
-      ) : (
-        payments.length > 0 && (
-          <table className="admin-table pay-table">
-            <thead>
-              <tr>
-                <th>{t('মাধ্যম', 'Method')}</th>
-                <th>{t('উৎস', 'Source')}</th>
-                <th>{t('পরিমাণ', 'Amount')}</th>
-                <th>{t('স্ট্যাটাস', 'Status')}</th>
-                <th>{t('রেফারেন্স', 'Reference')}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {payments.map((p) => (
-                <tr key={p.id} className={p.status === 'PENDING' ? 'pay-row--pending' : undefined}>
-                  <td>{paymentMethodLabel[p.method]}</td>
-                  <td>{paymentSourceLabel[p.source]}</td>
-                  <td>{formatBdt(p.amount)}</td>
-                  <td>{txnStatusLabel[p.status]}</td>
-                  <td>
-                    {p.reference ?? '—'}
-                    {p.status === 'VOID' && p.voidedByName && (
-                      <div className="muted pay-audit">
-                        {t(`বাতিল: ${p.voidedByName}`, `Voided by ${p.voidedByName}`)}
-                        {p.voidReason ? ` — ${p.voidReason}` : ''}
-                      </div>
-                    )}
-                    {p.status === 'REFUNDED' && p.recordedByName && (
-                      <div className="muted pay-audit">
-                        {t(`ফেরত: ${p.recordedByName}`, `Refunded by ${p.recordedByName}`)}
-                        {p.note ? ` — ${p.note}` : ''}
-                      </div>
-                    )}
-                  </td>
-                  <td className="admin-table__actions">
-                    {cancelled ? (
-                      <span className="muted">—</span>
-                    ) : p.status === 'PENDING' ? (
-                      <>
-                        <button className="btn-mini btn-mini--ok" onClick={() => handleVerify(p, 'verify')}>
-                          {t('নিশ্চিত', 'Confirm')}
-                        </button>
-                        <button className="btn-mini btn-mini--no" onClick={() => handleVerify(p, 'reject')}>
-                          {t('বাতিল', 'Reject')}
-                        </button>
-                      </>
-                    ) : p.status === 'SUCCESS' ? (
-                      <>
-                        <button className="btn-mini" onClick={() => handleRefund(p)}>
-                          {t('ফেরত', 'Refund')}
-                        </button>
-                        <button className="btn-mini btn-mini--no" onClick={() => handleVoid(p)}>
-                          {t('বাতিল', 'Void')}
-                        </button>
-                      </>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )
+      <dl className="facts">
+        <div>
+          <dt>{t('পদ্ধতি', 'Method')}</dt>
+          <dd>
+            {order.status === 'PENDING' ? (
+              <select
+                value={order.paymentMode}
+                disabled={busy}
+                onChange={(e) => run(async () => onOrderChange(await updateOrderPaymentMode(order.id, e.target.value as PaymentMode)))}
+                aria-label={t('পেমেন্ট পদ্ধতি', 'Payment method')}
+              >
+                {paymentModes
+                  .filter((m) => m !== 'PAY_LATER' || !order.customer.isGuest)
+                  .map((m) => (
+                    <option key={m} value={m}>
+                      {paymentModeLabel[m]}
+                    </option>
+                  ))}
+              </select>
+            ) : (
+              paymentModeLabel[order.paymentMode]
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>{t('মোট', 'Total')}</dt>
+          <dd className="num">{formatBdt(order.total)}</dd>
+        </div>
+        <div>
+          <dt>{t('পরিশোধিত', 'Paid')}</dt>
+          <dd className="num tone-gain">{formatBdt(order.amountPaid)}</dd>
+        </div>
+        {order.amountDue > 0 && (
+          <div>
+            <dt>{t('বাকি', 'Due')}</dt>
+            <dd className="num tone-warn">{formatBdt(order.amountDue)}</dd>
+          </div>
+        )}
+        {order.onWallet > 0 && (
+          <div>
+            <dt>{t('ওয়ালেটে', 'On wallet')}</dt>
+            <dd className="num">{formatBdt(order.onWallet)}</dd>
+          </div>
+        )}
+      </dl>
+
+      {pendingClaims.length > 0 && (
+        <div className="claims-inline">
+          <strong>{t('যাচাই করুন', 'To review')}</strong>
+          {pendingClaims.map((c) => (
+            <div key={c.id} className="claims-inline__row">
+              <span>
+                <strong className="num">{formatBdt(c.amount)}</strong> · {c.method ? paymentMethodLabel[c.method] : ''} · {t('রেফ', 'Ref')}{' '}
+                <span className="num">{c.reference}</span>
+              </span>
+              <span className="claims-inline__actions">
+                <button type="button" className="btn btn--primary btn--sm" disabled={busy} onClick={() => review(c.id, 'confirm')}>
+                  ✓ {t('নিশ্চিত', 'Confirm')}
+                </button>
+                <button type="button" className="btn btn--danger btn--sm" disabled={busy} onClick={() => review(c.id, 'reject')}>
+                  ✕ {t('বাতিল', 'Reject')}
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
       )}
 
-      {cancelled ? (
-        <p className="hint" style={{ marginTop: '0.5rem' }}>
-          {t('এই অর্ডারটি বাতিল হয়েছে — পেমেন্ট সংক্রান্ত কোনো পরিবর্তন করা যাবে না।', 'This order is cancelled — payment changes are locked.')}
+      {!cancelled && (
+        <form className="admin-form admin-form--compact admin-form--inline" onSubmit={record}>
+          <strong className="admin-form__title">{t('টাকা গ্রহণ রেকর্ড করুন', 'Record money received')}</strong>
+          <select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} aria-label={t('মাধ্যম', 'Method')}>
+            {paymentMethods.map((m) => (
+              <option key={m} value={m}>
+                {paymentMethodLabel[m]}
+              </option>
+            ))}
+          </select>
+          <input type="number" min={1} step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t('পরিমাণ', 'Amount')} aria-label={t('পরিমাণ', 'Amount')} required />
+          <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder={t('রেফারেন্স (TrxID/রসিদ)', 'Reference (TrxID/receipt)')} aria-label={t('রেফারেন্স', 'Reference')} required minLength={3} />
+          <button type="submit" className="btn btn--soft btn--sm" disabled={busy}>
+            {t('রেকর্ড', 'Record')}
+          </button>
+        </form>
+      )}
+
+      {order.payments.length > 0 && (
+        <WalletTimeline
+          entries={order.payments.map((p) => ({ ...p, orderId: null, orderNumber: null, reviewedAt: null, balanceAfter: null }))}
+        />
+      )}
+      {order.customer.id && (
+        <p className="muted">
+          <Link to={`/admin/wallets/${order.customer.id}`}>{t('গ্রাহকের ওয়ালেট দেখুন', "Open the customer's wallet")} →</Link>
         </p>
-      ) : (
-      <form className="pay-form" onSubmit={handleRecord}>
-        {error && <div className="auth-error">{error}</div>}
-        <p className="hint" style={{ marginTop: 0 }}>{t('অ্যাডমিন হিসেবে সরাসরি নিশ্চিত পেমেন্ট রেকর্ড করুন।', 'Record a confirmed payment directly as an admin.')}</p>
-        <div className="admin-form__row">
-          <label>
-            {t('মাধ্যম', 'Method')}
-            <select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>
-              {paymentMethods.map((m) => (
-                <option key={m} value={m}>
-                  {paymentMethodLabel[m]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t('পরিমাণ (৳)', 'Amount (৳)')}
-            <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-          </label>
-          <label>
-            {t('ধরন', 'Type')}
-            <select value={status} onChange={(e) => setStatus(e.target.value as PaymentTxnStatus)}>
-              {txnStatuses.map((s) => (
-                <option key={s} value={s}>
-                  {txnStatusLabel[s]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="admin-form__row">
-          <label>
-            {t('রেফারেন্স (ট্রানজেকশন আইডি)', 'Reference (transaction ID)')}
-            <input value={reference} onChange={(e) => setReference(e.target.value)} />
-          </label>
-        </div>
-        <div className="admin-form__actions">
-          <button type="submit">{t('পেমেন্ট রেকর্ড করুন', 'Record payment')}</button>
-        </div>
-      </form>
       )}
-    </div>
+    </section>
   )
 }

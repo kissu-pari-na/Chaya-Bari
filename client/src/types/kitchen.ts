@@ -1,5 +1,8 @@
 export type KitchenStage = 'TO_COOK' | 'PREPARING' | 'READY'
-export type OrderKitchenStatus = 'CONFIRMED' | 'PREPARING' | 'READY' | 'PACKED'
+/// An order's status while it is with the kitchen (five-step flow).
+export type OrderKitchenStatus = 'CONFIRMED' | 'PREPARING'
+/// What the kitchen card shows: derived from the lines and the packed flag.
+export type KitchenCardState = 'CONFIRMED' | 'PREPARING' | 'READY' | 'PACKED'
 
 export interface StageLineRef {
   lineId: string
@@ -27,6 +30,8 @@ export interface KitchenOrder {
   orderNumber: string
   recipientName: string
   status: OrderKitchenStatus
+  /// Packed and ready to dispatch (Order.readyAt).
+  packed: boolean
   timeSlot: string | null
   createdAt: string
   note: string | null

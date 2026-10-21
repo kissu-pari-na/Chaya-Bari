@@ -1,0 +1,207 @@
+/* ============================================================
+   ছায়া বাড়ি — Glossy Glass design tokens (single source of truth)
+   See /design.md. Palette tokens are generated into palettes.css by
+   client/scripts/palettes.mjs. No component may hard-code a colour.
+   ============================================================ */
+
+/* ---------- Neutral + shape + motion tokens (LIGHT values) ---------- */
+:root {
+  /* Neutrals (§3.2). Palettes may override --text/--muted. */
+  --text: #0b1530;
+  --muted: #45526b;
+  --outline: rgba(11, 21, 48, 0.09);
+  --glass: rgba(255, 255, 255, 0.56);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --glass-solid: #fbfcff;
+  --glass-inset: rgba(255, 255, 255, 0.55);
+  --edge: rgba(255, 255, 255, 0.85);
+  --edge-low: rgba(11, 21, 48, 0.06);
+  --gloss-top: rgba(255, 255, 255, 0.9);
+  --gloss-sheen: rgba(255, 255, 255, 0.45);
+  --shadow: 0 1px 1px rgba(11, 21, 48, 0.04), 0 12px 32px -12px rgba(30, 60, 140, 0.22);
+  --shadow-lift: 0 2px 2px rgba(11, 21, 48, 0.05), 0 30px 60px -20px rgba(30, 60, 140, 0.35);
+  --grain-op: 0.025;
+  --skel-a: rgba(11, 21, 48, 0.06);
+  --skel-b: rgba(255, 255, 255, 0.7);
+  --scrim: rgba(11, 21, 48, 0.35); /* dims content behind a sheet/dialog */
+  --on-media: #ffffff; /* text placed over a photo, always with a scrim */
+
+  /* Semantic status colours (§3.3) — reserved for meaning, never palette-tinted,
+     always paired with an icon and a text label. */
+  --success: #15803d;
+  --success-bg: rgba(22, 163, 74, 0.12);
+  --warning: #a44a06;
+  --warning-bg: rgba(245, 158, 11, 0.16);
+  --danger: #b91c1c;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --info: #1d4ed8;
+  --info-bg: rgba(59, 130, 246, 0.12);
+  --rating: #b45309; /* star glyphs: amber that passes 3:1 on light glass */
+
+  /* Printed documents (invoices/receipts) are always a white sheet. */
+  --print-paper: #ffffff;
+  --print-ink: #1d1512;
+  --print-muted: #5c5049;
+  --print-rule: #e6e0d0;
+  --print-tint: #faf7ee;
+
+  /* Third-party brand colours (allowed exceptions, used only for that brand's button). */
+  --brand-bkash: #e2136e;
+  --brand-bkash-on: #ffffff;
+
+  /* Type (§4). Self-hosted Bengali/Latin faces (see fonts.css). */
+  --font-display: 'Anek Bangla', 'Noto Sans Bengali', 'Nirmala UI', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', system-ui, sans-serif;
+  --tracking-tight: -0.03em; /* English headings; forced to 0 for Bangla */
+  --tracking-wide: 0.14em; /* eyebrows/kickers; forced to 0 for Bangla */
+
+  /* Shape (§5) */
+  --radius-card: 22px;
+  --radius-pop: 22px;
+  --radius-btn: 14px;
+  --radius-input: 12px;
+  --radius-nav: 20px;
+  --radius-pill: 999px;
+
+  /* Motion (§7) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-silk: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-ui: 420ms;
+  --dur-enter: 800ms;
+  --dur-press: 120ms;
+
+  color-scheme: light;
+}
+
+/* ---------- Neutral DARK base (0,2,0). Dark palette blocks (0,3,0) layer on top. ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --text: #e8edf7;
+    --muted: #a3aec6;
+    --outline: rgba(255, 255, 255, 0.08);
+    --glass: rgba(255, 255, 255, 0.055);
+    --glass-strong: rgba(18, 24, 48, 0.72);
+    --glass-inset: rgba(255, 255, 255, 0.06);
+    --edge: rgba(255, 255, 255, 0.14);
+    --edge-low: rgba(255, 255, 255, 0.05);
+    --gloss-top: rgba(255, 255, 255, 0.22);
+    --gloss-sheen: rgba(255, 255, 255, 0.09);
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 20px 40px -20px rgba(0, 0, 0, 0.8);
+    --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 60px -24px rgba(0, 0, 0, 0.9);
+    --grain-op: 0.035;
+    --skel-a: rgba(255, 255, 255, 0.05);
+    --skel-b: rgba(255, 255, 255, 0.12);
+    --scrim: rgba(0, 0, 0, 0.55);
+    --success: #4ade80;
+    --success-bg: rgba(74, 222, 128, 0.12);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.12);
+    --danger: #f87171;
+    --danger-bg: rgba(248, 113, 113, 0.13);
+    --info: #93c5fd;
+    --info-bg: rgba(147, 197, 253, 0.13);
+    --rating: #fbbf24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --text: #e8edf7;
+  --muted: #a3aec6;
+  --outline: rgba(255, 255, 255, 0.08);
+  --glass: rgba(255, 255, 255, 0.055);
+  --glass-strong: rgba(18, 24, 48, 0.72);
+  --glass-inset: rgba(255, 255, 255, 0.06);
+  --edge: rgba(255, 255, 255, 0.14);
+  --edge-low: rgba(255, 255, 255, 0.05);
+  --gloss-top: rgba(255, 255, 255, 0.22);
+  --gloss-sheen: rgba(255, 255, 255, 0.09);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 20px 40px -20px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.05), 0 30px 60px -24px rgba(0, 0, 0, 0.9);
+  --grain-op: 0.035;
+  --skel-a: rgba(255, 255, 255, 0.05);
+  --skel-b: rgba(255, 255, 255, 0.12);
+  --scrim: rgba(0, 0, 0, 0.55);
+  --success: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.12);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.13);
+  --info: #93c5fd;
+  --info-bg: rgba(147, 197, 253, 0.13);
+  --rating: #fbbf24;
+  color-scheme: dark;
+}
+
+/* Bangla: never track letters (it breaks conjuncts and vowel signs). */
+:root[lang='bn'] {
+  --tracking-tight: 0;
+  --tracking-wide: 0;
+}
+
+/* ---------- Derived + legacy aliases ----------
+   Older component CSS still speaks the Ember-era token names. They map onto
+   the glass tokens here, so a component is themed even before it is swept.
+   New code uses the glass names directly. */
+:root {
+  --popover-bg: color-mix(in srgb, var(--glass-solid) 97%, transparent);
+  --glass-shadow: inset 0 1px 0 var(--gloss-top), inset 0 0 0 1px var(--edge-low), var(--shadow);
+  --glass-bg: linear-gradient(165deg, var(--gloss-sheen) 0%, transparent 38%);
+  --glass-border: var(--edge);
+  --sheen: inset 0 1px 0 var(--gloss-top);
+
+  --page-bg: transparent;
+  --on-page: var(--text);
+  --on-page-muted: var(--muted);
+  --heading: var(--text);
+  --link: var(--accent-ink);
+  --ghost-border: var(--edge);
+  --ghost-fg: var(--text);
+
+  --card: var(--glass);
+  --card-2: var(--glass-inset);
+  --card-text: var(--text);
+  --card-muted: var(--muted);
+  --card-border: var(--outline);
+  --card-heading: var(--text);
+
+  --header-bg: var(--glass-strong);
+  --header-border: var(--edge);
+  --header-fg: var(--text);
+  --header-fg-muted: var(--muted);
+  --popover-border: var(--edge);
+
+  --bg-900: var(--canvas);
+  --bg-800: var(--canvas-2);
+  --bg-700: var(--glass-solid);
+  --border-dark: var(--outline);
+  --cream: var(--text);
+  --muted-cream: var(--muted);
+  --accent-bright: var(--accent-ink);
+  --accent-gold: var(--accent-ink);
+  --gold: var(--accent-ink);
+  --gold-bright: var(--accent-ink);
+  --red-bright: var(--accent);
+  --green-deep: var(--accent-soft-2);
+  --saffron-500: var(--accent-ink);
+  --saffron-100: var(--accent-soft);
+  --terra-600: var(--accent);
+  --surface-2: var(--glass-inset);
+  --muted-text: var(--muted);
+  --color-heading: var(--text);
+  --color-muted: var(--muted);
+
+  --radius-sm: var(--radius-input);
+  --radius-md: var(--radius-btn);
+  --radius-lg: var(--radius-card);
+  --shadow-sm: var(--shadow);
+  --shadow-md: var(--shadow);
+  --shadow-lg: var(--shadow-lift);
+  --shadow-card: var(--shadow);
+  --glow-accent: 0 10px 24px -10px var(--btn-glow);
+  --glow-gold: 0 10px 24px -10px var(--btn-glow);
+  --sheen-glass: var(--sheen);
+  --sheen-red: var(--sheen);
+  --sheen-gold: var(--sheen);
+}

@@ -6,9 +6,12 @@
   margin: 0 auto 1rem;
   padding: 0.65rem 0.95rem;
   border-radius: var(--radius-md);
-  background: linear-gradient(90deg, rgba(228, 50, 43, 0.14), rgba(245, 179, 0, 0.14));
-  border: 1px solid rgba(245, 179, 0, 0.4);
-  color: var(--card-text, #f5f1e7);
+  background: linear-gradient(90deg, var(--accent-soft-2), var(--accent-soft)), var(--glass);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--gloss-top);
+  color: var(--text);
   font-size: 0.9rem;
 }
 
@@ -24,7 +27,7 @@
 }
 
 .coverage-banner__text strong {
-  color: var(--accent-bright, #ff4a3d);
+  color: var(--accent-bright);
 }
 
 .coverage-banner__link {

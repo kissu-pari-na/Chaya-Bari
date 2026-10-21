@@ -152,11 +152,16 @@ export async function claimGuestOrders(userId: string): Promise<number> {
   const user = await prisma.user.findUnique({ where: { id: userId }, include: { customer: true } })
   if (!user || user.role !== 'CUSTOMER') return 0
   const customerId = user.customer?.id ?? (await prisma.customer.create({ data: { userId } })).id
-  const res = await prisma.order.updateMany({
+  const guestOrders = await prisma.order.findMany({
     where: { customerId: null, guestEmail: user.email.toLowerCase() },
-    data: { customerId },
+    select: { id: true },
   })
-  return res.count
+  if (!guestOrders.length) return 0
+  const ids = guestOrders.map((o) => o.id)
+  await prisma.order.updateMany({ where: { id: { in: ids } }, data: { customerId } })
+  // Their payments and credit follow them into the wallet.
+  await prisma.walletEntry.updateMany({ where: { orderId: { in: ids }, customerId: null }, data: { customerId } })
+  return ids.length
 }
 
 /// The owner has just proven they own this account's email (confirmation code,

@@ -84,7 +84,7 @@ export function Profile() {
   return (
     <div className="page">
       <Header variant={headerVariant[user.role]} />
-      <main className="page__content">
+      <main id="main" className="page__content">
         <div className="profile">
           <div className="profile__head">
             <div className="profile__avatar" aria-hidden="true">{initials}</div>
@@ -185,9 +185,6 @@ export function Profile() {
                 {t('আমার অর্ডার', 'My Orders')}
               </Link>
             )}
-            <Link to="/forgot-password" state={{ email: user.email }} className="btn">
-              {t('পাসওয়ার্ড পরিবর্তন', 'Change password')}
-            </Link>
             <button type="button" className="btn" onClick={handleLogout}>
               {t('লগআউট', 'Log out')}
             </button>

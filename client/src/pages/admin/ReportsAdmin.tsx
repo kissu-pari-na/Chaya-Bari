@@ -73,7 +73,7 @@ export function ReportsAdmin() {
           </div>
 
           {summary.ordersMissingActualDelivery > 0 && (
-            <p className="hint hint--warning" style={{ color: '#b3541e' }}>
+            <p className="hint hint--warning" style={{ color: 'var(--warning)' }}>
               {t(
                 `${summary.ordersMissingActualDelivery} টি অর্ডারে প্রকৃত ডেলিভারি খরচ এখনো যোগ হয়নি — ডেলিভারি লাভ/ক্ষতি অসম্পূর্ণ।`,
                 `${summary.ordersMissingActualDelivery} order(s) still missing actual delivery cost — delivery gain/loss is incomplete.`,
@@ -196,7 +196,7 @@ function ProfitLine({
   strong?: boolean
   tone?: 'gain' | 'loss'
 }) {
-  const color = tone === 'gain' ? '#b07d10' : tone === 'loss' ? '#b3261e' : undefined
+  const color = tone === 'gain' ? 'var(--success)' : tone === 'loss' ? 'var(--danger)' : undefined
   return (
     <div className={strong ? 'profit-line profit-line--strong' : 'profit-line'}>
       <span>{label}</span>
