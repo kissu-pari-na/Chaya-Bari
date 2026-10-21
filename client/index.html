@@ -15,7 +15,7 @@
           var p = localStorage.getItem('chaya-palette')
           if (p !== 'random' && ids.indexOf(p) < 0) p = 'random' // new visitors start on Random
           if (p === 'random') {
-            // Keep the current random pick until its period ends (same 5–20 min as src/lib/appearance.ts).
+            // Keep the current random pick until its period ends (same 30 s – 5 min as src/lib/appearance.ts).
             var s = null
             try { s = JSON.parse(localStorage.getItem('chaya-palette-random')) } catch (e) {}
             if (!s || ids.indexOf(s.id) < 0 || !(s.until > Date.now())) {

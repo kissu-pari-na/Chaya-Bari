@@ -49,7 +49,7 @@ const BUSY_RETRY_MS = 30_000
  * them before first paint from the same storage keys, so reloads never flash.
  *
  * Palette preference 'random' (the default) rotates to a different palette
- * every 5–20 minutes, never while the tab is hidden or the user is typing or
+ * every 30 s – 5 min, never while the tab is hidden or the user is typing or
  * has the picker open.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
