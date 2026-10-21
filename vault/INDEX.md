@@ -11,15 +11,15 @@
 | [Admin console (shell & dashboard)](nodes/admin-console.md) `admin-console` | feature | live | 4 | 2 | 0 | 2 | 2026-10-21 |
 | [Orders on a customer's behalf](nodes/admin-orders.md) `admin-orders` | feature | live | 3 | 2 | 0 | 1 | 2026-10-21 |
 | [Analytics](nodes/analytics.md) `analytics` | feature | live | 2 | 1 | 0 | 1 | 2026-10-21 |
-| [Accounts & sign-in (Google only)](nodes/auth.md) `auth` | feature | live | 7 | 4 | 0 | 2 | 2026-10-21 |
+| [Accounts & sign-in (Google only)](nodes/auth.md) `auth` | feature | live | 8 | 5 | 0 | 2 | 2026-10-21 |
 | [bKash online payment](nodes/bkash.md) `bkash` | integration | deprecated | 1 | 3 | 0 | 1 | 2026-10-21 |
 | [Business identity & profile](nodes/business-profile.md) `business-profile` | feature | live | 3 | 1 | 0 | 1 | 2026-10-21 |
-| [Cart](nodes/cart.md) `cart` | feature | live | 2 | 1 | 0 | 1 | 2026-10-21 |
+| [Cart](nodes/cart.md) `cart` | feature | live | 3 | 1 | 0 | 1 | 2026-10-21 |
 | [Product catalog](nodes/catalog.md) `catalog` | feature | live | 4 | 1 | 0 | 2 | 2026-10-21 |
 | [Checkout](nodes/checkout.md) `checkout` | feature | live | 6 | 2 | 0 | 2 | 2026-10-21 |
 | [Delivery coverage areas](nodes/delivery-coverage.md) `delivery-coverage` | feature | live | 3 | 1 | 0 | 2 | 2026-10-21 |
 | [Delivery](nodes/delivery.md) `delivery` | feature | partial | 5 | 2 | 0 | 1 | 2026-10-21 |
-| [Design system (Glossy Glass)](nodes/design-system.md) `design-system` | cross-cutting | live | 16 | 13 | 0 | 5 | 2026-10-21 |
+| [Design system (Glossy Glass)](nodes/design-system.md) `design-system` | cross-cutting | live | 16 | 14 | 0 | 5 | 2026-10-21 |
 | [Transactional email](nodes/email.md) `email` | integration | live | 4 | 1 | 0 | 1 | 2026-10-21 |
 | [Business expenses](nodes/expenses.md) `expenses` | feature | live | 2 | 1 | 0 | 1 | 2026-10-21 |
 | [Guest checkout](nodes/guest-checkout.md) `guest-checkout` | feature | live | 3 | 3 | 0 | 1 | 2026-10-21 |
@@ -27,13 +27,14 @@
 | [Inventory & product costing](nodes/inventory-costing.md) `inventory-costing` | feature | live | 4 | 1 | 0 | 1 | 2026-10-21 |
 | [Kitchen production board](nodes/kitchen.md) `kitchen` | feature | live | 5 | 2 | 0 | 2 | 2026-10-21 |
 | [Knowledge vault (this graph)](nodes/knowledge-vault.md) `knowledge-vault` | meta | live | 9 | 3 | 0 | 3 | 2026-10-21 |
+| [Mobile app (Android & iOS, Expo)](nodes/mobile-app.md) `mobile-app` | feature | partial | 9 | 11 | 2 | 4 | 2026-10-21 |
 | [In-app notifications](nodes/notifications.md) `notifications` | feature | live | 3 | 1 | 0 | 1 | 2026-10-21 |
 | [Orbitax corporate billing](nodes/orbitax-billing.md) `orbitax-billing` | feature | deprecated | 2 | 2 | 0 | 0 | 2026-10-21 |
 | [Order tracking](nodes/order-tracking.md) `order-tracking` | feature | live | 4 | 2 | 0 | 1 | 2026-10-21 |
 | [Advance-order window & time slots](nodes/ordering-window.md) `ordering-window` | feature | live | 5 | 1 | 0 | 2 | 2026-10-21 |
 | [Order lifecycle](nodes/orders.md) `orders` | feature | live | 9 | 5 | 0 | 1 | 2026-10-21 |
 | [Payment methods & accounts](nodes/payments.md) `payments` | feature | live | 5 | 3 | 0 | 1 | 2026-10-21 |
-| [Platform & architecture](nodes/platform.md) `platform` | cross-cutting | live | 9 | 2 | 0 | 2 | 2026-10-21 |
+| [Platform & architecture](nodes/platform.md) `platform` | cross-cutting | live | 9 | 3 | 0 | 2 | 2026-10-21 |
 | [Pricing, discounts & coupons](nodes/pricing-discounts.md) `pricing-discounts` | feature | live | 5 | 2 | 0 | 1 | 2026-10-21 |
 | [Profit & reports](nodes/profit-reports.md) `profit-reports` | feature | live | 4 | 1 | 0 | 1 | 2026-10-21 |
 | [Order again](nodes/reorder.md) `reorder` | feature | live | 3 | 1 | 0 | 1 | 2026-10-21 |
@@ -103,6 +104,14 @@ graph LR
   kitchen -->|triggers| notifications
   kitchen -->|uses| ordering_window
   knowledge_vault -->|constrains| platform
+  mobile_app -->|depends-on| auth
+  mobile_app -->|depends-on| storefront
+  mobile_app -->|uses| cart
+  mobile_app -->|depends-on| design_system
+  mobile_app -->|depends-on| i18n
+  mobile_app -->|uses| notifications
+  mobile_app -->|uses| web_push
+  mobile_app -->|depends-on| platform
   notifications -->|uses| web_push
   notifications -->|uses| wallet
   notifications -->|uses| email
@@ -155,8 +164,18 @@ graph LR
 ## Waiting on the user
 
 - **D-ADM-002** (proposed decision, [admin-console](nodes/admin-console.md)) Group the admin screens as Orders (all, new, deliveries), Money (wallets & payments, reports & profit, expenses), Menu (products, categories, coupons & promos), Stock (materials, purchases, costing), Insights (analytics) and Settings (ordering & wallet, business profile, users).
+- **D-DSN-014** (proposed decision, [design-system](nodes/design-system.md)) `npm run palettes` also generates `mobile/src/theme/palettes.gen.ts` for the React Native app: every palette's light and dark values plus the neutral and status colours parsed from `tokens.css`. `check-colors.mjs --mobile` applies R-DSN-001 to `mobile/src`. R-DSN-002 still holds: palettes change only in `palettes.mjs`. See D-APP-007.
+- **Q-APP-001** (question, [mobile-app](nodes/mobile-app.md)) What are the live website and API addresses for production builds? They set `EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_WEB_URL`, and https App Links / Universal Links for `/track/<token>` need the domain plus the Play signing SHA-256 (and later the Apple Team ID) in `/.well-known` files.
+- **Q-APP-002** (question, [mobile-app](nodes/mobile-app.md)) When will the Apple Developer account ($99/yr) be created? iOS builds, TestFlight and the iOS OAuth client wait on it.
+- **D-APP-006** (proposed decision, [mobile-app](nodes/mobile-app.md)) App id `com.chayabari.app` on both stores, display name `ছায়া বাড়ি`, deep-link scheme `chayabari`. The app id cannot change after the first store upload.
+- **D-APP-007** (proposed decision, [mobile-app](nodes/mobile-app.md)) `palettes.mjs` also writes `mobile/src/theme/palettes.gen.ts` (every palette's light/dark tokens plus the neutral and status colours parsed from `tokens.css`), and `check-colors.mjs --mobile` guards `mobile/src`. One palette source for web and app.
+- **D-APP-008** (proposed decision, [mobile-app](nodes/mobile-app.md)) Random palette mode is the app default too (R-DSN-016) and keeps the website's 30 s to 5 min hold, but the app only swaps when it starts or returns to the foreground, never while a screen is in view.
+- **D-APP-009** (proposed decision, [mobile-app](nodes/mobile-app.md)) Until in-app checkout ships, the cart screen shows the subtotal preview and a button that opens the website to order. The app cart is not carried over to the website.
+- **D-APP-010** (proposed decision, [mobile-app](nodes/mobile-app.md)) The app uses the phone's system fonts for now. The website's fonts are woff2 subsets that React Native cannot load; bundling TTFs of Hind Siliguri and Anek Bangla is a follow-up (I-APP-003).
+- **D-APP-011** (proposed decision, [mobile-app](nodes/mobile-app.md)) Native icons come from `expo-symbols` (SF Symbols on iOS, Material Symbols on Android) rather than an icon font package.
 - **D-ORD-004** (proposed decision, [orders](nodes/orders.md)) With the wallet, cancelling no longer requires refunding first. The charge is reversed and paid money stays as credit, so customers may cancel a pending order even after paying. This rewrote R-ORD-003, R-ORD-004 and R-ORD-005, and pay-first confirmation is now automatic (R-ORD-002).
 - **D-ORD-005** (proposed decision, [orders](nodes/orders.md)) Admins may dispatch straight from CONFIRMED (skipping Preparing) when nothing needs cooking, and the manual "set payment status" endpoint is removed (R-ORD-009).
+- **D-PLT-003** (proposed decision, [platform](nodes/platform.md)) The native apps live in `mobile/` as a separate Expo package with its own `package.json`. R-PLT-006 (no heavy dependencies) governs `client/`; the app's React Native and Expo packages stay inside `mobile/`. See mobile-app.
 - **D-WAL-006** (proposed decision, [wallet](nodes/wallet.md)) Store the wallet as one signed `WalletEntry` ledger that replaces the `Payment` table. The migration converts old payments (SUCCESS → confirmed, PENDING → pending claim, FAILED/VOID → rejected, REFUNDED → debit adjustment), posts charges for orders that were owed, and credits orders that an admin had marked PAID by hand.
 - **D-WAL-007** (proposed decision, [wallet](nodes/wallet.md)) Settlement rule: payments linked to an order cover that order first, plus any *free* positive credit. Existing pay-later debt does not block a pay-first order the customer has paid for.
 - **D-WAL-008** (proposed decision, [wallet](nodes/wallet.md)) A COD order collected short at the door leaves the shortfall as wallet debt for an account, or PARTIALLY_PAID for a guest.
@@ -183,10 +202,12 @@ graph LR
 - **R-AUTH-004** ([auth](nodes/auth.md)) `POST /api/auth/google` is throttled per IP (30 per 5 minutes), fail-open. Google accounts whose email Google hasn't verified are refused.
 - **R-AUTH-005** ([auth](nodes/auth.md)) The cleanup job deletes only legacy *self-registered* accounts that never confirmed (`createdById` null). It never deletes admin-created accounts, which stay unconfirmed until their owner's first Google sign-in, and never deletes placeholders.
 - **R-AUTH-007** ([auth](nodes/auth.md)) Sign-in requires `GOOGLE_CLIENT_ID` (server) and `VITE_GOOGLE_CLIENT_ID` (client), set to the same OAuth client. Without them the sign-in page explains it isn't set up, and guest checkout keeps working.
+- **R-AUTH-008** ([auth](nodes/auth.md)) The server accepts Google ID tokens whose audience is `GOOGLE_CLIENT_ID` or one of `GOOGLE_EXTRA_CLIENT_IDS` (the mobile app's iOS OAuth client). The extras are only for the native apps' own OAuth clients in the same Google Cloud project, never another product's.
 - **R-BKS-001** ([bkash](nodes/bkash.md)) No online bKash flow until the owner has a merchant account and decides to add it back. If it returns, it must record payments as wallet entries, idempotently.
 - **R-BIZ-001** ([business-profile](nodes/business-profile.md)) Business identity is never hard-coded in components. Read it from `useBusinessProfile()`, whose defaults live in `config/businessProfile.ts`.
 - **R-BIZ-002** ([business-profile](nodes/business-profile.md)) Currency is BDT and the business timezone is Asia/Dhaka (a fixed UTC+6 offset with no DST). Date logic relies on this.
 - **R-CART-001** ([cart](nodes/cart.md)) Prices shown in the cart are a preview. The server re-prices every line at checkout from current product data.
+- **R-CART-003** ([cart](nodes/cart.md)) The cart lives on the device (key `chaya_bari_cart`) as lines of `{productId, name, nameEnglish, price, imageUrl, quantity}`, in both the website (`CartContext`) and the mobile app (`mobile/src/lib/cart.tsx`). A line is keyed by `productId`, and setting a quantity to 0 removes it. Change both together.
 - **R-CAT-001** ([catalog](nodes/catalog.md)) A price change appends a `ProductPriceHistory` row. Past orders keep their captured prices and are never re-priced.
 - **R-CAT-002** ([catalog](nodes/catalog.md)) A sale price applies only when it is below the list price. The reduction is recorded as a food discount on each order line.
 - **R-CAT-003** ([catalog](nodes/catalog.md)) `isActive = false` hides a product everywhere public. `isAvailable = false` keeps it visible but not orderable.
@@ -241,6 +262,14 @@ graph LR
 - **R-KV-005** ([knowledge-vault](nodes/knowledge-vault.md)) Entry ids are permanent. Never reuse or renumber them. Get new ones with `vault.mjs next-id`.
 - **R-KV-006** ([knowledge-vault](nodes/knowledge-vault.md)) A new feature gets its own node, with edges to every feature it touches, in the same change that adds the feature.
 - **R-KV-007** ([knowledge-vault](nodes/knowledge-vault.md)) `vault.mjs check` reports 0 errors, and `vault.mjs build` has been run, before work is committed.
+- **R-APP-001** ([mobile-app](nodes/mobile-app.md)) The app uses the same REST API as the website and never computes a price the server trusts. Totals in the app are previews (R-PLT-004).
+- **R-APP-002** ([mobile-app](nodes/mobile-app.md)) No colour is hard-coded in `mobile/src`. Colours come only from `mobile/src/theme/palettes.gen.ts`, which `cd client && npm run palettes` generates from `palettes.mjs` and `tokens.css`. Never edit it by hand. `cd mobile && npm run check:design` must pass.
+- **R-APP-003** ([mobile-app](nodes/mobile-app.md)) Every user-visible string in the app is bilingual, `t('বাংলা', 'English')`, with Bangla as the default.
+- **R-APP-004** ([mobile-app](nodes/mobile-app.md)) Sign-in in the app is Google only and uses the native Google SDK, posting its ID token to `POST /api/auth/google`. Never a Google flow inside a WebView, and never another login method (R-AUTH-001).
+- **R-APP-005** ([mobile-app](nodes/mobile-app.md)) Without `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` the app hides sign-in, and browsing and the cart keep working (R-PLT-009).
+- **R-APP-006** ([mobile-app](nodes/mobile-app.md)) `mobile/ios` and `mobile/android` are generated by Expo prebuild and are never committed or edited by hand. Native settings live in `mobile/app.config.ts` and config plugins.
+- **R-APP-007** ([mobile-app](nodes/mobile-app.md)) The sign-in JWT is stored in the OS keychain/keystore (`expo-secure-store`), never in AsyncStorage.
+- **R-APP-009** ([mobile-app](nodes/mobile-app.md)) Staff (ADMIN/KITCHEN) who sign in to the app are told to use the website for their work. The app has no admin or kitchen screens (R-ACL-003 still decides access on the server).
 - **R-NTF-001** ([notifications](nodes/notifications.md)) Notifications come only from real events in services, never from client-side guesses.
 - **R-NTF-002** ([notifications](nodes/notifications.md)) Each notification stores a message key + params (plus a Bangla fallback title and body) and an optional in-app link.
 - **R-ORB-001** ([orbitax-billing](nodes/orbitax-billing.md)) Orbitax perks (office area, auto coupon) are gated by email domain (`orbitax.com` or a subdomain), checked on the server.
@@ -323,6 +352,10 @@ graph LR
 - **I-I18N-001** · impact:med · effort:S · [i18n](nodes/i18n.md) — Detect the browser's language on the very first visit and pre-select English for non-Bangla browsers, while keeping Bangla as the default for everyone else.
 - **I-KIT-001** · impact:med · effort:S · [kitchen](nodes/kitchen.md) — Add a printable or "big screen" prep sheet for the day (per-product totals plus per-order packing slips with slot and notes).
 - **I-KV-001** · impact:med · effort:S · [knowledge-vault](nodes/knowledge-vault.md) — Add a CI step (GitHub Action) that runs `vault.mjs check` on every PR, so a PR that edits a feature without updating its node is flagged.
+- **I-APP-001** · impact:high · effort:M · [mobile-app](nodes/mobile-app.md) — In-app checkout, my orders and order tracking, with the confirmation email's `/track/<token>` link opening the app when it is installed.
+- **I-APP-002** · impact:high · effort:M · [mobile-app](nodes/mobile-app.md) — Native push for order steps via Expo push / FCM, reusing the notification events and message keys, so customers hear "on the way" without the site open.
+- **I-APP-003** · impact:med · effort:S · [mobile-app](nodes/mobile-app.md) — Bundle Hind Siliguri and Anek Bangla as TTFs with `expo-font` so Bangla in the app matches the website exactly.
+- **I-APP-004** · impact:med · effort:S · [mobile-app](nodes/mobile-app.md) — Long-press the app icon for "Order again" and "Track my order" shortcuts.
 - **I-NTF-001** · impact:med · effort:S · [notifications](nodes/notifications.md) — Group notifications by order in the bell ("CB-1042 · 3 updates"), so busy days don't push older orders out of the seven-item panel.
 - **I-TRK-001** · impact:med · effort:S · [order-tracking](nodes/order-tracking.md) — Add "Add to calendar" (an .ics file with the delivery slot) on the tracking page and confirmation.
 - **I-PAY-002** · impact:med · effort:S · [payments](nodes/payments.md) — Show a QR code for the bKash/Nagad number next to the copy buttons, so customers paying from a second phone can scan instead of typing.

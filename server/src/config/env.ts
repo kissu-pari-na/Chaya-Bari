@@ -42,6 +42,14 @@ export const env = {
   // exchanging an authorization code). Leave unset to disable Google sign-in.
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+    // Extra OAuth client ids whose ID tokens are also accepted, comma-separated.
+    // The iOS app's native Google SDK issues tokens with the iOS client as the
+    // audience; Android and the website use GOOGLE_CLIENT_ID. Only honoured when
+    // GOOGLE_CLIENT_ID itself is set.
+    extraClientIds: (process.env.GOOGLE_EXTRA_CLIENT_IDS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   },
 
   // SMTP for outgoing email. Leave unset to run the mailer in log-only mode.

@@ -7,8 +7,13 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const SRC = fileURLToPath(new URL('../src', import.meta.url))
-const ALLOWED_FILES = new Set(['styles/tokens.css', 'styles/palettes.css', 'lib/palettes.gen.ts'])
+// `--mobile` checks the React Native app (mobile/src) instead, where the only
+// file allowed to hold colours is the generated theme/palettes.gen.ts.
+const MOBILE = process.argv.includes('--mobile')
+const SRC = fileURLToPath(new URL(MOBILE ? '../../mobile/src' : '../src', import.meta.url))
+const ALLOWED_FILES = new Set(
+  MOBILE ? ['theme/palettes.gen.ts'] : ['styles/tokens.css', 'styles/palettes.css', 'lib/palettes.gen.ts'],
+)
 const COLOR = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\(([^)]*)\)/g
 const GLOSS = /^\s*(255,\s*255,\s*255|0,\s*0,\s*0),\s*0?\.\d+\s*$/
 

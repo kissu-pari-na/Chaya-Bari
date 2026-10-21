@@ -40,6 +40,7 @@ guests can still order without any account.
 - **R-AUTH-005** [must] The cleanup job deletes only legacy *self-registered* accounts that never confirmed (`createdById` null). It never deletes admin-created accounts, which stay unconfirmed until their owner's first Google sign-in, and never deletes placeholders.
 - **R-AUTH-006** [should] Phone number is optional on the account but is collected before delivery: a storefront banner and a checkout field prompt for a missing number.
 - **R-AUTH-007** [must] Sign-in requires `GOOGLE_CLIENT_ID` (server) and `VITE_GOOGLE_CLIENT_ID` (client), set to the same OAuth client. Without them the sign-in page explains it isn't set up, and guest checkout keeps working.
+- **R-AUTH-008** [must] The server accepts Google ID tokens whose audience is `GOOGLE_CLIENT_ID` or one of `GOOGLE_EXTRA_CLIENT_IDS` (the mobile app's iOS OAuth client). The extras are only for the native apps' own OAuth clients in the same Google Cloud project, never another product's.
 
 ## Decisions
 - **D-AUTH-001** [superseded 2026-09-15 by:D-AUTH-004] Switch account confirmation from SMS to email.
@@ -55,6 +56,8 @@ guests can still order without any account.
   Guests: guest checkout stays. The phone number is asked for at checkout when missing.
   Rules changed: R-AUTH-001 to R-AUTH-005 were rewritten for Google-only, and R-AUTH-007 was added. R-USR-002 and R-ACL-002 were updated, and D-USR-002 was added. The cleanup job is now limited to legacy self-registered rows, because admin-created accounts now stay unconfirmed until the first Google sign-in.
   Why: one login method, no passwords to forget or reset, no confirmation emails, and fewer screens and endpoints. Google proves the email, so accounts are verified by construction.
+- **D-AUTH-005** [confirmed 2026-10-21] The mobile app signs in with the native Google SDK and posts its ID token to the same `POST /api/auth/google`. `GOOGLE_EXTRA_CLIENT_IDS` (optional, comma-separated) adds accepted audiences for the iOS client; R-AUTH-008 was added and R-AUTH-001 is unchanged. See D-APP-002.
+  Why: Google blocks sign-in inside app WebViews, and the iOS SDK issues tokens for the iOS client rather than the web client.
 
 ## Open questions
 - **Q-AUTH-001** [answered 2026-10-21 → D-AUTH-004] The `User` model comment in `schema.prisma` said "Phone confirmation is mandatory; email optional". It was corrected for Google-only sign-in.
