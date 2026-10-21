@@ -1937,13 +1937,26 @@
           "id": "D-DSN-011",
           "meta": {
             "tokens": [
-              "confirmed"
+              "superseded"
             ],
             "date": "2026-10-21"
           },
           "text": "Random interval is a uniform random 5–20 minutes (the owner allowed 3–30 and asked for best practice). Swaps pause while the user is busy (checked again every 30s), crossfade gently, never repeat the current palette, persist across reloads and sync across tabs.",
           "more": [
             "Why: under about 5 minutes the change becomes a distraction mid-order (a typical browse-to-checkout takes 3–8 minutes). Over about 20, most sessions would never see a change, which defeats the feature. Pausing while typing or picking avoids a swap under the user's hands."
+          ]
+        },
+        {
+          "id": "D-DSN-013",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Random interval is a uniform random 30 seconds to 5 minutes, chosen by the owner. This supersedes D-DSN-011 (5–20 minutes). Everything else about Random is unchanged: pausing while busy, crossfade, no repeats, persistence and tab sync.",
+          "more": [
+            "Why: the owner wants the palette rotation to be noticeable within a single visit."
           ]
         },
         {

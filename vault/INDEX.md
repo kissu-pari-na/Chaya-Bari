@@ -19,7 +19,7 @@
 | [Checkout](nodes/checkout.md) `checkout` | feature | live | 6 | 2 | 0 | 2 | 2026-10-21 |
 | [Delivery coverage areas](nodes/delivery-coverage.md) `delivery-coverage` | feature | live | 3 | 1 | 0 | 2 | 2026-10-21 |
 | [Delivery](nodes/delivery.md) `delivery` | feature | partial | 5 | 2 | 0 | 1 | 2026-10-21 |
-| [Design system (Glossy Glass)](nodes/design-system.md) `design-system` | cross-cutting | live | 16 | 12 | 0 | 5 | 2026-10-21 |
+| [Design system (Glossy Glass)](nodes/design-system.md) `design-system` | cross-cutting | live | 16 | 13 | 0 | 5 | 2026-10-21 |
 | [Transactional email](nodes/email.md) `email` | integration | live | 4 | 1 | 0 | 1 | 2026-10-21 |
 | [Business expenses](nodes/expenses.md) `expenses` | feature | live | 2 | 1 | 0 | 1 | 2026-10-21 |
 | [Guest checkout](nodes/guest-checkout.md) `guest-checkout` | feature | live | 3 | 3 | 0 | 1 | 2026-10-21 |

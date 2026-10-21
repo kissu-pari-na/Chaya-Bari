@@ -15,9 +15,9 @@ export const PALETTE_KEY = 'chaya-palette'
 /// Random mode's current pick and when it expires: {"id":"coral","until":1739999999999}.
 export const RANDOM_KEY = 'chaya-palette-random'
 
-/// Random mode switches palettes after a random 5–20 minutes (design.md §7).
-export const RANDOM_MIN_MS = 5 * 60_000
-export const RANDOM_MAX_MS = 20 * 60_000
+/// Random mode switches palettes after a random 30 seconds to 5 minutes (design.md §3.1).
+export const RANDOM_MIN_MS = 30_000
+export const RANDOM_MAX_MS = 5 * 60_000
 
 const isPalette = (s: unknown): s is PaletteId => typeof s === 'string' && PALETTES.some((p) => p.id === s)
 

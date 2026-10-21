@@ -77,8 +77,10 @@ specification. This node holds its rules and the decisions behind them.
   Why: the owner wants the site to feel fresh and showcase every palette, while keeping the brand palette as the fixed default.
 - **D-DSN-010** [confirmed 2026-10-21] Numerals keep following the language, with no separate Bangla-numeral toggle. Confirmed by the owner.
   Why: fewer settings. Bangla readers already see Bengali digits.
-- **D-DSN-011** [confirmed 2026-10-21] Random interval is a uniform random 5–20 minutes (the owner allowed 3–30 and asked for best practice). Swaps pause while the user is busy (checked again every 30s), crossfade gently, never repeat the current palette, persist across reloads and sync across tabs.
+- **D-DSN-011** [superseded 2026-10-21] Random interval is a uniform random 5–20 minutes (the owner allowed 3–30 and asked for best practice). Swaps pause while the user is busy (checked again every 30s), crossfade gently, never repeat the current palette, persist across reloads and sync across tabs.
   Why: under about 5 minutes the change becomes a distraction mid-order (a typical browse-to-checkout takes 3–8 minutes). Over about 20, most sessions would never see a change, which defeats the feature. Pausing while typing or picking avoids a swap under the user's hands.
+- **D-DSN-013** [confirmed 2026-10-21] Random interval is a uniform random 30 seconds to 5 minutes, chosen by the owner. This supersedes D-DSN-011 (5–20 minutes). Everything else about Random is unchanged: pausing while busy, crossfade, no repeats, persistence and tab sync.
+  Why: the owner wants the palette rotation to be noticeable within a single visit.
 - **D-DSN-012** [confirmed 2026-10-21] Added the 400ms View Transition guard (R-DSN-015) after a test showed that a throttled page could save a palette choice without ever applying it.
   Why: the UI and the stored preference disagreed until the next reload.
 

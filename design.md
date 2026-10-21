@@ -49,7 +49,7 @@ animation that distracts from ordering.
   attribute the palette is **Ember** (the brand default).
 - **Palette preference** (`chaya-palette`): a palette id, or `random`. A missing
   value means `random`, so **new visitors start on Random**. Random shows a random
-  palette (never the one just shown), keeps it for a random 5–20 minutes
+  palette (never the one just shown), keeps it for a random 30 seconds to 5 minutes
   (`chaya-palette-random` stores `{id, until}`, so a reload never jumps), then
   crossfades to another. It never swaps while the tab is hidden, while the user is
   typing, or while the picker is open (it checks again every 30s). Open tabs stay
