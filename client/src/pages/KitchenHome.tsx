@@ -6,14 +6,7 @@ import { fetchProduction, fetchProductionDates, moveLine, moveProduct, packOrder
 import { usePoll } from '../lib/usePoll'
 import { pick, localeDigits } from '../lib/i18n'
 import { formatSlotValue } from '../lib/slots'
-import type {
-  KitchenStage,
-  OrderKitchenStatus,
-  ProductControl,
-  ProductionDate,
-  ProductionDay,
-  StageLineRef,
-} from '../types/kitchen'
+import type { KitchenStage, ProductControl, ProductionDate, ProductionDay, StageLineRef, KitchenCardState, KitchenOrder } from '../types/kitchen'
 import './Kitchen.css'
 
 const bn = (n: number) => localeDigits(n)
@@ -29,7 +22,7 @@ const stageLabel: Record<KitchenStage, string> = {
     return pick('প্রস্তুত', 'Ready')
   },
 }
-const orderStatusLabel: Record<OrderKitchenStatus, string> = {
+const orderStatusLabel: Record<KitchenCardState, string> = {
   get CONFIRMED() {
     return pick('রান্নার জন্য', 'To cook')
   },
@@ -44,6 +37,13 @@ const orderStatusLabel: Record<OrderKitchenStatus, string> = {
   },
 }
 const NEXT: Record<KitchenStage, KitchenStage | null> = { TO_COOK: 'PREPARING', PREPARING: 'READY', READY: null }
+
+/// The kitchen card's state: packed, cooked-but-not-packed, or the order status.
+function cardState(o: KitchenOrder): KitchenCardState {
+  if (o.packed) return 'PACKED'
+  if (o.lines.length > 0 && o.lines.every((l) => l.stage === 'READY')) return 'READY'
+  return o.status
+}
 const PREV: Record<KitchenStage, KitchenStage | null> = { TO_COOK: null, PREPARING: 'TO_COOK', READY: 'PREPARING' }
 
 interface Picker {
@@ -203,10 +203,10 @@ export function KitchenHome() {
           {/* ---- Per-order cards with per-line controls ---- */}
           <div className="ord-list">
             {day.orders.map((o) => (
-              <div key={o.id} className={`ord-card ord-card--${o.status.toLowerCase()}`}>
+              <div key={o.id} className={`ord-card ord-card--${cardState(o).toLowerCase()}`}>
                 <div className="ord-card__head">
                   <span className="ord-card__num">{o.orderNumber}</span>
-                  <span className={`ord-chip ord-chip--${o.status.toLowerCase()}`}>{orderStatusLabel[o.status]}</span>
+                  <span className={`ord-chip ord-chip--${cardState(o).toLowerCase()}`}>{orderStatusLabel[cardState(o)]}</span>
                 </div>
                 <div className="ord-card__who">
                   {o.recipientName}
@@ -237,12 +237,12 @@ export function KitchenHome() {
                 </ul>
 
                 {/* Order-level packing — a step after all items are cooked. */}
-                {o.status === 'READY' && (
+                {cardState(o) === 'READY' && (
                   <button className="ord-pack ord-pack--do" onClick={() => pack(o.id, true)}>
                     📦 {t('প্যাক সম্পন্ন', 'Packing done')}
                   </button>
                 )}
-                {o.status === 'PACKED' && (
+                {cardState(o) === 'PACKED' && (
                   <div className="ord-packed">
                     <span>✓ {t('প্যাক করা হয়েছে — ডেলিভারির জন্য প্রস্তুত', 'Packed — ready for delivery')}</span>
                     <button className="mini mini--back" onClick={() => pack(o.id, false)}>

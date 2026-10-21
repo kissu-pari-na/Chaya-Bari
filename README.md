@@ -17,16 +17,21 @@ implements **all 11 phases** of the spec:
   prices, coupons (food vs. delivery)
 - **Phase 5** — kitchen production dashboard
 - **Phase 6** — delivery: customer vs. actual cost, difference,
-  provider/tracking, status (no estimated cost)
-- **Phase 7** — payments: transactions, methods, derived payment status
+  provider/tracking (no estimated cost); progress is the order's own status
+- **Phase 7** — payments: a per-customer wallet ledger, pay first / pay later /
+  cash on delivery, manual payment claims
 - **Phase 8** — inventory & costing: materials, purchases with weighted-average
   cost, recipes, per-unit product cost
 - **Phase 9** — expenses & profit: business expenses, order contribution,
   product profitability, business profit dashboard
 - **Phase 10** — analytics: customer behavior, product demand×profit
   classification, sales-by-day
-- **Phase 11** — automation: in-app notifications, and integration points for a
-  delivery provider and a payment gateway
+- **Phase 11** — automation: in-app notifications and web push
+
+## Knowledge vault & design system
+
+- **[`vault/`](vault/README.md)** is the project's knowledge graph. Each feature is a node holding its rules, decisions, open questions and improvement ideas, and the edges are how features relate. AI agents must follow [`vault/PROTOCOL.md`](vault/PROTOCOL.md) (also referenced from [`CLAUDE.md`](CLAUDE.md)). Open `vault/graph.html` in a browser to explore it, or run `node vault/tools/vault.mjs questions` to see what is waiting on the owner.
+- **[`design.md`](design.md)** is the Glossy Glass design system: glass surfaces, seven contrast-checked palettes (Ember & Gold by default) in light, dark and system modes, and calm motion. Check it with `cd client && npm run check:design`.
 
 ## Tech stack
 
@@ -64,9 +69,9 @@ server/
     config/env.ts          env loading + validation
     lib/                   prisma client, logger
     middleware/            authenticate, requireRole, validate, error handler
-    utils/                 httpError, password (bcrypt), jwt
+    utils/                 httpError, password (legacy column filler), jwt
     modules/
-      auth/                register / login / me
+      auth/                Google sign-in / me
       health/             health + db checks
 ```
 
@@ -78,15 +83,17 @@ client/src/
   context/AuthContext.tsx  auth state, JWT persistence, /me on boot
   context/BusinessProfileContext.tsx
   components/ProtectedRoute.tsx   role-based route guard
-  pages/                   Login, Register, CustomerHome, AdminDashboard,
+  pages/                   Login (Google), CustomerHome, AdminDashboard,
                            BusinessProfileSettings, KitchenHome, ...
   layouts/                 Customer / Admin / Kitchen layouts
 ```
 
 ## Phase 1 — what's implemented
 
-- **Authentication**: register (public → always CUSTOMER), login, `GET /me`,
-  JWT bearer tokens, bcrypt password hashing.
+- **Authentication**: **Google sign-in only**, for customers and staff alike
+  (`POST /api/auth/google`), `GET /me`, and JWT bearer tokens. A first Google
+  sign-in creates a CUSTOMER account; a missing phone number is asked for at
+  checkout. There are no passwords, email codes or password resets.
 - **Roles**: `CUSTOMER`, `ADMIN`, `KITCHEN`. Role-based authorization on the API
   (`requireRole`) and role-based route guards + redirects on the frontend.
   Admin/Kitchen accounts are created via seed, never via public registration.
@@ -102,30 +109,32 @@ client/src/
 ```bash
 cd server
 npm install
-cp .env.example .env          # then edit DATABASE_URL + JWT_SECRET
+cp .env.example .env          # then edit DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID, SEED_*_EMAIL
 npm run prisma:migrate        # create the schema (needs a running Postgres)
 npm run seed                  # create initial admin + kitchen accounts
 npm run dev                   # http://localhost:4000
 ```
 
-Default seeded accounts (local dev only — override via `SEED_*` env vars):
+Seeded staff accounts come from `SEED_ADMIN_EMAIL` and `SEED_KITCHEN_EMAIL`.
+Set them to the **Google accounts** the owner and the kitchen sign in with.
+More staff can be added later from Admin → Users, by their Google email.
 
-```
-ADMIN   -> admin@chayabari.local   / admin12345
-KITCHEN -> kitchen@chayabari.local / kitchen12345
-```
+Sign-in needs a Google OAuth client: create a "Web application" client in Google
+Cloud Console, add `http://localhost:5173` (and your live site) as an Authorized
+JavaScript origin, and set the same ID as `GOOGLE_CLIENT_ID` (server) and
+`VITE_GOOGLE_CLIENT_ID` (client).
 
 ### 2. Frontend
 
 ```bash
 cd client
 npm install
-cp .env.example .env          # VITE_API_URL defaults to http://localhost:4000/api
+cp .env.example .env          # set VITE_GOOGLE_CLIENT_ID; VITE_API_URL defaults to http://localhost:4000/api
 npm run dev                   # http://localhost:5173
 ```
 
-Register a new account (becomes a customer), or log in with a seeded
-admin/kitchen account. Each role lands on its own area:
+Sign in with Google: a new Google account becomes a customer, and a seeded or
+admin-created email signs in as that staff member. Each role lands on its own area:
 `/` (customer), `/admin`, `/kitchen`.
 
 ## Phase 2 — what's implemented
@@ -161,7 +170,7 @@ admin/kitchen account. Each role lands on its own area:
   the order number to reference) or cash on delivery, and only admins are
   notified. `Order.customerId` is nullable for these; guest orders are grouped
   under a single "Guest" bucket in analytics and skipped by the review-invite
-  job. The confirmation screen invites the guest to register (track orders,
+  job. The confirmation screen invites the guest to sign in with Google (track orders,
   history, faster checkout, reviews).
 - **Address phone is optional + backfilled**: an address can be saved without a
   phone; at checkout a missing address phone is auto-filled from the customer's
@@ -175,13 +184,13 @@ admin/kitchen account. Each role lands on its own area:
   also order to their Mohakhali office. The `/contact` page lists all zones. The
   area list lives in `delivery-areas.ts` (server) mirrored in the client.
 - **Order cancellation rules**: a customer can cancel their own order only while
-  it is still pending (and nothing has been paid); once confirmed or beyond, the
-  order page tells them to contact the business, linking a new public **/contact**
-  page built from the business profile. An admin can cancel only from
-  pending/confirmed (never once preparing has started) and only after refunding
-  any amount paid. Once an order is cancelled everything is locked — no status,
-  payment, or payment-method changes. Customers and admins are notified on
-  cancellation.
+  it is still pending; once confirmed or beyond, the order page tells them to
+  contact the business, linking a public **/contact** page built from the
+  business profile. An admin can cancel only from pending/confirmed (never once
+  preparing has started). Cancelling reverses the order's wallet charge; any
+  money already paid stays in the customer's wallet as credit. Once cancelled,
+  the order is locked — no status or payment-method changes. Customers and
+  admins are notified on cancellation.
 - **Missing phone capture**: a phone number is optional on some accounts (e.g.
   Google sign-in). Customers can add/edit their own name and phone from the
   profile (`PATCH /api/auth/me`); a storefront-wide banner and a checkout field
@@ -190,9 +199,13 @@ admin/kitchen account. Each role lands on its own area:
 ## Phase 4 — what's implemented
 
 - **Admin order management**: list orders with filters (status, payment
-  status, search by order/customer, fulfillment date range), an order detail
-  view with the full breakdown and customer info, status updates (validated
-  transitions), and payment-status updates.
+  status, search by order/customer, fulfillment date range) and an order page
+  built around one **next step** card (confirm → dispatch → mark delivered,
+  collecting COD cash on delivery), with money, delivery and customer cards
+  beside it.
+- **Five order steps everywhere**: Placed → Confirmed → Preparing → On the way
+  → Delivered (plus Cancelled). Packing is the kitchen's `readyAt` marker, not
+  a status. Admins may dispatch straight from Confirmed.
 - **Discounts** (food kept separate from delivery, per the business rules):
   - **Product sale price** — an optional promotional price per product; the
     reduction is recorded as a food discount on each order line.
@@ -209,9 +222,9 @@ admin/kitchen account. Each role lands on its own area:
   day, the confirmed orders' items are aggregated per product into a simple
   "what to make" list — product, quantity to prepare, and how many orders it
   spans — with total orders and total items at a glance.
-- **Prep/pack status**: each product's status (Pending → Preparing → Prepared
-  → Packed) is tapped through on large, phone/tablet-friendly controls and
-  persists per day (`KitchenTask`). Only admin-confirmed, non-cancelled orders
+- **Prep/pack status**: each order line moves To cook → Preparing → Ready on
+  large, phone/tablet-friendly controls; an order whose lines are all ready can
+  be marked **packed** (`Order.readyAt`). Only confirmed, non-cancelled orders
   count toward production.
 - **Special notes**: customer order notes for the day are surfaced for the
   kitchen.
@@ -224,50 +237,42 @@ admin/kitchen account. Each role lands on its own area:
   later). The **difference** (customer − actual = delivery gain/loss) is
   derived, never stored, and is `null` until the actual cost is entered. There
   is deliberately **no** `EstimatedDeliveryCost`.
-- **Admin delivery management**: create a delivery on the order, set provider,
-  tracking reference, actual cost, and status; a deliveries list with the
-  per-order difference and rolled-up delivery gain/loss.
-- **Customer view**: a read-only delivery summary (status, provider, tracking)
-  on their order — cost details are never exposed to customers.
+- **Admin delivery management**: dispatching an order ("On the way") records
+  who delivers it (provider or rider) and a tracking reference or phone; the
+  actual cost is entered later. The delivery record has **no status of its
+  own** — progress is the order status. A deliveries list shows the per-order
+  difference and rolled-up delivery gain/loss.
+- **Customer view**: who is delivering and the tracking reference, on their
+  order — cost details are never exposed to customers.
 
 ## Phase 7 — what's implemented
 
-- **Payment transactions** recorded separately from the order (not a ledger).
-  Each has a method (cash, bKash, Nagad, Rocket, card, bank transfer, online),
-  amount, transaction status (success / pending / failed / refunded), a source
-  (customer / admin), and an optional reference.
-- **Payment mode (prepaid vs cash on delivery)**: an order carries a
-  `paymentMode` chosen at checkout. **Prepaid** orders are gated on payment —
-  they auto-confirm once fully paid and can't be confirmed while unpaid.
-  **Cash-on-delivery** orders skip that gate: they can be confirmed and sent to
-  the kitchen while unpaid, and the cash is recorded when they're delivered
-  (payment never auto-confirms/reverts their status). The order tracker adapts
-  to the mode — prepaid shows a "payment completed" gate before confirmation,
-  COD shows the cash payment as the closing milestone after delivery.
-- **Derived order payment status**: the order's status
-  (Pending → Partially Paid → Paid, or Refunded) is recomputed from its
-  payments — net collected = successful payments minus refunds — along with
-  `amountPaid` / `amountDue`. **Pending (unverified) claims never count.**
-- **Manual payment + verification**: a customer who pays directly (cash or any
-  transfer) reports it on their order — method, amount, transaction reference —
-  which creates a *pending* claim and notifies admins. An admin **verifies or
-  rejects** it from the order's payments panel; only on verify does it count
-  toward paid/due. The customer is notified either way.
-- **bKash online payment**: a "Pay with bKash" button on the order runs the
-  bKash Tokenized Checkout flow (create → redirect → execute) and records a
-  confirmed payment automatically on success. It runs in a **sandbox/mock mode**
-  out of the box and becomes live by setting the `BKASH_*` env vars — no code
-  change (see `server/.env.example`).
-- **Admin**: a payments panel lists transactions with source + status, verifies
-  pending claims, and records confirmed payments directly. **Customer**: sees
-  paid/due, pays via bKash, reports manual payments, and tracks each claim's
-  verification status.
-- **Orbitax combined billing**: staff whose email is on the `orbitax.com` domain
-  (or a subdomain) get a billing shortcut icon in the header linking to
-  `/orbitax`. The page shows their **combined outstanding balance** across all
-  orders and lets them **pay some or a specific amount**; the amount is allocated
-  across their unpaid orders (oldest first) as payment claims that admins verify.
-  Access is gated server-side by the email domain.
+- **Wallet** (one per customer): a signed ledger of `WalletEntry` rows — order
+  charges, order refunds, payments and admin adjustments — each with a status
+  (pending / confirmed / rejected), who, when and a reference. Balance = sum of
+  confirmed entries. Entries are never deleted; corrections are new entries.
+  Customers see it as a timeline at **/wallet**.
+- **Three payment modes** chosen at checkout:
+  - **Pay first** — the order stays *Placed* until its payment is confirmed,
+    then confirms itself. Free wallet credit is used automatically.
+  - **Pay later** — the amount goes onto the wallet immediately. Allowed only
+    while unpaid wallet debt stays within the **credit limit** (৳100 by
+    default, admin-configurable; checked under a per-customer lock).
+  - **Cash on delivery** — settled when the admin marks it delivered and
+    collected.
+  Guests can choose pay first or cash on delivery.
+- **Manual payment claims**: there is no online gateway. Customers send money
+  to the business's bKash / Nagad / Rocket / bank account (shown with copy
+  buttons) and claim it with the transaction reference. A claim is pending
+  until an admin confirms (counted) or rejects it (a note is required).
+  Duplicate references are refused.
+- **Promo codes that raise the limit**: a `WALLET_LIMIT` coupon temporarily
+  raises a customer's credit limit for a set number of days.
+- **Admin**: a wallets list with totals and a pending-claims queue, a per-customer
+  wallet page with the timeline, and **adjust** (credit or debit, reference
+  required). Order pages show paid / due / on wallet and can record a payment.
+- **Orbitax staff** use the ordinary wallet (the old `/orbitax` page redirects to
+  `/wallet`); they keep the office delivery area and the automatic coupon.
 
 ## Phase 8 — what's implemented
 
@@ -318,8 +323,9 @@ admin/kitchen account. Each role lands on its own area:
 ## Phase 11 — what's implemented
 
 - **In-app notifications** (fully working): emitted from real events — order
-  placed (→ customer + admins), order status changes (→ customer), payment
-  submitted/received/verified/rejected, and the review invite. A header bell
+  placed (→ customer + admins), order status changes (→ customer), wallet claims
+  submitted (→ admins) and confirmed/rejected (→ customer), wallet adjustments,
+  and the review invite. A header bell
   shows the unread count with a dropdown to read and mark-all-read.
   **Bilingual**: each notification is stored with a message key + params (plus a
   Bengali fallback), and the bell renders the text in the active UI language, so
@@ -333,19 +339,13 @@ admin/kitchen account. Each role lands on its own area:
   and everything else works. Subscriptions are stored per device and pruned when
   they expire. (Note: web push uses the standard notification sound, not a
   call-style ring, and iOS requires the site be added to the Home Screen.)
-- **Delivery provider integration point** (mock): "dispatch to provider"
-  generates a tracking reference and moves the delivery to *assigned* —
-  swap the adapter for a real Pathao/pandago client without changing callers.
-- **Payment gateway integration point** (mock): "take online payment" records a
-  successful charge with a gateway reference — swap for a real bKash / card
-  gateway (redirect + webhook) later.
-
-> The provider and gateway pieces are working **mock adapters** with clean
-> seams; wiring real third-party APIs needs live credentials and webhooks.
+> There is no online payment gateway or delivery-provider API yet: payments are
+> claimed manually and dispatch records the provider by hand. A future
+> integration hooks into the wallet (payments) and the dispatch step (delivery).
 
 ## Status
 
 All 11 phases of the spec are implemented — the full flow works end to end:
-**customer orders → kitchen sees what to prepare → food is packed → delivery is
-tracked → payment is recorded → the owner sees sales, costs and profit without
-manual calculation.**
+**customer orders → kitchen sees what to prepare → food is packed → it goes out
+for delivery → payment lands in the wallet → the owner sees sales, costs and
+profit without manual calculation.**

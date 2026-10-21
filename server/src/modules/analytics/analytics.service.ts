@@ -12,7 +12,7 @@ function toUtcDate(dateStr: string): Date {
 const round2 = (n: number) => Math.round(n * 100) / 100
 
 // Orders counted as sales in the profit reports: everything except cancelled.
-const SALES_STATUSES: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY', 'DELIVERED']
+const SALES_STATUSES: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED']
 
 // ---- Order contribution (Section 13) ----
 
@@ -213,7 +213,7 @@ export async function businessSummary(from: string, to: string): Promise<Busines
 
   const [pendingOrders, awaitingDelivery, lowStock] = await Promise.all([
     prisma.order.count({ where: { status: 'PENDING' } }),
-    prisma.order.count({ where: { status: { in: ['CONFIRMED', 'PREPARING', 'PACKED', 'OUT_FOR_DELIVERY'] } } }),
+    prisma.order.count({ where: { status: { in: ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY'] } } }),
     prisma.material.findMany({ orderBy: { stockQty: 'asc' }, take: 5 }),
   ])
 

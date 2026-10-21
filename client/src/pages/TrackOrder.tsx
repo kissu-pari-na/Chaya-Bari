@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchTrackedOrder } from '../lib/orders'
 import { formatBdt, formatDateWithDay } from '../lib/format'
-import { orderStatusLabel, paymentStatusLabel } from '../lib/orderStatus'
+import { orderStatusLabel, paymentModeLabel } from '../lib/orderStatus'
 import { formatSlotValue } from '../lib/slots'
-import { deliveryStatusLabel } from '../lib/deliveryStatus'
 import { usePoll } from '../lib/usePoll'
 import { DocumentHeader } from '../components/DocumentHeader'
 import { OrderTracker } from '../components/OrderTracker'
@@ -68,14 +67,20 @@ export function TrackOrder() {
         </div>
         <div className="order-detail__badges">
           <span className={`status status--${order.status.toLowerCase()}`}>{orderStatusLabel[order.status]}</span>
-          <span className="status status--payment">{t('পেমেন্ট:', 'Payment:')} {paymentStatusLabel[order.paymentStatus]}</span>
-          {order.paymentMode === 'COD' && (
-            <span className="status status--cod">{t('ক্যাশ অন ডেলিভারি', 'Cash on delivery')}</span>
-          )}
+          <span className="status status--payment">{paymentModeLabel[order.paymentMode]}</span>
         </div>
       </div>
 
-      <OrderTracker status={order.status} paymentStatus={order.paymentStatus} paymentMode={order.paymentMode} />
+      <OrderTracker
+        status={order.status}
+        paymentStatus={order.paymentStatus}
+        paymentMode={order.paymentMode}
+        amountDue={order.amountDue}
+        readyAt={order.readyAt}
+        dispatchedAt={order.dispatchedAt}
+        deliveredAt={order.deliveredAt}
+        delivery={order.delivery}
+      />
 
       <table className="document-table">
         <thead>
@@ -138,14 +143,13 @@ export function TrackOrder() {
         </tfoot>
       </table>
 
-      {order.delivery && (
+      {order.delivery?.provider && (
         <div className="order-detail__address">
           <h3>{t('ডেলিভারি', 'Delivery')}</h3>
           <p>
-            {t('স্ট্যাটাস:', 'Status:')} <span className="status status--payment">{deliveryStatusLabel[order.delivery.status]}</span>
-            {order.delivery.provider ? ` · ${order.delivery.provider}` : ''}
+            {order.delivery.provider}
+            {order.delivery.trackingRef && <span className="muted"> · {order.delivery.trackingRef}</span>}
           </p>
-          {order.delivery.trackingRef && <p className="muted">{t('ট্র্যাকিং:', 'Tracking:')} {order.delivery.trackingRef}</p>}
         </div>
       )}
 
@@ -170,19 +174,19 @@ export function TrackOrder() {
                 )}
               </p>
               <Link to="/login" className="btn btn--brand">
-                {t('লগইন', 'Log in')}
+                {t('সাইন ইন', 'Sign in')}
               </Link>
             </>
           ) : (
             <>
               <p>
                 {t(
-                  `${order.account.maskedEmail ?? 'আপনার ইমেইল'} দিয়ে অ্যাকাউন্ট খুলুন — এই ইমেইলের সব অর্ডার আপনার অ্যাকাউন্টে চলে আসবে।`,
-                  `Create an account with ${order.account.maskedEmail ?? 'your email'} — every order placed with that email will be in your account.`,
+                  `${order.account.maskedEmail ?? 'আপনার ইমেইলের'} গুগল অ্যাকাউন্ট দিয়ে সাইন ইন করুন — এই ইমেইলের সব অর্ডার আপনার অ্যাকাউন্টে চলে আসবে।`,
+                  `Sign in with the Google account for ${order.account.maskedEmail ?? 'your email'} — every order placed with that email will be in your account.`,
                 )}
               </p>
-              <Link to="/register" className="btn btn--brand">
-                {t('অ্যাকাউন্ট খুলুন', 'Create account')}
+              <Link to="/login" className="btn btn--brand">
+                {t('গুগল দিয়ে সাইন ইন', 'Sign in with Google')}
               </Link>
             </>
           )}

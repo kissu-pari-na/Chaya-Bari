@@ -1,4 +1,6 @@
 import { z } from 'zod'
+
+export const paymentModes = ['PAY_FIRST', 'PAY_LATER', 'COD'] as const
 import { SLOT_VALUES } from './slots.js'
 
 const optionalText = (max: number) =>
@@ -59,9 +61,9 @@ export const checkoutSchema = z.object({
     .max(40)
     .optional()
     .or(z.literal('').transform(() => undefined)),
-  /// How the order is settled. Defaults to PREPAID (pay in advance); COD means
-  /// cash is collected on delivery.
-  paymentMode: z.enum(['PREPAID', 'COD']).optional().default('PREPAID'),
+  /// How the order is settled: pay first (manual payment or wallet credit), pay
+  /// later (charged to the wallet within its limit) or cash on delivery.
+  paymentMode: z.enum(paymentModes).optional().default('PAY_FIRST'),
 })
 
 // Guest checkout: no account, so contact + delivery details are inline. Guests
@@ -93,7 +95,8 @@ export const guestCheckoutSchema = z.object({
     .max(40)
     .optional()
     .or(z.literal('').transform(() => undefined)),
-  paymentMode: z.enum(['PREPAID', 'COD']).optional().default('COD'),
+  /// Guests have no wallet, so no pay later.
+  paymentMode: z.enum(['PAY_FIRST', 'COD']).optional().default('COD'),
 })
 
 // Admin places an order on a customer's behalf, identified by email. If the
@@ -128,7 +131,7 @@ export const adminCheckoutSchema = z
       .max(40)
       .optional()
       .or(z.literal('').transform(() => undefined)),
-    paymentMode: z.enum(['PREPAID', 'COD']).optional().default('COD'),
+    paymentMode: z.enum(paymentModes).optional().default('COD'),
   })
   .refine((v) => v.addressId || v.address, {
     message: 'A delivery address is required',
@@ -137,21 +140,28 @@ export const adminCheckoutSchema = z
 
 // ---- Ordering settings ----
 
-export const orderStatuses = [
-  'PENDING',
-  'CONFIRMED',
-  'PREPARING',
-  'PACKED',
-  'OUT_FOR_DELIVERY',
-  'DELIVERED',
-  'CANCELLED',
-] as const
+/// The five steps (+ cancelled) every role sees (vault D-ORD-003).
+export const orderStatuses = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] as const
 
-export const paymentStatuses = ['PENDING', 'PAID', 'PARTIALLY_PAID', 'REFUNDED', 'FAILED'] as const
+const textOpt = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .or(z.literal('').transform(() => undefined))
 
-export const updateStatusSchema = z.object({ status: z.enum(orderStatuses) })
-export const updatePaymentStatusSchema = z.object({ paymentStatus: z.enum(paymentStatuses) })
-export const updatePaymentModeSchema = z.object({ paymentMode: z.enum(['PREPAID', 'COD']) })
+/// Admin moves an order to its next step. Dispatching may carry the delivery
+/// details; delivering a cash-on-delivery order records the cash collected.
+export const updateStatusSchema = z.object({
+  status: z.enum(orderStatuses),
+  provider: textOpt(120),
+  trackingRef: textOpt(120),
+  collected: z.number().min(0).max(1_000_000).optional(),
+  collectMethod: z.enum(['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'BANK']).optional(),
+  collectReference: textOpt(120),
+})
+export const updatePaymentModeSchema = z.object({ paymentMode: z.enum(paymentModes) })
 
 export const updateOrderingSettingSchema = z.object({
   cutoffTime: z
@@ -160,6 +170,8 @@ export const updateOrderingSettingSchema = z.object({
   minAdvanceDays: z.number().int().min(0).max(30),
   defaultDeliveryCost: z.number().min(0).max(100000),
   timezone: z.string().min(1).max(60),
+  /// Default pay-later limit (BDT) for every wallet.
+  walletCreditLimit: z.number().min(0).max(100000).optional(),
 })
 
 export type AddressInput = z.infer<typeof addressSchema>

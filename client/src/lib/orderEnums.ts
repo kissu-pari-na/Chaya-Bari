@@ -1,28 +1,19 @@
-import type { OrderStatus, PaymentStatus } from '../types/order'
+import type { OrderStatus, PaymentMode, PaymentStatus } from '../types/order'
 
-export const orderStatuses: OrderStatus[] = [
-  'PENDING',
-  'CONFIRMED',
-  'PREPARING',
-  'READY',
-  'PACKED',
-  'OUT_FOR_DELIVERY',
-  'DELIVERED',
-  'CANCELLED',
-]
+/// The five steps (+ cancelled), in order (vault D-ORD-003).
+export const orderStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED']
 
-export const paymentStatuses: PaymentStatus[] = ['PENDING', 'PAID', 'PARTIALLY_PAID', 'REFUNDED', 'FAILED']
+export const paymentStatuses: PaymentStatus[] = ['PENDING', 'PAID', 'ON_WALLET', 'REFUNDED']
 
-/// Allowed next statuses (mirrors the server's transition rules) for building
-/// the admin status controls. An order can only be CANCELLED while it is still
-/// PENDING or CONFIRMED — once preparing has started it can no longer be
-/// cancelled. CANCELLED and DELIVERED are terminal.
+export const paymentModes: PaymentMode[] = ['PAY_FIRST', 'PAY_LATER', 'COD']
+
+/// Allowed next statuses (mirrors the server's transitions). Admins may dispatch
+/// straight from CONFIRMED when nothing needs cooking. Cancelling is possible
+/// only while PENDING or CONFIRMED; DELIVERED and CANCELLED are terminal.
 export const nextStatuses: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PREPARING', 'CANCELLED'],
-  PREPARING: ['READY'],
-  READY: ['PACKED'],
-  PACKED: ['OUT_FOR_DELIVERY'],
+  CONFIRMED: ['PREPARING', 'OUT_FOR_DELIVERY', 'CANCELLED'],
+  PREPARING: ['OUT_FOR_DELIVERY'],
   OUT_FOR_DELIVERY: ['DELIVERED'],
   DELIVERED: [],
   CANCELLED: [],

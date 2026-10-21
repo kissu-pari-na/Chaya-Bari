@@ -6,8 +6,8 @@
   justify-content: center;
   padding: 1.5rem 1rem;
   background:
-    radial-gradient(circle at 20% 20%, rgba(228, 50, 43, 0.16), transparent 42%),
-    radial-gradient(circle at 82% 78%, rgba(245, 179, 0, 0.12), transparent 45%),
+    radial-gradient(circle at 20% 20%, var(--accent-soft-2), transparent 42%),
+    radial-gradient(circle at 82% 78%, var(--accent-soft), transparent 45%),
     var(--page-bg);
   color: var(--on-page);
 }
@@ -25,16 +25,17 @@
   overflow: hidden;
   width: 100%;
   max-width: 400px;
-  /* Theme-aware surface: dark glass in dark mode, light paper in light mode. */
-  background: var(--glass-bg), var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
+  /* Glass surface (design.md §5). */
+  background: var(--glass-bg), var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-card);
   padding: 2.25rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(22px) saturate(170%);
   color: var(--card-text);
 }
 
@@ -43,7 +44,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(245, 224, 184, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, var(--gloss-top), transparent);
   pointer-events: none;
 }
 
@@ -86,9 +87,9 @@
 
 .auth-card button {
   margin-top: 0.5rem;
-  background: linear-gradient(180deg, #ea342c, #d0241d);
-  color: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--btn-grad);
+  color: var(--on-accent);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   padding: 0.85rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
@@ -100,8 +101,8 @@
 }
 
 .auth-card button:hover:not(:disabled) {
-  background: linear-gradient(180deg, #f5443b, #de2c24);
-  box-shadow: 0 6px 16px rgba(228, 50, 43, 0.3), var(--sheen-red);
+  background: var(--btn-grad);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 45%, transparent), var(--sheen-red);
   transform: translateY(-1px);
 }
 
@@ -112,9 +113,9 @@
 }
 
 .auth-error {
-  background: rgba(192, 69, 58, 0.14);
-  color: #c0453a;
-  border: 1px solid rgba(192, 69, 58, 0.4);
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
   font-size: 0.85rem;
@@ -140,9 +141,9 @@
 }
 
 .auth-notice {
-  background: rgba(76, 175, 80, 0.14);
-  color: #3c9142;
-  border: 1px solid rgba(76, 175, 80, 0.4);
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.75rem;
   font-size: 0.85rem;
@@ -190,4 +191,36 @@
   box-shadow: none;
   transform: none;
   text-decoration: underline;
+}
+
+/* Google-only sign-in (vault D-AUTH-004) */
+.auth-lede {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.auth-perks {
+  margin: 0.25rem 0 0;
+  padding: 0.85rem 1rem;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  background: var(--glass-inset);
+  border: 1px solid var(--edge-low);
+  border-radius: var(--radius-input);
+  box-shadow: inset 0 1px 0 var(--gloss-top);
+  font-size: 0.9rem;
+}
+.auth-perks li::before {
+  content: '✓';
+  margin-right: 0.5rem;
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+html.low-motion .auth-card {
+  background: var(--glass-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

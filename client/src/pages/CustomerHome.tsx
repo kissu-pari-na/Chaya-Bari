@@ -4,11 +4,11 @@ import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../context/LanguageContext'
 import { useContentLang } from '../context/TranslationContext'
-import { fetchProducts } from '../lib/products'
+import { fetchCategories, fetchProducts } from '../lib/products'
 import { fetchRatingSummary, fetchTopReviews } from '../lib/reviews'
 import { formatBdt, toBnDigits } from '../lib/format'
-import { ProductCard } from '../components/ProductCard'
-import { effectivePrice, type Product } from '../types/product'
+import { MenuByCategory } from '../components/MenuByCategory'
+import { effectivePrice, type Category, type Product } from '../types/product'
 import type { RatingSummary, Review } from '../types/review'
 import './Home.css'
 import './Products.css'
@@ -38,6 +38,7 @@ export function CustomerHome() {
   const bizName = lc(profile.name, profile.nameEnglish)
   const tagline = lc(profile.tagline, profile.taglineEnglish)
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [topReviews, setTopReviews] = useState<Review[]>([])
   const [rating, setRating] = useState<RatingSummary | null>(null)
 
@@ -45,6 +46,9 @@ export function CustomerHome() {
     fetchProducts()
       .then(setProducts)
       .catch(() => setProducts([]))
+    fetchCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]))
     fetchTopReviews()
       .then(setTopReviews)
       .catch(() => setTopReviews([]))
@@ -61,7 +65,8 @@ export function CustomerHome() {
   ]
 
   const available = products.filter((p) => p.isAvailable)
-  const featured = available.slice(0, 4)
+  // The menu by category shows everything orderable (sold-out items stay visible, R-SHOP-002).
+  const menu = products
   // Top 4 by rating (then review count) for the animated hero showcase; the #1
   // product sits in the centre, the next three orbit around it.
   const ranked = [...available].sort(
@@ -139,7 +144,7 @@ export function CustomerHome() {
           )}
         </div>
         <div className="hero__art">
-          <div className="hero__stage">
+          <div className="hero__stage" data-tilt>
             <span className="hero__ring hero__ring--outer" aria-hidden="true" />
             <span className="hero__ring hero__ring--inner" aria-hidden="true" />
             <span className="hero__glow" aria-hidden="true" />
@@ -196,18 +201,14 @@ export function CustomerHome() {
         </Link>
       </div>
 
-      {featured.length === 0 ? (
+      {menu.length === 0 ? (
         <p className="home__featured-empty">
           {t('আমাদের পূর্ণ মেনু দেখতে', 'To see our full menu visit the')}{' '}
           <Link to="/products">{t('পণ্যের পাতায়', 'products page')}</Link>{' '}
           {t('যান।', '.')}
         </p>
       ) : (
-        <div className="product-grid">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        <MenuByCategory products={menu} categories={categories} />
       )}
 
       {/* ---------- Promo / combo band ---------- */}

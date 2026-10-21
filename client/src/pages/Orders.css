@@ -27,7 +27,7 @@
 
 .order-row:hover {
   transform: translateY(-2px);
-  border-color: rgba(228, 50, 43, 0.5);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   box-shadow: var(--glass-shadow);
   text-decoration: none;
 }
@@ -109,29 +109,11 @@
   opacity: 0.85;
 }
 
-.status {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  background: #f0e8d2;
-  color: #6b5f3c;
-  white-space: nowrap;
-}
-
-.status--pending { background: #fff4d6; color: #8a6d1a; }
-.status--confirmed { background: #e0eefc; color: #1a5b8a; }
-.status--preparing { background: #efe3fb; color: #6b3a9a; }
-.status--ready { background: #dce9fb; color: #1c5fa8; }
-.status--packed { background: #f6ead0; color: #8a5a10; }
-.status--out_for_delivery { background: #f7e6c6; color: #96690f; }
-.status--delivered { background: #efdcae; color: #7a5410; }
-.status--cancelled { background: #fdecea; color: #b3261e; }
-.status--payment { background: #f0e8d2; color: #6b5f3c; }
-.status--cod { background: #e6f4ea; color: #1f7a44; }
+/* Status pills moved to styles/glass.css (shared by every page). */
 
 .order-placed {
-  background: rgba(245, 179, 0, 0.12);
-  border: 1px solid rgba(245, 179, 0, 0.42);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent-bright);
   padding: 0.7rem 1rem;
   border-radius: 8px;
@@ -176,7 +158,7 @@
   display: block;
   margin: 1rem 0 0.5rem;
   text-align: center;
-  background: rgba(228, 50, 43, 0.14);
+  background: var(--accent-soft-2);
   border: 1px solid var(--accent);
   color: var(--accent-bright);
   font-weight: 700;
@@ -187,7 +169,7 @@
 }
 
 .order-detail__review-cta:hover {
-  background: rgba(228, 50, 43, 0.22);
+  background: var(--accent-soft-2);
 }
 
 /* ---- Customer payment panel (order detail) ---- */
@@ -219,9 +201,9 @@
   font-size: 0.88rem;
   margin-bottom: 0.85rem;
 }
-.pay-note--ok { background: #f7edd3; color: #7a5410; border: 1px solid #e6cf97; }
-.pay-note--err { background: var(--danger-bg); color: var(--danger); border: 1px solid #e6b8b3; }
-.pay-note--cod { background: #e6f4ea; color: #1f7a44; border: 1px solid #b7e0c5; }
+.pay-note--ok { background: var(--success-bg); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 35%, transparent); }
+.pay-note--err { background: var(--danger-bg); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); }
+.pay-note--cod { background: var(--info-bg); color: var(--info); border: 1px solid color-mix(in srgb, var(--info) 35%, transparent); }
 
 /* Cancel controls on the customer order page. */
 .order-cancel {
@@ -237,7 +219,7 @@
 
 .order-cancel--locked {
   border-style: solid;
-  background: rgba(245, 179, 0, 0.08);
+  background: var(--accent-soft);
 }
 
 .order-cancel--locked p {
@@ -245,14 +227,14 @@
 }
 
 .btn--danger {
-  background: var(--danger, #b3261e);
-  color: #fff;
-  border: none;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
 }
 
 .btn--danger:hover {
-  background: #9c211a;
-  color: #fff;
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger);
 }
 
 .btn--danger:disabled {
@@ -298,16 +280,20 @@
   border-radius: var(--radius-pill);
   padding: 0.1rem 0.55rem;
 }
-.pay-chip--pending { background: #fff4d6; color: #8a6d1a; }
-.pay-chip--success { background: #f3e6c4; color: #7a5410; }
+.pay-chip--pending { background: var(--warning-bg); color: var(--warning); }
+.pay-chip--success { background: var(--success-bg); color: var(--success); }
 .pay-chip--failed { background: var(--danger-bg); color: var(--danger); }
-.pay-chip--refunded { background: #eee; color: #555; }
+.pay-chip--refunded { background: var(--glass-inset); color: var(--muted); }
+.pay-chip--pending::before { content: '◷ '; content: '◷ ' / ''; }
+.pay-chip--success::before { content: '✓ '; content: '✓ ' / ''; }
+.pay-chip--failed::before { content: '✕ '; content: '✕ ' / ''; }
+.pay-chip--refunded::before { content: '↺ '; content: '↺ ' / ''; }
 
 .pay-online { margin-bottom: 0.5rem; }
 .pay-bkash {
   width: 100%;
-  background: #e2136e;
-  color: #fff;
+  background: var(--brand-bkash);
+  color: var(--brand-bkash-on);
   border: none;
   padding: 0.85rem;
   border-radius: var(--radius-md);
@@ -315,7 +301,7 @@
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(226, 19, 110, 0.28);
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--brand-bkash) 60%, transparent);
   transition: filter 0.14s ease, transform 0.14s ease;
 }
 .pay-bkash:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
@@ -333,8 +319,8 @@
   text-transform: uppercase;
   padding: 0.12rem 0.5rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: color-mix(in srgb, var(--brand-bkash-on) 22%, transparent);
+  color: var(--brand-bkash-on);
 }
 
 .pay-divider {
@@ -384,7 +370,7 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   font-size: 0.92rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-inset);
   color: var(--card-text);
 }
 .pay-claim__submit {
@@ -429,4 +415,21 @@
     align-items: flex-start;
     margin-right: auto;
   }
+}
+
+/* ---- Order page layout (5-step flow) ---- */
+.order-detail__section {
+  margin: 1.25rem 0;
+}
+.order-detail__section h2,
+.order-detail__section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1.1rem;
+}
+.order-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 1rem 0;
 }

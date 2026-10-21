@@ -16,5 +16,3 @@ adminDeliveryRouter.patch(
   validateBody(updateDeliverySchema),
   asyncHandler(deliveryController.update),
 )
-// Mock provider dispatch (integration point for Pathao/pandago).
-adminDeliveryRouter.post('/deliveries/:id/dispatch', asyncHandler(deliveryController.dispatch))

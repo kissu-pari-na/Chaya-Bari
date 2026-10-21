@@ -128,7 +128,7 @@ export function RecipeAdmin() {
               {t('রেসিপি মুছুন', 'Delete recipe')}
             </button>
           )}
-          {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>{t('সংরক্ষিত', 'Saved')}</span>}
+          {saved && <span className="hint" style={{ color: 'var(--success)', fontWeight: 600 }}>{t('সংরক্ষিত', 'Saved')}</span>}
         </div>
       </form>
 

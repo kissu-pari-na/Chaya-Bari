@@ -26,7 +26,7 @@ export function CustomerLayout({ allowStaff = false, adminPreview = false }: Cus
     return (
       <div className="page">
         <Header variant="customer" />
-        <main className="page__content">
+        <main id="main" className="page__content">
           <div className="admin-preview-bar" role="status">
             <span>
               👁️{' '}
@@ -50,7 +50,7 @@ export function CustomerLayout({ allowStaff = false, adminPreview = false }: Cus
     return (
       <div className="page">
         <Header variant={user.role === 'ADMIN' ? 'admin' : 'kitchen'} />
-        <main className="page__content">
+        <main id="main" className="page__content">
           <Outlet />
         </main>
       </div>
@@ -68,7 +68,7 @@ export function CustomerLayout({ allowStaff = false, adminPreview = false }: Cus
   return (
     <div className="page">
       <Header variant="customer" />
-      <main className="page__content">
+      <main id="main" className="page__content">
         <CoverageBanner />
         <PhoneNoticeBanner />
         <Outlet />

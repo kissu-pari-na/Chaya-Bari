@@ -39,7 +39,7 @@
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-inset);
   color: var(--card-text);
 }
 
@@ -87,7 +87,7 @@
 
 .address-opt--on {
   border-color: var(--accent);
-  background: rgba(228, 50, 43, 0.12);
+  background: var(--accent-soft);
 }
 
 .address-opt__badge {
@@ -97,8 +97,8 @@
   font-weight: 700;
   padding: 1px 7px;
   border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--btn-grad);
+  color: var(--on-accent);
   vertical-align: middle;
 }
 
@@ -111,13 +111,13 @@
 .checkout__chosen-date {
   margin: 0.4rem 0 0;
   font-weight: 600;
-  color: var(--accent-gold, #f5b300);
+  color: var(--accent-gold);
 }
 
 /* Guest checkout: register-benefits banner + inline contact/address grid. */
 .checkout__guest-banner {
-  background: rgba(245, 179, 0, 0.1);
-  border: 1px solid rgba(245, 179, 0, 0.4);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   border-radius: var(--radius-md);
   padding: 0.75rem 0.9rem;
   margin-bottom: 1rem;
@@ -131,7 +131,7 @@
 .checkout__guest-banner p {
   margin: 0.25rem 0 0;
   font-size: 0.88rem;
-  color: var(--muted-text, #b8b9b2);
+  color: var(--muted-text);
 }
 
 .checkout__guest-links {
@@ -182,22 +182,7 @@
   padding: 1rem;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  background: rgba(228, 50, 43, 0.06);
-}
-
-.checkout__pay-instructions {
-  margin: 0.5rem 0 1rem;
-}
-
-.checkout__pay-instructions .pay-accounts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.88rem;
-  border: 1px dashed var(--card-border);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 0.75rem;
-  margin-top: 0.5rem;
+  background: var(--accent-soft);
 }
 
 .checkout__register-cta h2 {
@@ -214,9 +199,9 @@
 .checkout__area-warn {
   margin-top: 0.6rem;
   padding: 0.6rem 0.8rem;
-  border: 1px solid var(--danger, #b3261e);
-  background: var(--danger-bg, #fdecea);
-  color: var(--danger, #b3261e);
+  border: 1px solid var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
   border-radius: var(--radius-sm);
 }
 
@@ -228,29 +213,7 @@
   margin-top: 0.35rem;
 }
 
-/* Payment method (prepaid vs cash on delivery) options — same visual language
-   as the address options. */
-.pay-mode-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pay-mode {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-start;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 0.75rem;
-  font-size: 0.88rem;
-  cursor: pointer;
-}
-
-.pay-mode--on {
-  border-color: var(--accent);
-  background: rgba(228, 50, 43, 0.12);
-}
+/* Payment method picker: components/PayModePicker.tsx (styles in Pay.css). */
 
 .slot-grid {
   display: grid;
@@ -262,7 +225,7 @@
   padding: 0.6rem 0.5rem;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-inset);
   color: var(--card-text);
   font-size: 0.9rem;
   font-family: inherit;
@@ -278,7 +241,7 @@
 
 .slot--on {
   border-color: var(--accent);
-  background: rgba(228, 50, 43, 0.16);
+  background: var(--accent-soft-2);
   color: var(--accent-bright);
 }
 
@@ -394,7 +357,7 @@
 .coupon-applied button {
   background: transparent;
   color: var(--danger);
-  border: 1px solid #e6b8b3;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
   padding: 0.3rem 0.65rem;
 }
 
@@ -405,8 +368,8 @@
 .checkout__place {
   width: 100%;
   margin-top: 0.85rem;
-  background: var(--accent);
-  color: #fff;
+  background: var(--btn-grad);
+  color: var(--on-accent);
   border: none;
   padding: 0.9rem;
   border-radius: var(--radius-md);

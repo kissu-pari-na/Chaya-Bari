@@ -27,9 +27,9 @@
 }
 
 .pagination__btn--active {
-  background: var(--accent);
+  background: var(--btn-grad);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
   cursor: default;
 }

@@ -21,9 +21,9 @@
   place-items: center;
   font-size: 1.6rem;
   font-weight: 800;
-  color: #fff;
-  background: linear-gradient(135deg, #ea342c, #d0241d);
-  box-shadow: var(--glow-accent, 0 4px 14px rgba(228, 50, 43, 0.3));
+  color: var(--on-accent);
+  background: var(--btn-grad);
+  box-shadow: var(--glow-accent);
 }
 
 .profile__name {
@@ -34,7 +34,7 @@
 
 .profile__role {
   font-size: 0.85rem;
-  color: var(--on-page-muted, #888);
+  color: var(--on-page-muted);
 }
 
 .profile__card {
@@ -93,13 +93,13 @@
 }
 
 .profile__badge--ok {
-  background: rgba(76, 175, 80, 0.16);
-  color: #4caf50;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .profile__badge--warn {
-  background: rgba(245, 179, 0, 0.16);
-  color: #b98600;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .profile__actions {
@@ -116,15 +116,15 @@
 }
 
 .profile__saved {
-  color: #4caf50;
+  color: var(--success);
   font-weight: 600;
   margin: 0.25rem 0 0.5rem;
 }
 
 .profile__phone-warn {
-  background: rgba(245, 179, 0, 0.12);
-  border: 1px solid rgba(245, 179, 0, 0.42);
-  color: #b98600;
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  color: var(--warning);
   padding: 0.55rem 0.75rem;
   border-radius: var(--radius-sm);
   margin: 0.25rem 0 0.75rem;

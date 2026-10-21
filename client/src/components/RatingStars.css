@@ -7,24 +7,24 @@
 
 .stars__mark {
   position: relative;
-  color: #f2b01e;
+  color: var(--rating);
   letter-spacing: 0.02em;
   line-height: 1;
 }
 
 /* The hollow remainder is drawn as muted stars right after the filled ones. */
 .stars__empty {
-  color: color-mix(in srgb, var(--card-muted, #b8b9b2) 55%, transparent);
+  color: color-mix(in srgb, var(--card-muted) 55%, transparent);
 }
 
 .stars__value {
   font-weight: 700;
-  color: var(--card-text, #f5f1e7);
+  color: var(--card-text);
   font-size: 0.85em;
 }
 
 .stars__count {
-  color: var(--card-muted, #b8b9b2);
+  color: var(--card-muted);
   font-size: 0.8em;
 }
 

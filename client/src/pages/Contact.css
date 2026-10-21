@@ -26,7 +26,7 @@
   padding: 1rem 1.1rem;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  background: var(--surface-2, rgba(255, 255, 255, 0.03));
+  background: var(--surface-2);
   text-decoration: none;
   color: inherit;
   transition: border-color 0.14s ease, transform 0.14s ease;
@@ -46,13 +46,13 @@ a.contact__card:hover {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--header-fg-muted, #b8b9b2);
+  color: var(--header-fg-muted);
 }
 
 .contact__value {
   font-size: 1.05rem;
   font-weight: 600;
-  color: var(--card-text, #f5f1e7);
+  color: var(--card-text);
   word-break: break-word;
 }
 
@@ -81,19 +81,19 @@ a.contact__card:hover {
 .contact__zone h3 {
   margin: 0 0 0.25rem;
   font-size: 0.9rem;
-  color: var(--accent-gold, #f5b300);
+  color: var(--accent-gold);
 }
 
 .contact__zone p {
   margin: 0;
   font-size: 0.88rem;
-  color: var(--card-muted, #b8b9b2);
+  color: var(--card-muted);
 }
 
 .contact__tagline {
   font-family: var(--font-display);
   font-size: 1.15rem;
-  color: var(--accent-gold, #f5b300);
+  color: var(--accent-gold);
   border-top: 1px solid var(--card-border);
   padding-top: 1rem;
 }

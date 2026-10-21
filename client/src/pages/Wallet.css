@@ -1,0 +1,108 @@
+.wallet {
+  display: grid;
+  gap: 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.wallet__head h1 {
+  margin: 0.25rem 0 0;
+}
+.wallet .card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+/* Balance card */
+.wallet-balance {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+.wallet-balance__main {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}
+.wallet-balance__label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.wallet-balance__amount {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--text);
+}
+.wallet-balance--owe .wallet-balance__amount {
+  color: var(--warning);
+}
+.wallet-balance--credit .wallet-balance__amount {
+  color: var(--success);
+}
+.wallet-balance__limit {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--glass-inset);
+  border: 1px solid var(--edge-low);
+}
+.wallet-balance__limit-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+.wallet-balance__grants {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.wallet__grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+.wallet__grid > .card {
+  display: grid;
+  gap: 0.85rem;
+}
+.wallet__code-form {
+  display: flex;
+  gap: 0.5rem;
+}
+.wallet__code-form input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 0.8rem;
+  text-transform: uppercase;
+}
+.wallet__how-title {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+.wallet__how {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.wallet__how strong {
+  color: var(--text);
+}
+
+@media (max-width: 800px) {
+  .wallet-balance,
+  .wallet__grid {
+    grid-template-columns: 1fr;
+  }
+}

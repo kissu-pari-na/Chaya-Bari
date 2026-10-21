@@ -13,7 +13,6 @@ const emptyForm = {
   name: '',
   email: '',
   phone: '',
-  password: '',
   role: 'CUSTOMER' as Role,
 }
 
@@ -58,14 +57,13 @@ export function UsersAdmin() {
         name: form.name,
         email: form.email,
         phone: form.phone,
-        password: form.password,
         role: form.role,
       })
       setForm({ ...emptyForm, role: form.role })
       setNotice(
         t(
-          `${created.name} তৈরি হয়েছে — নিশ্চিতকরণের জন্য ইমেইল পাঠানো হয়েছে।`,
-          `${created.name} created — a confirmation email has been sent to them.`,
+          `${created.name} তৈরি হয়েছে — এই ইমেইলের গুগল অ্যাকাউন্ট দিয়ে সাইন ইন করতে বলে তাকে ইমেইল পাঠানো হয়েছে।`,
+          `${created.name} created — they've been emailed to sign in with the Google account for this email.`,
         ),
       )
       // New users sort to the top; jump back to the first page to reveal it.
@@ -122,17 +120,12 @@ export function UsersAdmin() {
             />
           </label>
         </div>
-        <label>
-          {t('পাসওয়ার্ড', 'Password')}
-          <input
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-            minLength={8}
-            placeholder={t('অন্তত ৮ অক্ষর', 'At least 8 characters')}
-          />
-        </label>
+        <p className="hint">
+          {t(
+            'পাসওয়ার্ড লাগে না: তিনি এই ইমেইলের গুগল অ্যাকাউন্ট দিয়ে সাইন ইন করবেন। তাই একটি গুগল (Gmail বা Google Workspace) ইমেইল দিন।',
+            'No password needed: they sign in with the Google account for this email, so enter a Google (Gmail or Google Workspace) address.',
+          )}
+        </p>
         <div className="admin-form__actions">
           <button type="submit" disabled={saving}>
             {saving ? t('তৈরি হচ্ছে…', 'Creating…') : t('ব্যবহারকারী তৈরি করুন', 'Create user')}
@@ -173,7 +166,7 @@ export function UsersAdmin() {
                       </span>
                     ) : !u.emailVerified ? (
                       <span className="user-status user-status--pending">
-                        {t('অপেক্ষমাণ (ইমেইল অনিশ্চিত)', 'Pending — email not confirmed')}
+                        {t('অপেক্ষমাণ (এখনো সাইন ইন করেননি)', 'Pending — has not signed in yet')}
                       </span>
                     ) : (
                       <span className="user-status user-status--ok">{t('সক্রিয়', 'Active')}</span>

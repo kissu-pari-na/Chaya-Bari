@@ -1,11 +1,11 @@
 import { randomBytes } from 'node:crypto'
-import type { Delivery, Order } from '@prisma/client'
+import type { Order } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { logger } from '../../lib/logger.js'
 import { appLink, sendEmail } from '../../lib/mailer.js'
 import { HttpError } from '../../utils/httpError.js'
-import { paymentTotals } from '../payments/payment.service.js'
-import { buttonHtml, emailShell, escapeHtml, logoAttachment } from '../auth/verification.service.js'
+import { orderMoney } from '../wallet/order-money.js'
+import { buttonHtml, emailShell, escapeHtml, logoAttachment } from '../auth/account-email.service.js'
 
 // Public order tracking.
 //
@@ -59,7 +59,7 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true, payments: true, customer: { include: { user: true } } },
+      include: { items: true, walletEntries: true, customer: { include: { user: true } } },
     })
     if (!order || order.confirmationEmailSentAt) return
     // Every confirmed order gets a link, even with no email on file, so the
@@ -77,8 +77,8 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
 
     const url = trackingLink(token)
     const registered = await isRegisteredEmail(to.email)
-    const registerUrl = appLink(`/register?email=${encodeURIComponent(to.email)}`)
-    const { amountDue } = paymentTotals(order.payments, order.total)
+    const signInUrl = appLink('/login')
+    const { amountDue } = orderMoney(order, order.walletEntries)
     const when = `${order.fulfillmentDate.toISOString().slice(0, 10)}${order.timeSlot ? ` · ${order.timeSlot}` : ''}`
 
     const itemsText = order.items.map((i) => `  • ${i.productName} × ${i.quantity} — ${bdt(Number(i.lineTotal))}`).join('\n')
@@ -98,11 +98,11 @@ export async function sendOrderConfirmedEmail(orderId: string): Promise<void> {
 
     const accountText = registered
       ? 'You can also see it under "My orders" when you log in.'
-      : `Create an account with ${to.email} to see all your orders in one place: ${registerUrl}`
+      : `Sign in with the Google account for ${to.email} to see all your orders in one place: ${signInUrl}`
     const accountHtml = registered
       ? `<p style="margin:0;font-size:13px;line-height:1.5;color:#888;">আপনার অ্যাকাউন্টে লগইন করে “আমার অর্ডার”-এও দেখতে পারবেন। · You can also find it under “My orders” when you log in.</p>`
-      : `<p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#888;">এই ইমেইল (<strong>${escapeHtml(to.email)}</strong>) দিয়ে অ্যাকাউন্ট খুললে আপনার সব অর্ডার এক জায়গায় পাবেন। · Create an account with this email and all your orders will be waiting there.</p>` +
-        `<div style="text-align:center;margin:0 0 8px;">${buttonHtml(registerUrl, 'অ্যাকাউন্ট খুলুন · Create account', 'gold')}</div>`
+      : `<p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#888;">এই ইমেইলের (<strong>${escapeHtml(to.email)}</strong>) গুগল অ্যাকাউন্ট দিয়ে সাইন ইন করলে আপনার সব অর্ডার এক জায়গায় পাবেন। · Sign in with the Google account for this email and all your orders will be waiting there.</p>` +
+        `<div style="text-align:center;margin:0 0 8px;">${buttonHtml(signInUrl, 'গুগল দিয়ে সাইন ইন · Sign in with Google', 'gold')}</div>`
 
     const inner = `
     <p style="margin:0 0 8px;font-size:16px;">প্রিয় ${escapeHtml(to.name)},</p>
@@ -152,8 +152,12 @@ export interface TrackedOrder {
   total: number
   amountPaid: number
   amountDue: number
+  onWallet: number
   createdAt: string
-  delivery: { status: Delivery['status']; provider: string | null; trackingRef: string | null } | null
+  readyAt: string | null
+  dispatchedAt: string | null
+  deliveredAt: string | null
+  delivery: { provider: string | null; trackingRef: string | null } | null
   /// Masked email the order belongs to, and whether it already has a usable
   /// account — the page invites unregistered customers to sign up with it.
   account: { maskedEmail: string | null; registered: boolean }
@@ -170,13 +174,13 @@ export async function getTrackedOrder(token: string): Promise<TrackedOrder> {
   const order = token
     ? await prisma.order.findUnique({
         where: { trackingToken: token },
-        include: { items: true, payments: true, delivery: true, customer: { include: { user: true } } },
+        include: { items: true, walletEntries: true, delivery: true, customer: { include: { user: true } } },
       })
     : null
   if (!order) throw HttpError.notFound('Order not found')
 
   const email = recipientOf(order)?.email ?? null
-  const totals = paymentTotals(order.payments, order.total)
+  const totals = orderMoney(order, order.walletEntries)
   return {
     orderNumber: order.orderNumber,
     status: order.status,
@@ -200,10 +204,12 @@ export async function getTrackedOrder(token: string): Promise<TrackedOrder> {
     total: Number(order.total),
     amountPaid: totals.amountPaid,
     amountDue: totals.amountDue,
+    onWallet: totals.onWallet,
     createdAt: order.createdAt.toISOString(),
-    delivery: order.delivery
-      ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
-      : null,
+    readyAt: order.readyAt?.toISOString() ?? null,
+    dispatchedAt: order.dispatchedAt?.toISOString() ?? null,
+    deliveredAt: order.deliveredAt?.toISOString() ?? null,
+    delivery: order.delivery ? { provider: order.delivery.provider, trackingRef: order.delivery.trackingRef } : null,
     // Only a masked email: the link may have been forwarded.
     account: {
       maskedEmail: email ? maskEmail(email) : null,

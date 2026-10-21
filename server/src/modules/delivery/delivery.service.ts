@@ -1,4 +1,4 @@
-import { Prisma, type Delivery } from '@prisma/client'
+import { Prisma, type Delivery, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { UpdateDeliveryInput } from './delivery.schemas.js'
@@ -13,7 +13,6 @@ export interface PublicDelivery {
   /// customerDeliveryCost - actualDeliveryCost. Null until the actual cost is
   /// entered (the order's delivery gain/loss is incomplete until then).
   difference: number | null
-  status: Delivery['status']
 }
 
 export function toPublicDelivery(d: Delivery): PublicDelivery {
@@ -27,7 +26,6 @@ export function toPublicDelivery(d: Delivery): PublicDelivery {
     customerDeliveryCost: customer,
     actualDeliveryCost: actual,
     difference: actual != null ? customer - actual : null,
-    status: d.status,
   }
 }
 
@@ -53,22 +51,6 @@ export async function getByOrder(orderId: string): Promise<PublicDelivery | null
   return delivery ? toPublicDelivery(delivery) : null
 }
 
-/// Mock third-party dispatch. A real integration (Pathao/pandago) would call the
-/// provider's API to create the delivery and return its tracking id; here we
-/// simulate that and move the delivery to ASSIGNED. Swap this implementation
-/// for the real client without changing callers.
-export async function dispatchToProvider(id: string, provider: string): Promise<PublicDelivery> {
-  const existing = await prisma.delivery.findUnique({ where: { id } })
-  if (!existing) throw HttpError.notFound('Delivery not found')
-
-  const trackingRef = `${provider.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'PROV'}-${Math.floor(100000 + Math.random() * 900000)}`
-  const delivery = await prisma.delivery.update({
-    where: { id },
-    data: { provider, trackingRef, status: 'ASSIGNED' },
-  })
-  return toPublicDelivery(delivery)
-}
-
 export async function updateDelivery(id: string, input: UpdateDeliveryInput): Promise<PublicDelivery> {
   const existing = await prisma.delivery.findUnique({ where: { id } })
   if (!existing) throw HttpError.notFound('Delivery not found')
@@ -84,14 +66,19 @@ export async function updateDelivery(id: string, input: UpdateDeliveryInput): Pr
           : input.actualDeliveryCost === null
             ? null
             : new Prisma.Decimal(input.actualDeliveryCost),
-      status: input.status,
     },
   })
   return toPublicDelivery(delivery)
 }
 
+/// One row per order that has gone out (or has delivery details). Where it is
+/// comes from the order's own status: there is no separate delivery status
+/// (vault D-DLV-002).
 export interface DeliveryListRow extends PublicDelivery {
   orderNumber: string
+  orderStatus: OrderStatus
+  dispatchedAt: string | null
+  deliveredAt: string | null
   recipientName: string
   fulfillmentDate: string
   timeSlot: string | null
@@ -105,6 +92,9 @@ export async function listDeliveries(): Promise<DeliveryListRow[]> {
   return deliveries.map((d) => ({
     ...toPublicDelivery(d),
     orderNumber: d.order.orderNumber,
+    orderStatus: d.order.status,
+    dispatchedAt: d.order.dispatchedAt?.toISOString() ?? null,
+    deliveredAt: d.order.deliveredAt?.toISOString() ?? null,
     recipientName: d.order.recipientName,
     fulfillmentDate: d.order.fulfillmentDate.toISOString().slice(0, 10),
     timeSlot: d.order.timeSlot,

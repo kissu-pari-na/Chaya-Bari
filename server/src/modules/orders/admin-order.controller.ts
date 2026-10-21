@@ -3,10 +3,15 @@ import type { OrderStatus } from '@prisma/client'
 import { parsePageParams } from '../../lib/pagination.js'
 import { HttpError } from '../../utils/httpError.js'
 import * as adminOrderService from './admin-order.service.js'
+import { adminOverview } from './overview.service.js'
 import { lookupCustomerByEmail } from '../customers/customer-account.service.js'
 
 function str(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+export async function overview(_req: Request, res: Response) {
+  res.json({ overview: await adminOverview() })
 }
 
 export async function list(req: Request, res: Response) {
@@ -41,12 +46,9 @@ export async function get(req: Request, res: Response) {
 }
 
 export async function updateStatus(req: Request, res: Response) {
-  res.json({ order: await adminOrderService.updateStatus(req.params.id, req.body.status) })
+  res.json({ order: await adminOrderService.updateStatus(req.params.id, req.body, req.user!.id) })
 }
 
-export async function updatePaymentStatus(req: Request, res: Response) {
-  res.json({ order: await adminOrderService.updatePaymentStatus(req.params.id, req.body.paymentStatus) })
-}
 
 export async function updatePaymentMode(req: Request, res: Response) {
   res.json({ order: await adminOrderService.updatePaymentMode(req.params.id, req.body.paymentMode) })

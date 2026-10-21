@@ -1,0 +1,691 @@
+/* ============================================================
+   Glossy Glass system — surfaces, components, motion (see /design.md)
+   Colours come only from tokens.css / palettes.css.
+   ============================================================ */
+
+/* ---------- Aurora background + grain (one fixed layer behind everything) ---------- */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--canvas-2), var(--canvas));
+}
+.aurora span {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  will-change: transform;
+}
+.aurora span:nth-child(1) {
+  top: -30vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, var(--aur-1), transparent 60%);
+  animation: aur-a 38s var(--ease-silk) infinite alternate;
+}
+.aurora span:nth-child(2) {
+  top: -10vmax;
+  right: -30vmax;
+  background: radial-gradient(circle, var(--aur-2), transparent 60%);
+  animation: aur-b 44s var(--ease-silk) infinite alternate;
+}
+.aurora span:nth-child(3) {
+  bottom: -40vmax;
+  left: 10vmax;
+  background: radial-gradient(circle, var(--aur-3), transparent 60%);
+  animation: aur-c 50s var(--ease-silk) infinite alternate;
+}
+.aurora span:nth-child(4) {
+  bottom: -30vmax;
+  right: -20vmax;
+  background: radial-gradient(circle, var(--aur-4), transparent 60%);
+  animation: aur-d 32s var(--ease-silk) infinite alternate;
+}
+@keyframes aur-a { to { transform: translate3d(18vmax, 14vmax, 0) scale(1.1); } }
+@keyframes aur-b { to { transform: translate3d(-16vmax, 20vmax, 0) scale(0.92); } }
+@keyframes aur-c { to { transform: translate3d(14vmax, -18vmax, 0) scale(1.08); } }
+@keyframes aur-d { to { transform: translate3d(-20vmax, -10vmax, 0) scale(1.05); } }
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain-op);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Glass surface ---------- */
+.glass,
+.card,
+.paper {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow);
+  color: var(--text);
+}
+
+/* Gloss sheen (behind content) */
+.glass::before,
+.card::before,
+.paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(165deg, var(--gloss-sheen) 0%, transparent 38%),
+    linear-gradient(0deg, var(--glass-inset), transparent 30%);
+}
+
+/* Cursor spotlight (pointer devices only; --mx/--my set by lib/motion.ts) */
+.glass::after,
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), var(--spot), transparent 45%);
+  transition: opacity var(--dur-ui) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .glass:hover::after,
+  .card:hover::after {
+    opacity: 1;
+  }
+}
+
+.card {
+  padding: 1.5rem 1.75rem;
+}
+.card--pad-lg {
+  padding: 2rem 2.25rem;
+}
+.paper {
+  padding: 1.5rem 1.75rem;
+}
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.paper h1,
+.paper h2,
+.paper h3,
+.paper h4 {
+  color: var(--text);
+}
+.card .muted,
+.paper .muted {
+  color: var(--muted);
+}
+
+/* Inner panels: number boxes, fact rows, inputs */
+.inset {
+  background: var(--glass-inset);
+  border: 1px solid var(--edge-low);
+  border-radius: var(--radius-input);
+  box-shadow: inset 0 1px 0 var(--gloss-top);
+}
+
+/* Fallback: no backdrop-filter, or low-motion devices → solid glass */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .card,
+  .paper {
+    background: var(--glass-solid);
+  }
+}
+html.low-motion .glass,
+html.low-motion .card,
+html.low-motion .paper {
+  background: var(--glass-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Printed documents: a clean white sheet regardless of theme/palette */
+@media print {
+  .aurora,
+  .grain {
+    display: none;
+  }
+  .paper {
+    --text: var(--print-ink);
+    --muted: var(--print-muted);
+    --outline: var(--print-rule);
+    --glass-inset: var(--print-tint);
+    background: var(--print-paper);
+    color: var(--print-ink);
+    border-color: var(--print-rule);
+    box-shadow: none;
+    backdrop-filter: none;
+    color-scheme: light;
+  }
+  .paper::before,
+  .paper::after {
+    display: none;
+  }
+}
+
+/* ---------- Buttons ---------- */
+.btn,
+button.btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 48px;
+  padding: 0.7rem 1.4rem;
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform var(--dur-ui) var(--ease-spring),
+    box-shadow var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out),
+    border-color var(--dur-ui) var(--ease-out),
+    color var(--dur-ui) var(--ease-out);
+}
+.btn:hover {
+  text-decoration: none;
+}
+.btn:active {
+  transform: scale(0.97);
+  transition-duration: var(--dur-press);
+}
+.btn--lg {
+  min-height: 56px;
+  padding: 0.9rem 1.85rem;
+  font-size: 1.06rem;
+}
+.btn--sm {
+  min-height: 40px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.88rem;
+}
+
+/* Primary: --btn-grad + --on-accent, glossy top half, light streak on hover */
+.btn--primary,
+.btn--brand {
+  background: var(--btn-grad);
+  color: var(--on-accent);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -8px 16px -8px rgba(0, 0, 0, 0.25),
+    0 10px 24px -10px var(--btn-glow);
+}
+.btn--primary::before,
+.btn--brand::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 52% 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent);
+  pointer-events: none;
+}
+.btn--primary::after,
+.btn--brand::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -60%;
+  width: 40%;
+  z-index: -1;
+  transform: skewX(-18deg) translateX(0);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .btn--primary:hover,
+  .btn--brand:hover {
+    transform: translateY(-2px);
+    color: var(--on-accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -8px 16px -8px rgba(0, 0, 0, 0.25),
+      0 16px 32px -10px var(--btn-glow);
+  }
+  .btn--primary:hover::after,
+  .btn--brand:hover::after {
+    transform: skewX(-18deg) translateX(420%);
+    transition: transform 900ms var(--ease-out);
+  }
+  .btn--primary:active,
+  .btn--brand:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Ghost: glass with an edge; accent border + text on hover */
+.btn--ghost,
+.btn--on-dark {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-color: var(--edge);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 var(--gloss-top), var(--shadow);
+}
+.btn--ghost:hover,
+.btn--on-dark:hover {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Soft: tinted, for secondary in-card actions */
+.btn--soft {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.btn--soft:hover {
+  background: var(--accent-soft-2);
+}
+
+.btn--danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Inputs ---------- */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+select,
+textarea {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--glass-inset);
+  border: 1px solid var(--edge-low);
+  border-radius: var(--radius-input);
+  box-shadow: inset 0 1px 0 var(--gloss-top);
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    box-shadow var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--glass-strong);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+/* Native select popups need a solid, legible list */
+select option,
+select optgroup {
+  background-color: var(--glass-solid);
+  color: var(--text);
+}
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--accent);
+}
+
+/* ---------- Segmented control (language / theme) with a sliding thumb ---------- */
+.seg {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-inset);
+  border: 1px solid var(--edge-low);
+  box-shadow: inset 0 1px 0 var(--gloss-top);
+}
+.seg__thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: var(--radius-pill);
+  background: var(--glass-strong);
+  box-shadow: inset 0 1px 0 var(--gloss-top), 0 2px 8px -2px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--edge);
+  transition:
+    transform 540ms var(--ease-spring),
+    width 540ms var(--ease-spring);
+  pointer-events: none;
+}
+.seg__btn {
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font: 700 0.78rem/1 var(--font-body);
+  min-height: 34px;
+  min-width: 40px;
+  padding: 0 0.7rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transition: color var(--dur-ui) var(--ease-out);
+}
+.seg__btn:hover {
+  color: var(--text);
+}
+.seg__btn[aria-pressed='true'],
+.seg__btn[aria-checked='true'] {
+  color: var(--text);
+}
+
+/* ---------- Badges & status pills (semantic colours + icon + label) ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  padding: 0.18rem 0.65rem;
+  line-height: 1.5;
+  border: 1px solid var(--edge-low);
+}
+.badge--sale,
+.badge--new {
+  background: var(--btn-grad);
+  color: var(--on-accent);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.badge--muted {
+  background: var(--glass-inset);
+  color: var(--muted);
+}
+.badge--success { background: var(--success-bg); color: var(--success); }
+.badge--warning { background: var(--warning-bg); color: var(--warning); }
+.badge--danger { background: var(--danger-bg); color: var(--danger); }
+.badge--info { background: var(--info-bg); color: var(--info); }
+
+/* ---------- Status pills (orders, payments, wallet) ----------
+   Semantic colour + icon + label, never colour alone (design.md §3.3). */
+.status {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--glass-inset);
+  color: var(--text);
+  border: 1px solid var(--edge-low);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+}
+.status--pending { background: var(--warning-bg); color: var(--warning); }
+.status--confirmed,
+.status--preparing,
+.status--out_for_delivery { background: var(--info-bg); color: var(--info); }
+.status--delivered { background: var(--success-bg); color: var(--success); }
+.status--cancelled { background: var(--danger-bg); color: var(--danger); }
+.status--payment,
+.status--cod { background: var(--glass-inset); color: var(--text); }
+.status--pending::before { content: '◷'; content: '◷' / ''; }
+.status--confirmed::before { content: '✓'; content: '✓' / ''; }
+.status--preparing::before { content: '♨'; content: '♨' / ''; }
+.status--out_for_delivery::before { content: '➜'; content: '➜' / ''; }
+.status--delivered::before { content: '✓'; content: '✓' / ''; }
+.status--cancelled::before { content: '✕'; content: '✕' / ''; }
+.status--cod::before { content: '৳'; content: '৳' / ''; }
+
+/* ---------- Brand mark / step numbers / avatar tiles ---------- */
+.mark {
+  position: relative;
+  overflow: hidden;
+  display: inline-grid;
+  place-items: center;
+  background: var(--btn-grad);
+  color: var(--on-accent);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 8px 18px -8px var(--btn-glow);
+}
+.mark::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent);
+  pointer-events: none;
+}
+
+/* ---------- Gradient text (apply to the text element itself) ---------- */
+.grad-text {
+  background: var(--h-grad);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: grad-flow 16s linear infinite;
+}
+@keyframes grad-flow {
+  to { background-position: -250% 0; }
+}
+
+/* ---------- Skeleton (never spinners for content) ---------- */
+.skeleton {
+  border-radius: var(--radius-input);
+  background: linear-gradient(90deg, var(--skel-a) 25%, var(--skel-b) 45%, var(--skel-a) 65%);
+  background-size: 300% 100%;
+  animation: skel 1.6s var(--ease-silk) infinite;
+}
+@keyframes skel {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 200;
+  transform: translate(-50%, 0);
+  max-width: min(92vw, 460px);
+  padding: 0.8rem 1.1rem;
+  border-radius: var(--radius-pop);
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 var(--gloss-top), var(--shadow-lift);
+  color: var(--text);
+  animation: toast-in 600ms var(--ease-spring) both;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 24px) scale(0.96); }
+}
+
+/* ---------- Mobile sticky action bar ---------- */
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  margin: 1rem -1.25rem -4rem;
+  padding: 0.75rem 1.25rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border-top: 1px solid var(--edge);
+  box-shadow: 0 -12px 32px -16px rgba(0, 0, 0, 0.35);
+}
+@media (min-width: 768px) {
+  .action-bar {
+    display: none;
+  }
+}
+
+/* ---------- Progress ---------- */
+.progress {
+  position: relative;
+  overflow: hidden;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-inset);
+  border: 1px solid var(--edge-low);
+}
+.progress__fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  background: var(--grad);
+  transition: transform 1100ms var(--ease-spring);
+}
+
+/* ---------- Live dot ---------- */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.live-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--success);
+  animation: ping 2.4s var(--ease-out) infinite;
+}
+@keyframes ping {
+  to { transform: scale(2.6); opacity: 0; }
+}
+
+/* ---------- Entrance: below-the-fold reveal (lib/motion.ts) ---------- */
+.reveal-pending {
+  opacity: 0;
+  transform: translateY(28px) scale(0.98);
+}
+.reveal-in {
+  transition:
+    opacity var(--dur-enter) var(--ease-out),
+    transform var(--dur-enter) var(--ease-out);
+}
+
+@media print {
+  .reveal-pending {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Pointer tilt (lib/motion.ts sets --rx/--ry/--gx/--gy on [data-tilt]) */
+[data-tilt] {
+  transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 900ms var(--ease-spring);
+}
+[data-tilt][data-tilting] {
+  transition-duration: 160ms;
+}
+
+/* Cards lift on hover (pointer devices only) */
+@media (hover: hover) and (pointer: fine) {
+  .lift {
+    transition:
+      transform var(--dur-ui) var(--ease-spring),
+      box-shadow var(--dur-ui) var(--ease-out);
+  }
+  .lift:hover {
+    transform: translateY(-6px);
+    box-shadow: inset 0 1px 0 var(--gloss-top), inset 0 0 0 1px var(--edge-low), var(--shadow-lift);
+  }
+}
+
+/* ---------- View transitions (theme/palette circular reveal; language crossfade) ---------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html.vt-fade::view-transition-old(root) {
+  animation: vt-out 360ms var(--ease-out) both;
+}
+html.vt-fade::view-transition-new(root) {
+  animation: vt-in 520ms var(--ease-spring) both;
+}
+@keyframes vt-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* ---------- Skip link ---------- */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  transform: translateY(-300%);
+  z-index: 300;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-btn);
+  background: var(--glass-solid);
+  color: var(--text);
+  border: 2px solid var(--accent);
+  font-weight: 700;
+}
+.skip-link:focus {
+  transform: none;
+}
+
+/* ---------- Reduced motion & low-motion devices ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .aurora span,
+  .grad-text,
+  .skeleton {
+    animation: none !important;
+  }
+  .reveal-pending {
+    opacity: 1;
+    transform: none;
+  }
+}
+html.low-motion .aurora span,
+html.low-motion .grad-text,
+html.low-motion .live-dot::after {
+  animation: none;
+}

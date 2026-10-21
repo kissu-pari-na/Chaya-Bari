@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
-export const couponScopes = ['FOOD', 'DELIVERY'] as const
+/// WALLET_LIMIT codes are not discounts: redeeming one in the wallet raises the
+/// customer's pay-later limit by `value` for `limitDays` days (vault wallet node).
+export const couponScopes = ['FOOD', 'DELIVERY', 'WALLET_LIMIT'] as const
 export const couponKinds = ['PERCENT', 'FIXED', 'FREE_DELIVERY'] as const
 
 export const createCouponSchema = z
@@ -22,8 +24,16 @@ export const createCouponSchema = z
     minOrderSubtotal: z.number().min(0).max(1_000_000).optional(),
     isActive: z.boolean().optional(),
     expiresAt: z.string().datetime().optional().or(z.literal('').transform(() => undefined)),
+    limitDays: z.number().int().min(1).max(365).optional(),
+    maxRedemptions: z.number().int().min(1).max(100000).optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.scope === 'WALLET_LIMIT') {
+      if (data.kind !== 'FIXED') ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['kind'], message: 'A wallet-limit code is a fixed amount' })
+      if (!data.value) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['value'], message: 'Enter how much to raise the limit by' })
+      if (!data.limitDays) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['limitDays'], message: 'Enter how many days the raise lasts' })
+      return
+    }
     if (data.kind === 'FREE_DELIVERY' && data.scope !== 'DELIVERY') {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scope'], message: 'FREE_DELIVERY requires DELIVERY scope' })
     }

@@ -88,9 +88,28 @@ export function OrderingSettingsAdmin() {
             />
           </label>
         </div>
+        <div className="admin-form__row">
+          <label>
+            {t('পরে-পেমেন্টের ডিফল্ট সীমা (৳)', 'Default pay-later limit (৳)')}
+            <input
+              type="number"
+              min={0}
+              step="1"
+              value={setting.walletCreditLimit}
+              onChange={(e) => setSetting({ ...setting, walletCreditLimit: Number(e.target.value) })}
+              required
+            />
+            <span className="hint">
+              {t(
+                'প্রত্যেক গ্রাহকের ওয়ালেট এই পরিমাণ পর্যন্ত বকেয়া রাখতে পারে। প্রোমো কোড দিয়ে সাময়িকভাবে বাড়ানো যায়।',
+                'Every wallet can owe up to this much. Promo codes can raise it for a while.',
+              )}
+            </span>
+          </label>
+        </div>
         <div className="admin-form__actions">
           <button type="submit">{t('সংরক্ষণ করুন', 'Save')}</button>
-          {saved && <span className="hint" style={{ color: '#b07d10', fontWeight: 600 }}>{t('সংরক্ষিত হয়েছে', 'Saved')}</span>}
+          {saved && <span className="hint" style={{ color: 'var(--success)', fontWeight: 600 }}>{t('সংরক্ষিত হয়েছে', 'Saved')}</span>}
         </div>
       </form>
     </section>

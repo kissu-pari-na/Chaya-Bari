@@ -31,6 +31,7 @@ export async function updateOrderingSetting(input: UpdateOrderingSettingInput): 
       minAdvanceDays: input.minAdvanceDays,
       defaultDeliveryCost: input.defaultDeliveryCost,
       timezone: input.timezone,
+      ...(input.walletCreditLimit !== undefined ? { walletCreditLimit: input.walletCreditLimit } : {}),
     },
   })
 }

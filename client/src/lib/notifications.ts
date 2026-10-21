@@ -7,6 +7,10 @@ export interface NotificationData {
   orderNumber?: string
   amount?: number
   method?: string
+  /// Wallet events.
+  name?: string
+  reference?: string
+  reason?: string
 }
 
 export interface AppNotification {

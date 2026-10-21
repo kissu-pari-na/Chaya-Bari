@@ -6,7 +6,8 @@ import { orderRouter, adminOrderingRouter, publicOrderRouter } from './modules/o
 import { couponRouter, adminCouponRouter } from './modules/coupons/coupon.routes.js'
 import { kitchenRouter } from './modules/kitchen/kitchen.routes.js'
 import { adminDeliveryRouter } from './modules/delivery/delivery.routes.js'
-import { adminPaymentRouter, customerPaymentRouter, publicPaymentRouter } from './modules/payments/payment.routes.js'
+import { adminPaymentRouter, publicPaymentRouter } from './modules/payments/payment.routes.js'
+import { adminWalletRouter, walletRouter } from './modules/wallet/wallet.routes.js'
 import { adminInventoryRouter } from './modules/inventory/inventory.routes.js'
 import { adminExpenseRouter } from './modules/expenses/expense.routes.js'
 import { adminAnalyticsRouter } from './modules/analytics/analytics.routes.js'
@@ -15,7 +16,6 @@ import { adminBusinessRouter, publicBusinessRouter } from './modules/business/bu
 import { reviewRouter } from './modules/reviews/review.routes.js'
 import { translateRouter } from './modules/translate/translate.routes.js'
 import { adminUserRouter } from './modules/users/user.routes.js'
-import { orbitaxRouter } from './modules/orbitax/orbitax.routes.js'
 import { pushRouter } from './modules/push/push.routes.js'
 import { maintenanceRouter } from './modules/maintenance/maintenance.routes.js'
 
@@ -74,8 +74,10 @@ apiRouter.use('/admin', adminDeliveryRouter)
 // Payment management (ADMIN).
 apiRouter.use('/admin', adminPaymentRouter)
 
-// Customer payment actions (own orders): manual claim + bKash online payment.
-apiRouter.use('/', customerPaymentRouter)
+// Wallet: customers see their balance, claim manual payments and redeem limit
+// codes under /wallet; admins review claims and adjust wallets under /admin.
+apiRouter.use('/wallet', walletRouter)
+apiRouter.use('/admin', adminWalletRouter)
 
 // Inventory & costing (ADMIN).
 apiRouter.use('/admin', adminInventoryRouter)
@@ -91,9 +93,6 @@ apiRouter.use('/admin', adminBusinessRouter)
 
 // User management (ADMIN): create staff/customer accounts with a creator footprint.
 apiRouter.use('/admin', adminUserRouter)
-
-// Orbitax staff self-service billing (own account; gated by email domain).
-apiRouter.use('/', orbitaxRouter)
 
 // Notifications (any authenticated user).
 apiRouter.use('/', notificationRouter)

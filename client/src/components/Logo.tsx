@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { useBusinessProfile } from '../context/BusinessProfileContext'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { roleHome } from './ProtectedRoute'
 import './Logo.css'
 
 interface LogoProps {
   /** Rendered height of the mark in px (width scales to keep the artwork's aspect ratio). */
   size?: number
-  /** Use the light-background variant (deep green) for printed documents; default is the dark-surface variant. */
+  /** Force the light-background (deep red) variant, e.g. for printed documents. By default the variant follows the active theme. */
   onLight?: boolean
   /** Set false to render a static mark (e.g. on a printed document) instead of a home link. */
   link?: boolean
@@ -21,7 +22,9 @@ interface LogoProps {
 export function Logo({ size = 40, onLight = false, link = true }: LogoProps) {
   const { profile } = useBusinessProfile()
   const { user } = useAuth()
-  const src = onLight ? '/logo-light.png' : '/logo-dark.png'
+  const { theme } = useTheme()
+  // Gold mark on dark surfaces, deep-red mark on light ones.
+  const src = onLight || theme === 'light' ? '/logo-light.png' : '/logo-dark.png'
   const img = <img src={src} alt={`${profile.name} logo`} height={size} />
 
   if (!link) {

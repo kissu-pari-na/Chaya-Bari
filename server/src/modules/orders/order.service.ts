@@ -1,4 +1,4 @@
-import { type Delivery, type Order, type OrderItem, type Payment } from '@prisma/client'
+import { type Delivery, type Order, type OrderItem, type WalletEntry } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import type { AddressInput, CheckoutInput, GuestCheckoutInput } from './order.schemas.js'
@@ -8,7 +8,8 @@ import { priceOrder } from './pricing.js'
 import { isOrderableArea } from './delivery-areas.js'
 import { isOrbitaxEmail } from '../../utils/orbitax.js'
 import { findUsableCoupon } from '../coupons/coupon.service.js'
-import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment, type PublicPayment } from '../payments/payment.service.js'
+import { orderMoney } from '../wallet/order-money.js'
+import { applyPaymentMode, balanceOf, changeMode, limitOf, reverseOrderCharge } from '../wallet/wallet.service.js'
 import {
   notifyOrderPlaced,
   notifyNewOrderToAdmins,
@@ -58,18 +59,57 @@ export interface PublicOrder {
   paymentMode: Order['paymentMode']
   amountPaid: number
   amountDue: number
+  /// Part of the order charged to the wallet (pay later, or cash collected short).
+  onWallet: number
   createdAt: string
+  /// Kitchen packed it; ready to dispatch (status stays PREPARING).
+  readyAt: string | null
+  dispatchedAt: string | null
+  deliveredAt: string | null
   items: PublicOrderItem[]
   /// Read-only delivery summary for the customer (no cost details).
-  delivery: { status: Delivery['status']; provider: string | null; trackingRef: string | null } | null
-  /// The customer's payment records for this order (claims + settled payments).
-  payments: PublicPayment[]
+  delivery: { provider: string | null; trackingRef: string | null } | null
+  /// Money movements for this order (charges, payments, claims, refunds).
+  payments: OrderPayment[]
 }
 
-type OrderWithItems = Order & { items: OrderItem[]; delivery?: Delivery | null; payments?: Payment[] }
+/// A wallet entry as seen on an order page.
+export interface OrderPayment {
+  id: string
+  type: WalletEntry['type']
+  status: WalletEntry['status']
+  amount: number
+  method: WalletEntry['method']
+  reference: string | null
+  note: string | null
+  source: WalletEntry['source']
+  createdAt: string
+  createdByName: string | null
+  reviewedByName: string | null
+  reviewNote: string | null
+}
+
+export function toOrderPayment(e: WalletEntry): OrderPayment {
+  return {
+    id: e.id,
+    type: e.type,
+    status: e.status,
+    amount: Number(e.amount),
+    method: e.method,
+    reference: e.reference,
+    note: e.note,
+    source: e.source,
+    createdAt: e.createdAt.toISOString(),
+    createdByName: e.createdByName,
+    reviewedByName: e.reviewedByName,
+    reviewNote: e.reviewNote,
+  }
+}
+
+type OrderWithItems = Order & { items: OrderItem[]; delivery?: Delivery | null; walletEntries?: WalletEntry[] }
 
 function toPublicOrder(order: OrderWithItems): PublicOrder {
-  const totals = paymentTotals(order.payments ?? [], order.total)
+  const totals = orderMoney(order, order.walletEntries ?? [])
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -93,7 +133,11 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
     paymentMode: order.paymentMode,
     amountPaid: totals.amountPaid,
     amountDue: totals.amountDue,
+    onWallet: totals.onWallet,
     createdAt: order.createdAt.toISOString(),
+    readyAt: order.readyAt?.toISOString() ?? null,
+    dispatchedAt: order.dispatchedAt?.toISOString() ?? null,
+    deliveredAt: order.deliveredAt?.toISOString() ?? null,
     items: order.items.map((i) => ({
       id: i.id,
       productId: i.productId,
@@ -103,13 +147,39 @@ function toPublicOrder(order: OrderWithItems): PublicOrder {
       quantity: i.quantity,
       lineTotal: Number(i.lineTotal),
     })),
-    delivery: order.delivery
-      ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
-      : null,
-    payments: (order.payments ?? [])
+    delivery: order.delivery ? { provider: order.delivery.provider, trackingRef: order.delivery.trackingRef } : null,
+    payments: (order.walletEntries ?? [])
       .slice()
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      .map(toPublicPayment),
+      .map(toOrderPayment),
+  }
+}
+
+/// Refuses a pay-later order that would take the wallet past its limit, before
+/// anything is created (applyPaymentMode re-checks under a lock).
+export async function assertPayLaterAllowed(customerId: string | null, total: { toNumber(): number }): Promise<void> {
+  if (!customerId) throw HttpError.badRequest('Pay later needs an account. Please sign in with Google.')
+  const [balance, limit] = await Promise.all([balanceOf(customerId), limitOf(customerId)])
+  const available = balance.add(limit.total)
+  if (available.toNumber() < total.toNumber()) {
+    throw new HttpError(
+      400,
+      `This order is more than your pay-later limit. You can pay later up to ৳${Math.max(0, Math.floor(available.toNumber()))} right now (limit ৳${limit.total.toFixed(0)}). Choose pay first or cash on delivery, or clear your wallet.`,
+      { available: Math.max(0, available.toNumber()), limit: limit.total.toNumber() },
+      'WALLET_LIMIT',
+    )
+  }
+}
+
+/// Applies the payment mode to a just-created order. If that fails (the
+/// pay-later limit was raced past), the order is removed so nothing half-placed
+/// remains.
+export async function finalizePayment(orderId: string): Promise<void> {
+  try {
+    await applyPaymentMode(orderId)
+  } catch (err) {
+    await prisma.order.delete({ where: { id: orderId } }).catch(() => {})
+    throw err
   }
 }
 
@@ -253,6 +323,7 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
   }
 
   const { priced, fulfillmentDate } = await priceCheckout(input)
+  if (input.paymentMode === 'PAY_LATER') await assertPayLaterAllowed(customerId, priced.total)
 
   const order = await prisma.order.create({
     data: {
@@ -279,15 +350,16 @@ export async function checkout(customerId: string, input: CheckoutInput): Promis
     include: { items: true },
   })
 
+  await finalizePayment(order.id)
   await notifyOrderPlaced(customerId, order.orderNumber, order.id)
 
-  return toPublicOrder(order)
+  return getMyOrder(customerId, order.id)
 }
 
 /// Guest checkout: places an order without an account. Contact/address come in
-/// inline. A guest can pay in advance (shown manual-payment instructions on the
-/// confirmation) or pick cash on delivery. Only admins are notified — there is
-/// no customer account to notify.
+/// inline. A guest can pay first (shown manual-payment instructions on the
+/// confirmation) or pick cash on delivery; pay later needs an account (wallet).
+/// Only admins are notified — there is no customer account to notify.
 export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOrder> {
   // Guests can only order to serviceable areas (no orbitax office exception —
   // that is for signed-in orbitax accounts).
@@ -324,9 +396,11 @@ export async function guestCheckout(input: GuestCheckoutInput): Promise<PublicOr
     include: { items: true },
   })
 
+  await finalizePayment(order.id)
   await notifyNewOrderToAdmins(order.orderNumber, order.id)
 
-  return toPublicOrder(order)
+  const fresh = await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { items: true, walletEntries: true } })
+  return toPublicOrder(fresh)
 }
 
 export async function listMyOrders(
@@ -337,7 +411,7 @@ export async function listMyOrders(
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
       where,
-      include: { items: true, delivery: true, payments: true },
+      include: { items: true, delivery: true, walletEntries: true },
       orderBy: { createdAt: 'desc' },
       ...(page ? { take: page.limit, skip: page.offset } : {}),
     }),
@@ -347,7 +421,7 @@ export async function listMyOrders(
 }
 
 export async function getMyOrder(customerId: string, id: string): Promise<PublicOrder> {
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true, delivery: true, payments: true } })
+  const order = await prisma.order.findUnique({ where: { id }, include: { items: true, delivery: true, walletEntries: true } })
   if (!order || order.customerId !== customerId) {
     throw HttpError.notFound('Order not found')
   }
@@ -355,9 +429,8 @@ export async function getMyOrder(customerId: string, id: string): Promise<Public
 }
 
 /// Customer cancels their own order. Allowed only while it is still PENDING
-/// (not yet confirmed). If any money has been paid, a refund is involved, so the
-/// customer must contact the business instead of self-cancelling — this keeps a
-/// cancelled order from stranding a refund.
+/// (not yet confirmed). Any wallet charge is reversed; money already paid stays
+/// in the wallet as credit (vault R-ORD-003).
 export async function cancelOrder(customerId: string, id: string): Promise<PublicOrder> {
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order || order.customerId !== customerId) throw HttpError.notFound('Order not found')
@@ -366,41 +439,22 @@ export async function cancelOrder(customerId: string, id: string): Promise<Publi
       'This order can no longer be cancelled. Please contact us if you still need to cancel it.',
     )
   }
-  const payments = await prisma.payment.findMany({ where: { orderId: id } })
-  if (payments.some((p) => p.status === 'PENDING')) {
-    throw HttpError.badRequest(
-      'You have a payment awaiting verification. Please contact us to cancel this order.',
-    )
-  }
-  if (netPaid(payments).gt(0)) {
-    throw HttpError.badRequest(
-      'You have already paid for this order. Please contact us to cancel it and arrange a refund.',
-    )
-  }
   await prisma.order.update({ where: { id }, data: { status: 'CANCELLED' } })
+  await reverseOrderCharge(id)
   await notifyOrderStatus(customerId, 'CANCELLED', order.orderNumber, order.id)
   await notifyOrderCancelledByCustomer(order.orderNumber, order.id)
   return getMyOrder(customerId, id)
 }
 
-/// Customer switches their own order between pay-in-advance and cash-on-delivery.
-/// Only allowed while the order is still PENDING (awaiting admin confirmation);
-/// once it has been confirmed and moved on, the payment method is locked.
+/// Customer switches their own order's payment method. Only while it is still
+/// PENDING; pay later is re-checked against the wallet limit.
 export async function changePaymentMode(
   customerId: string,
   id: string,
-  paymentMode: 'PREPAID' | 'COD',
+  paymentMode: Order['paymentMode'],
 ): Promise<PublicOrder> {
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order || order.customerId !== customerId) throw HttpError.notFound('Order not found')
-  if (order.status !== 'PENDING') {
-    throw HttpError.badRequest('Payment method can only be changed before the order is confirmed')
-  }
-  if (order.paymentMode !== paymentMode) {
-    await prisma.order.update({ where: { id }, data: { paymentMode } })
-    // Switching to prepaid can auto-confirm an already fully-paid order; switching
-    // to COD leaves the status alone. Recompute keeps the invariants consistent.
-    await recomputeOrderPaymentStatus(id)
-  }
+  await changeMode(id, paymentMode)
   return getMyOrder(customerId, id)
 }

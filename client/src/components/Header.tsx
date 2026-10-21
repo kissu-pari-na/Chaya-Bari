@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Logo } from './Logo'
-import { AdminNav } from './AdminNav'
 import { NotificationBell } from './NotificationBell'
 import { PrefControls } from './PrefControls'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useI18n } from '../context/LanguageContext'
-import { isOrbitaxEmail } from '../lib/orbitax'
 import './Header.css'
 
 interface HeaderProps {
@@ -28,7 +26,9 @@ export function Header({ variant }: HeaderProps) {
     setMenuOpen(false)
   }, [location.pathname])
 
-  const flatLinks: Record<'customer' | 'kitchen', { to: string; label: string; end?: boolean }[]> = {
+  const flatLinks: Record<'customer' | 'kitchen' | 'admin', { to: string; label: string; end?: boolean }[]> = {
+    // Staff outside the admin shell (e.g. a tracking link) get a way back.
+    admin: [{ to: '/admin', label: t('ড্যাশবোর্ড', 'Dashboard'), end: true }],
     customer: [
       { to: '/', label: t('হোম', 'Home'), end: true },
       { to: '/products', label: t('পণ্য', 'Products') },
@@ -45,11 +45,10 @@ export function Header({ variant }: HeaderProps) {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'app-header__link app-header__link--active' : 'app-header__link'
 
-  // Orbitax staff get a billing shortcut (combined outstanding balance) in the
-  // header, wherever their account surface is.
-  const showOrbitax = !!user && isOrbitaxEmail(user.email)
+  // Customers get a wallet shortcut (balance, pay later, payments) in the header.
+  const showWallet = user?.role === 'CUSTOMER'
 
-  const orbitaxIcon = (
+  const walletIcon = (
     <svg
       width="20"
       height="20"
@@ -69,6 +68,9 @@ export function Header({ variant }: HeaderProps) {
 
   return (
     <header className="app-header">
+      <a href="#main" className="skip-link">
+        {t('মূল অংশে যান', 'Skip to content')}
+      </a>
       <div className="app-header__bar">
         <Logo />
         <div className="app-header__bar-actions">
@@ -77,14 +79,14 @@ export function Header({ variant }: HeaderProps) {
               <NotificationBell />
             </span>
           )}
-          {showOrbitax && (
+          {showWallet && (
             <NavLink
-              to="/orbitax"
+              to="/wallet"
               className="app-header__orbitax-icon"
-              aria-label={t('অরবিট্যাক্স বিলিং', 'Orbitax billing')}
-              title={t('অরবিট্যাক্স বিলিং', 'Orbitax billing')}
+              aria-label={t('ওয়ালেট', 'Wallet')}
+              title={t('ওয়ালেট', 'Wallet')}
             >
-              {orbitaxIcon}
+              {walletIcon}
             </NavLink>
           )}
           {variant === 'customer' && (
@@ -124,15 +126,11 @@ export function Header({ variant }: HeaderProps) {
       </div>
 
       <nav className="app-header__nav" data-open={menuOpen}>
-        {variant === 'admin' ? (
-          <AdminNav />
-        ) : (
-          flatLinks[variant].map((link) => (
-            <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
-              {link.label}
-            </NavLink>
-          ))
-        )}
+        {flatLinks[variant].map((link) => (
+          <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
+            {link.label}
+          </NavLink>
+        ))}
 
         {variant === 'customer' && (
           <>
@@ -141,10 +139,17 @@ export function Header({ variant }: HeaderProps) {
                 {t('আমার অর্ডার', 'My Orders')}
               </NavLink>
             )}
-            <NavLink to="/cart" className="app-header__cart">
+            {/* Cart and wallet are icon buttons in the bar (every width); in the
+                phone menu they also appear as text links. */}
+            <NavLink to="/cart" className="app-header__cart app-header__menu-only">
               {t('কার্ট', 'Cart')}
               {count > 0 && <span className="app-header__cart-count">{count}</span>}
             </NavLink>
+            {user?.role === 'CUSTOMER' && (
+              <NavLink to="/wallet" className={({ isActive }) => `${linkClass({ isActive })} app-header__menu-only`}>
+                {t('ওয়ালেট', 'Wallet')}
+              </NavLink>
+            )}
           </>
         )}
 
@@ -164,7 +169,7 @@ export function Header({ variant }: HeaderProps) {
           </div>
         ) : (
           <NavLink to="/login" className="btn btn--brand app-header__login">
-            {t('লগইন', 'Log in')}
+            {t('সাইন ইন', 'Sign in')}
           </NavLink>
         )}
       </nav>

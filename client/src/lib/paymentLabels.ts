@@ -1,4 +1,4 @@
-import type { PaymentMethod, PaymentSource, PaymentTxnStatus } from '../types/payment'
+import type { PaymentMethod, PaymentSource, WalletEntryStatus, WalletEntryType } from '../types/payment'
 import { pick } from './i18n'
 
 // Getter-based maps so labels render in the active language at access time.
@@ -26,33 +26,38 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
   },
 }
 
-/// All methods (admin manual entry).
-export const paymentMethods: PaymentMethod[] = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'CARD', 'BANK', 'ONLINE']
+/// Methods an admin can record.
+export const paymentMethods: PaymentMethod[] = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'BANK', 'CARD']
 
-/// Methods a customer can pick when reporting a payment they already made.
-export const claimMethods: PaymentMethod[] = ['CASH', 'BKASH', 'NAGAD', 'ROCKET', 'BANK', 'ONLINE']
+/// Methods a customer can pay us by manually (no online gateway).
+export const claimMethods: PaymentMethod[] = ['BKASH', 'NAGAD', 'ROCKET', 'BANK', 'CASH']
 
-export const txnStatusLabel: Record<PaymentTxnStatus, string> = {
-  get PENDING() {
-    return pick('যাচাইয়ের অপেক্ষায়', 'Awaiting verification')
+export const entryTypeLabel: Record<WalletEntryType, string> = {
+  get ORDER_CHARGE() {
+    return pick('অর্ডার', 'Order')
   },
-  get SUCCESS() {
-    return pick('নিশ্চিত', 'Confirmed')
+  get ORDER_REFUND() {
+    return pick('অর্ডার বাতিল (ফেরত)', 'Order cancelled (reversed)')
   },
-  get FAILED() {
-    return pick('বাতিল', 'Failed')
+  get PAYMENT() {
+    return pick('পেমেন্ট', 'Payment')
   },
-  get REFUNDED() {
-    return pick('ফেরত', 'Refunded')
-  },
-  get VOID() {
-    return pick('বাতিল (রেকর্ড)', 'Voided')
+  get ADJUSTMENT() {
+    return pick('সমন্বয়', 'Adjustment')
   },
 }
 
-// Statuses an admin can pick when recording a payment directly. Refunds and
-// voids are dedicated audited actions, not a manual "type" here.
-export const txnStatuses: PaymentTxnStatus[] = ['SUCCESS', 'PENDING']
+export const entryStatusLabel: Record<WalletEntryStatus, string> = {
+  get PENDING() {
+    return pick('যাচাইয়ের অপেক্ষায়', 'Awaiting review')
+  },
+  get CONFIRMED() {
+    return pick('নিশ্চিত', 'Confirmed')
+  },
+  get REJECTED() {
+    return pick('বাতিল', 'Rejected')
+  },
+}
 
 export const paymentSourceLabel: Record<PaymentSource, string> = {
   get ADMIN() {
@@ -61,4 +66,15 @@ export const paymentSourceLabel: Record<PaymentSource, string> = {
   get CUSTOMER() {
     return pick('গ্রাহক', 'Customer')
   },
+  get SYSTEM() {
+    return pick('স্বয়ংক্রিয়', 'Automatic')
+  },
+}
+
+/// Icon for a timeline entry (paired with its text label, never alone).
+export const entryIcon: Record<WalletEntryType, string> = {
+  ORDER_CHARGE: '🧾',
+  ORDER_REFUND: '↺',
+  PAYMENT: '৳',
+  ADJUSTMENT: '⚖',
 }

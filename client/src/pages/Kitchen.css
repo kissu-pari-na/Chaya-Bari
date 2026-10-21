@@ -46,12 +46,13 @@
 }
 
 .kitchen-date--active {
-  border-color: var(--green-deep);
-  background: var(--green-deep);
-  color: var(--cream);
+  border-color: transparent;
+  background: var(--btn-grad);
+  color: var(--on-accent);
 }
 .kitchen-date--active span {
-  color: #f0d9a0;
+  color: var(--on-accent);
+  opacity: 0.85;
 }
 
 /* ---- Product-wise control panel ---- */
@@ -120,10 +121,10 @@
   border-left-color: var(--saffron-500);
 }
 .prod-stage--preparing {
-  border-left-color: #c67a1e;
+  border-left-color: var(--warning);
 }
 .prod-stage--ready {
-  border-left-color: var(--green-deep);
+  border-left-color: var(--success);
 }
 
 .prod-stage__label {
@@ -186,14 +187,14 @@
   box-shadow: var(--shadow-card);
 }
 .ord-card--preparing {
-  border-top-color: #c67a1e;
+  border-top-color: var(--warning);
 }
 .ord-card--ready {
-  border-top-color: #2f6db0;
+  border-top-color: var(--success);
 }
 .ord-card--packed {
-  border-top-color: var(--green-deep);
-  background: rgba(245, 179, 0, 0.07);
+  border-top-color: var(--info);
+  background: var(--accent-soft);
 }
 
 .ord-card__head {
@@ -223,13 +224,13 @@
   white-space: nowrap;
 }
 .ord-card__note {
-  background: rgba(224, 161, 46, 0.1);
-  border: 1px solid rgba(224, 161, 46, 0.3);
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
   border-radius: var(--radius-sm);
   padding: 0.35rem 0.55rem;
   margin: 0 0 0.55rem;
   font-size: 0.8rem;
-  color: var(--saffron-500);
+  color: var(--warning);
 }
 
 .ord-chip {
@@ -239,21 +240,30 @@
   padding: 0.12rem 0.6rem;
 }
 .ord-chip--confirmed {
-  background: var(--saffron-100);
-  color: #8a6a12;
+  background: var(--info-bg);
+  color: var(--info);
 }
 .ord-chip--preparing {
-  background: #f7e3c8;
-  color: #9a5a12;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 .ord-chip--ready {
-  background: #dce9fb;
-  color: #1c5fa8;
+  background: var(--success-bg);
+  color: var(--success);
 }
 .ord-chip--packed {
-  background: #f3e6c4;
-  color: #7a5410;
+  background: var(--glass-inset);
+  color: var(--text);
+  border: 1px solid var(--edge-low);
 }
+/* Status is never colour alone: each chip carries an icon (hidden from AT). */
+.ord-chip::before {
+  margin-right: 0.25rem;
+}
+.ord-chip--confirmed::before { content: '✓'; content: '✓' / ''; }
+.ord-chip--preparing::before { content: '♨'; content: '♨' / ''; }
+.ord-chip--ready::before { content: '●'; content: '●' / ''; }
+.ord-chip--packed::before { content: '▣'; content: '▣' / ''; }
 
 /* Order-level packing */
 .ord-pack {
@@ -282,8 +292,8 @@
   gap: 0.5rem;
   margin-top: 0.6rem;
   padding: 0.5rem 0.6rem;
-  background: rgba(245, 179, 0, 0.12);
-  border: 1px solid rgba(245, 179, 0, 0.34);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 600;
@@ -309,10 +319,10 @@
   border-left: 3px solid var(--saffron-500);
 }
 .ord-line--preparing {
-  border-left-color: #c67a1e;
+  border-left-color: var(--warning);
 }
 .ord-line--ready {
-  border-left-color: var(--green-deep);
+  border-left-color: var(--success);
   opacity: 0.82;
 }
 .ord-line__item {
@@ -338,7 +348,7 @@
 .picker-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20, 15, 8, 0.45);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -346,7 +356,9 @@
   z-index: 100;
 }
 .picker {
-  background: var(--bg-800);
+  background: var(--popover-bg);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.25rem;

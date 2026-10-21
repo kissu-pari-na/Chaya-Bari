@@ -9,7 +9,6 @@ import {
   updateAddressSchema,
   updateOrderingSettingSchema,
   updatePaymentModeSchema,
-  updatePaymentStatusSchema,
   updateStatusSchema,
 } from './order.schemas.js'
 import * as orderController from './order.controller.js'
@@ -65,6 +64,8 @@ adminOrderingRouter.put(
 )
 
 adminOrderingRouter.get('/orders', asyncHandler(adminOrderController.list))
+// Dashboard snapshot: counts per step, payments to review, orders needing action.
+adminOrderingRouter.get('/overview', asyncHandler(adminOrderController.overview))
 // Place an order on a customer's behalf, by email (opens a placeholder account
 // when the email has none).
 adminOrderingRouter.post('/orders', validateBody(adminCheckoutSchema), asyncHandler(adminOrderController.create))
@@ -74,11 +75,6 @@ adminOrderingRouter.patch(
   '/orders/:id/status',
   validateBody(updateStatusSchema),
   asyncHandler(adminOrderController.updateStatus),
-)
-adminOrderingRouter.patch(
-  '/orders/:id/payment-status',
-  validateBody(updatePaymentStatusSchema),
-  asyncHandler(adminOrderController.updatePaymentStatus),
 )
 adminOrderingRouter.patch(
   '/orders/:id/payment-mode',

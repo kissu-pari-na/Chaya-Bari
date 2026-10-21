@@ -2,16 +2,20 @@ import { Prisma, type OrderStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma.js'
 import { HttpError } from '../../utils/httpError.js'
 import {
+  assertPayLaterAllowed,
+  finalizePayment,
   generateOrderNumber,
   itemsCreate,
   priceCheckout,
   resolveAddress,
+  toOrderPayment,
   type PublicOrder,
 } from './order.service.js'
 import type { AdminCheckoutInput } from './order.schemas.js'
+import { orderMoney } from '../wallet/order-money.js'
+import { actorOf, changeMode, collectOnDelivery, reverseOrderCharge } from '../wallet/wallet.service.js'
 import { isOrderableArea } from './delivery-areas.js'
 import { isOrbitaxEmail } from '../../utils/orbitax.js'
-import { netPaid, paymentTotals, recomputeOrderPaymentStatus, toPublicPayment } from '../payments/payment.service.js'
 import { notifyOrderPlaced, notifyOrderStatus } from '../notifications/notification.service.js'
 import { findOrCreateCustomerForEmail } from '../customers/customer-account.service.js'
 import { ensureTrackingToken, sendOrderConfirmedEmail, trackingLink } from './tracking.service.js'
@@ -40,14 +44,14 @@ const orderWithRelations = {
   items: true,
   customer: { include: { user: true } },
   delivery: true,
-  payments: true,
+  walletEntries: true,
   placedBy: { select: { id: true, name: true } },
 } satisfies Prisma.OrderInclude
 
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderWithRelations }>
 
 function toAdminOrder(order: OrderRow): AdminOrder {
-  const totals = paymentTotals(order.payments, order.total)
+  const totals = orderMoney(order, order.walletEntries)
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -71,7 +75,11 @@ function toAdminOrder(order: OrderRow): AdminOrder {
     paymentMode: order.paymentMode,
     amountPaid: totals.amountPaid,
     amountDue: totals.amountDue,
+    onWallet: totals.onWallet,
     createdAt: order.createdAt.toISOString(),
+    readyAt: order.readyAt?.toISOString() ?? null,
+    dispatchedAt: order.dispatchedAt?.toISOString() ?? null,
+    deliveredAt: order.deliveredAt?.toISOString() ?? null,
     items: order.items.map((i) => ({
       id: i.id,
       productId: i.productId,
@@ -81,10 +89,11 @@ function toAdminOrder(order: OrderRow): AdminOrder {
       quantity: i.quantity,
       lineTotal: Number(i.lineTotal),
     })),
-    delivery: order.delivery
-      ? { status: order.delivery.status, provider: order.delivery.provider, trackingRef: order.delivery.trackingRef }
-      : null,
-    payments: order.payments.map(toPublicPayment),
+    delivery: order.delivery ? { provider: order.delivery.provider, trackingRef: order.delivery.trackingRef } : null,
+    payments: order.walletEntries
+      .slice()
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(toOrderPayment),
     // Guest orders have no customer account; fall back to the delivery snapshot
     // and the optional guest email so the admin still sees who to contact.
     customer: order.customer
@@ -180,6 +189,7 @@ export async function createOrderOnBehalf(input: AdminCheckoutInput, adminId: st
   }
 
   const { priced, fulfillmentDate } = await priceCheckout(input, { byAdmin: true })
+  if (input.paymentMode === 'PAY_LATER') await assertPayLaterAllowed(customerId, priced.total)
 
   // Keep a new address in the customer's address book (once), so it's there
   // for the next order — and for the owner once they claim the account.
@@ -225,6 +235,7 @@ export async function createOrderOnBehalf(input: AdminCheckoutInput, adminId: st
     },
   })
 
+  await finalizePayment(order.id)
   // In-app notification waits in the customer's inbox (a placeholder sees it
   // once claimed); other admins hear about the new order as usual.
   await notifyOrderPlaced(customerId, order.orderNumber, order.id)
@@ -232,86 +243,89 @@ export async function createOrderOnBehalf(input: AdminCheckoutInput, adminId: st
   return getOrder(order.id)
 }
 
-// Allowed forward transitions. An order can only be CANCELLED while it is still
-// PENDING or CONFIRMED — once it reaches PREPARING (or beyond) it can no longer
-// be cancelled. CANCELLED and DELIVERED are terminal (everything is locked).
+// The five-step order flow (vault R-ORD-001): every role sees the same states.
+// Admins may dispatch straight from CONFIRMED when nothing needs cooking.
+// An order can be cancelled only while PENDING or CONFIRMED; CANCELLED and
+// DELIVERED are terminal.
 const transitions: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['PREPARING', 'CANCELLED'],
-  PREPARING: ['READY'],
-  READY: ['PACKED'],
-  PACKED: ['OUT_FOR_DELIVERY'],
+  CONFIRMED: ['PREPARING', 'OUT_FOR_DELIVERY', 'CANCELLED'],
+  PREPARING: ['OUT_FOR_DELIVERY'],
   OUT_FOR_DELIVERY: ['DELIVERED'],
   DELIVERED: [],
   CANCELLED: [],
 }
 
-export async function updateStatus(id: string, status: OrderStatus): Promise<AdminOrder> {
+export interface StatusChange {
+  status: OrderStatus
+  /// OUT_FOR_DELIVERY: who is delivering and their tracking reference.
+  provider?: string
+  trackingRef?: string
+  /// DELIVERED (cash on delivery): money collected at the door.
+  collected?: number
+  collectMethod?: 'CASH' | 'BKASH' | 'NAGAD' | 'ROCKET' | 'BANK'
+  collectReference?: string
+}
+
+export async function updateStatus(id: string, change: StatusChange, adminId: string): Promise<AdminOrder> {
+  const { status } = change
   const order = await prisma.order.findUnique({ where: { id } })
   if (!order) throw HttpError.notFound('Order not found')
-  if (order.status !== status && !transitions[order.status].includes(status)) {
-    // Give a clearer reason for the common "too late to cancel" case.
+  if (order.status === status) return getOrder(id)
+  if (!transitions[order.status].includes(status)) {
     if (status === 'CANCELLED') {
       throw HttpError.badRequest('This order can no longer be cancelled — it is already being prepared.')
     }
     throw HttpError.badRequest(`Cannot change status from ${order.status} to ${status}`)
   }
-  // Prepaid orders can't be confirmed until fully paid. Cash-on-delivery orders
-  // are collected at the door, so they skip this gate and can be confirmed and
-  // sent to the kitchen while still unpaid.
-  if (status === 'CONFIRMED' && order.paymentMode !== 'COD' && order.paymentStatus !== 'PAID') {
-    throw HttpError.badRequest('Cannot confirm this order until payment is completed in full')
+  // Pay-first orders confirm themselves once paid (vault R-ORD-002).
+  if (status === 'CONFIRMED' && order.paymentMode === 'PAY_FIRST' && order.paymentStatus !== 'PAID') {
+    throw HttpError.badRequest('This order is pay-first: confirm its payment first and it will confirm automatically.')
   }
-  // Cancelling requires the payment situation to be settled first, so a cancelled
-  // order never strands money (nothing can change once it is cancelled):
-  //  - any payment awaiting verification must be verified or rejected first;
-  //  - any amount actually collected must be refunded first.
-  if (status === 'CANCELLED') {
-    const payments = await prisma.payment.findMany({ where: { orderId: id } })
-    if (payments.some((p) => p.status === 'PENDING')) {
-      throw HttpError.badRequest('Verify or reject the pending payment before cancelling this order.')
-    }
-    if (netPaid(payments).gt(0)) {
-      throw HttpError.badRequest('Refund the paid amount before cancelling this order.')
-    }
+
+  const now = new Date()
+  if (status === 'OUT_FOR_DELIVERY') {
+    // The delivery record holds who delivers it (no separate delivery status).
+    await prisma.delivery.upsert({
+      where: { orderId: id },
+      create: {
+        orderId: id,
+        provider: change.provider ?? null,
+        trackingRef: change.trackingRef ?? null,
+        customerDeliveryCost: order.customerDeliveryCost.sub(order.deliveryDiscount),
+      },
+      update: {
+        ...(change.provider !== undefined ? { provider: change.provider } : {}),
+        ...(change.trackingRef !== undefined ? { trackingRef: change.trackingRef } : {}),
+      },
+    })
   }
-  // Stamp the delivery time on first transition to DELIVERED; it drives the
-  // day-after review invite.
-  const markDelivered = status === 'DELIVERED' && !order.deliveredAt
+
   await prisma.order.update({
     where: { id },
-    data: { status, ...(markDelivered ? { deliveredAt: new Date() } : {}) },
+    data: {
+      status,
+      ...(status === 'OUT_FOR_DELIVERY' && !order.dispatchedAt ? { dispatchedAt: now } : {}),
+      // Stamped on the first DELIVERED only; it drives the day-after review invite.
+      ...(status === 'DELIVERED' && !order.deliveredAt ? { deliveredAt: now } : {}),
+    },
   })
-  if (order.status !== status) {
-    await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
-    // First confirmation: email the customer their tracking link.
-    if (status === 'CONFIRMED') await sendOrderConfirmedEmail(order.id)
+
+  if (status === 'DELIVERED' && order.paymentMode === 'COD') {
+    const admin = await actorOf(adminId)
+    await collectOnDelivery(order, change.collected ?? Number(order.total), admin, change.collectMethod ?? 'CASH', change.collectReference)
   }
+  if (status === 'CANCELLED') await reverseOrderCharge(id)
+
+  await notifyOrderStatus(order.customerId, status, order.orderNumber, order.id)
+  // First confirmation: email the customer their tracking link.
+  if (status === 'CONFIRMED') await sendOrderConfirmedEmail(order.id)
   return getOrder(id)
 }
 
-export async function updatePaymentStatus(id: string, paymentStatus: string): Promise<AdminOrder> {
-  const order = await prisma.order.findUnique({ where: { id } })
-  if (!order) throw HttpError.notFound('Order not found')
-  if (order.status === 'CANCELLED') {
-    throw HttpError.badRequest('This order is cancelled — no further changes are allowed.')
-  }
-  await prisma.order.update({ where: { id }, data: { paymentStatus: paymentStatus as never } })
-  return getOrder(id)
-}
-
-/// Admin switches an order between pay-in-advance and cash-on-delivery. Only
-/// allowed while the order is still PENDING (before it is confirmed); once it has
-/// moved past confirmation the payment method is locked.
-export async function updatePaymentMode(id: string, paymentMode: 'PREPAID' | 'COD'): Promise<AdminOrder> {
-  const order = await prisma.order.findUnique({ where: { id } })
-  if (!order) throw HttpError.notFound('Order not found')
-  if (order.status !== 'PENDING') {
-    throw HttpError.badRequest('Payment method can only be changed before the order is confirmed')
-  }
-  if (order.paymentMode !== paymentMode) {
-    await prisma.order.update({ where: { id }, data: { paymentMode } })
-    await recomputeOrderPaymentStatus(id)
-  }
+/// Admin switches an order's payment method. Only while it is still PENDING;
+/// pay later is re-checked against the customer's wallet limit.
+export async function updatePaymentMode(id: string, paymentMode: AdminOrder['paymentMode']): Promise<AdminOrder> {
+  await changeMode(id, paymentMode)
   return getOrder(id)
 }

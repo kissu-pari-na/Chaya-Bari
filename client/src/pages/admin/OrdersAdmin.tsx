@@ -1,14 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { fetchAdminOrdersPage, type OrderFilters } from '../../lib/orders'
 import { usePoll } from '../../lib/usePoll'
 import { Pagination } from '../../components/Pagination'
 import { formatBdt, formatDateWithDay } from '../../lib/format'
-import { orderStatusLabel, paymentStatusLabel } from '../../lib/orderStatus'
+import { orderStatusLabel, paymentModeLabel, paymentStatusClass, paymentStatusLabel } from '../../lib/orderStatus'
 import { formatSlotValue } from '../../lib/slots'
 import { orderStatuses, paymentStatuses } from '../../lib/orderEnums'
 import { useI18n } from '../../context/LanguageContext'
-import type { AdminOrder } from '../../types/order'
+import type { AdminOrder, OrderStatus } from '../../types/order'
 import '../Orders.css'
 import './Admin.css'
 
@@ -18,7 +18,12 @@ export function OrdersAdmin() {
   const { t } = useI18n()
   const [orders, setOrders] = useState<AdminOrder[]>([])
   const [total, setTotal] = useState(0)
-  const [filters, setFilters] = useState<OrderFilters>({})
+  // ?status= (from the dashboard tiles) pre-selects the status filter.
+  const [params] = useSearchParams()
+  const initialStatus = params.get('status') as OrderStatus | null
+  const [filters, setFilters] = useState<OrderFilters>(
+    initialStatus && orderStatuses.includes(initialStatus) ? { status: initialStatus } : {},
+  )
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
@@ -150,10 +155,9 @@ export function OrdersAdmin() {
                     <span className={`status status--${o.status.toLowerCase()}`}>{orderStatusLabel[o.status]}</span>
                   </td>
                   <td>
-                    <span className="status status--payment">{paymentStatusLabel[o.paymentStatus]}</span>
-                    {o.paymentMode === 'COD' && (
-                      <><br /><span className="status status--cod">{t('ক্যাশ অন ডেলিভারি', 'COD')}</span></>
-                    )}
+                    <span className={paymentStatusClass[o.paymentStatus]}>{paymentStatusLabel[o.paymentStatus]}</span>
+                    <br />
+                    <span className="muted">{paymentModeLabel[o.paymentMode]}</span>
                   </td>
                 </tr>
               ))}

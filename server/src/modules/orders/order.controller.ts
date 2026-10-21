@@ -92,6 +92,7 @@ export async function getSetting(_req: Request, res: Response) {
       minAdvanceDays: setting.minAdvanceDays,
       defaultDeliveryCost: Number(setting.defaultDeliveryCost),
       timezone: setting.timezone,
+      walletCreditLimit: Number(setting.walletCreditLimit),
     },
   })
 }
@@ -104,6 +105,7 @@ export async function updateSetting(req: Request, res: Response) {
       minAdvanceDays: setting.minAdvanceDays,
       defaultDeliveryCost: Number(setting.defaultDeliveryCost),
       timezone: setting.timezone,
+      walletCreditLimit: Number(setting.walletCreditLimit),
     },
   })
 }

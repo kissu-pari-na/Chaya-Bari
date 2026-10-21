@@ -151,6 +151,34 @@ const catalog: Record<string, (d: NotificationData) => Rendered> = {
       `We couldn't verify your ${amt(d)} payment for order ${d.orderNumber}. Please resubmit with the correct details.`,
     ),
   }),
+
+  // ---- Wallet ----
+  'wallet.claim.submitted': (d) => ({
+    title: pick('পেমেন্ট যাচাই করুন', 'Payment to review'),
+    body: pick(
+      `${d.name ?? 'গ্রাহক'} ${amt(d)} (${method(d)}) পরিশোধের তথ্য জমা দিয়েছেন। অনুগ্রহ করে যাচাই করুন।`,
+      `${d.name ?? 'A customer'} reported paying ${amt(d)} (${method(d)}). Please review it.`,
+    ),
+  }),
+  'wallet.claim.confirmed': (d) => ({
+    title: pick('পেমেন্ট নিশ্চিত হয়েছে ✅', 'Payment confirmed ✅'),
+    body: pick(`আপনার ${amt(d)} পেমেন্ট যাচাই করে ওয়ালেটে যোগ করা হয়েছে। ধন্যবাদ!`, `Your ${amt(d)} payment was verified and added to your wallet. Thank you!`),
+  }),
+  'wallet.claim.rejected': (d) => ({
+    title: pick('পেমেন্ট যাচাই করা যায়নি', 'Payment not verified'),
+    body: pick(
+      `আপনার ${amt(d)} পেমেন্ট যাচাই করা যায়নি${d.reason ? `: ${d.reason}` : ''}। অনুগ্রহ করে সঠিক রেফারেন্স দিয়ে আবার জমা দিন।`,
+      `We couldn't verify your ${amt(d)} payment${d.reason ? `: ${d.reason}` : ''}. Please resubmit with the correct reference.`,
+    ),
+  }),
+  'wallet.adjusted.credit': (d) => ({
+    title: pick('ওয়ালেটে জমা হয়েছে', 'Wallet credited'),
+    body: pick(`আপনার ওয়ালেটে ${amt(d)} যোগ হয়েছে (রেফারেন্স: ${d.reference ?? ''})।`, `${amt(d)} was added to your wallet (reference: ${d.reference ?? ''}).`),
+  }),
+  'wallet.adjusted.debit': (d) => ({
+    title: pick('ওয়ালেট থেকে কাটা হয়েছে', 'Wallet debited'),
+    body: pick(`আপনার ওয়ালেট থেকে ${amt(d)} কাটা হয়েছে (রেফারেন্স: ${d.reference ?? ''})।`, `${amt(d)} was deducted from your wallet (reference: ${d.reference ?? ''}).`),
+  }),
 }
 
 /// Render a notification's title/body in the active language, falling back to the
