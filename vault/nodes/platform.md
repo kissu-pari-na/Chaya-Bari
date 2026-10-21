@@ -48,6 +48,8 @@ schemas, mounted by `routes.ts`.
   Why: one small business and one codebase. Modules keep the seams clean, so parts can be split out later if ever needed.
 - **D-PLT-002** [confirmed 2026-09-15] Store rate limits in the database (the `RateLimit` table) and fail open.
   Why: an in-memory limiter is useless on serverless, and blocking real users is worse than letting a few extra requests through.
+- **D-PLT-003** [proposed 2026-10-21] The native apps live in `mobile/` as a separate Expo package with its own `package.json`. R-PLT-006 (no heavy dependencies) governs `client/`; the app's React Native and Expo packages stay inside `mobile/`. See mobile-app.
+  Why: keeps the website's bundle and dependency list unchanged while the app grows.
 
 ## Ideas
 - **I-PLT-001** [new · impact:med · effort:M] Add a small test suite, starting with the pure functions (pricing, slots, the status transition table, derived payment status). The project has no automated tests today, so regressions in money logic go unnoticed.

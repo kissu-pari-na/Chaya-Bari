@@ -38,6 +38,7 @@ implements **all 11 phases** of the spec:
 | Layer     | Choice                                   |
 |-----------|------------------------------------------|
 | Frontend  | React + Vite + TypeScript (`client/`)    |
+| Mobile    | React Native + Expo, EAS Build (`mobile/`) |
 | Backend   | Node.js + Express + TypeScript (`server/`) |
 | Database  | PostgreSQL                               |
 | ORM       | Prisma                                    |
@@ -52,6 +53,7 @@ React (Vercel) → Express API (Render) → Prisma → PostgreSQL (Supabase)
 ```
 Chaya-Bari/
   client/   React frontend (customer, admin, kitchen UIs)
+  mobile/   Android & iOS customer app (React Native + Expo), see mobile/README.md
   server/   Express API (modular monolith)
 ```
 
@@ -342,6 +344,17 @@ admin-created email signs in as that staff member. Each role lands on its own ar
 > There is no online payment gateway or delivery-provider API yet: payments are
 > claimed manually and dispatch records the provider by hand. A future
 > integration hooks into the wallet (payments) and the dispatch step (delivery).
+
+## Mobile app (Android & iOS)
+
+`mobile/` holds the customer app, built with React Native and Expo. Its first
+version covers the menu, dish details, the cart, native Google sign-in and the
+language, theme and palette settings; checkout opens the website for now. It uses
+the same API (no CORS change needed) and the same palette data as the website.
+Builds run in the cloud with EAS Build, so neither a Mac nor the Android SDK is
+required. Setup, Google OAuth clients and store builds:
+**[`mobile/README.md`](mobile/README.md)**. For the iOS app's sign-in, set the
+server's optional `GOOGLE_EXTRA_CLIENT_IDS` to the iOS OAuth client id.
 
 ## Status
 

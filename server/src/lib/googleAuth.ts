@@ -78,7 +78,7 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleProfil
   try {
     const verified = jwt.verify(idToken, key, {
       algorithms: ['RS256'],
-      audience: env.google.clientId,
+      audience: [env.google.clientId, ...env.google.extraClientIds] as [string, ...string[]],
       issuer: ISSUERS,
     })
     if (typeof verified === 'string') throw new Error('Unexpected token payload')

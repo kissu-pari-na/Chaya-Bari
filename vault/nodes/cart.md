@@ -19,6 +19,7 @@ badge in the header. It works for guests and customers alike.
 ## Rules
 - **R-CART-001** [must] Prices shown in the cart are a preview. The server re-prices every line at checkout from current product data.
 - **R-CART-002** [should] Unavailable products cannot be added. When a carted product becomes unavailable, checkout refuses it with a clear message.
+- **R-CART-003** [must] The cart lives on the device (key `chaya_bari_cart`) as lines of `{productId, name, nameEnglish, price, imageUrl, quantity}`, in both the website (`CartContext`) and the mobile app (`mobile/src/lib/cart.tsx`). A line is keyed by `productId`, and setting a quantity to 0 removes it. Change both together.
 
 ## Decisions
 - **D-CART-001** [confirmed 2026-09-11] Keep the cart in localStorage (Phase 3), with no server-side cart.

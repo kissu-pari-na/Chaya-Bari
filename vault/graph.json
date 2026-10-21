@@ -650,6 +650,16 @@
           },
           "text": "Sign-in requires `GOOGLE_CLIENT_ID` (server) and `VITE_GOOGLE_CLIENT_ID` (client), set to the same OAuth client. Without them the sign-in page explains it isn't set up, and guest checkout keeps working.",
           "more": []
+        },
+        {
+          "id": "R-AUTH-008",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "The server accepts Google ID tokens whose audience is `GOOGLE_CLIENT_ID` or one of `GOOGLE_EXTRA_CLIENT_IDS` (the mobile app's iOS OAuth client). The extras are only for the native apps' own OAuth clients in the same Google Cloud project, never another product's.",
+          "more": []
         }
       ],
       "decisions": [
@@ -710,6 +720,19 @@
             "Guests: guest checkout stays. The phone number is asked for at checkout when missing.",
             "Rules changed: R-AUTH-001 to R-AUTH-005 were rewritten for Google-only, and R-AUTH-007 was added. R-USR-002 and R-ACL-002 were updated, and D-USR-002 was added. The cleanup job is now limited to legacy self-registered rows, because admin-created accounts now stay unconfirmed until the first Google sign-in.",
             "Why: one login method, no passwords to forget or reset, no confirmation emails, and fewer screens and endpoints. Google proves the email, so accounts are verified by construction."
+          ]
+        },
+        {
+          "id": "D-AUTH-005",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "The mobile app signs in with the native Google SDK and posts its ID token to the same `POST /api/auth/google`. `GOOGLE_EXTRA_CLIENT_IDS` (optional, comma-separated) adds accepted audiences for the iOS client; R-AUTH-008 was added and R-AUTH-001 is unchanged. See D-APP-002.",
+          "more": [
+            "Why: Google blocks sign-in inside app WebViews, and the iOS SDK issues tokens for the iOS client rather than the web client."
           ]
         }
       ],
@@ -1020,6 +1043,16 @@
             ]
           },
           "text": "Unavailable products cannot be added. When a carted product becomes unavailable, checkout refuses it with a clear message.",
+          "more": []
+        },
+        {
+          "id": "R-CART-003",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "The cart lives on the device (key `chaya_bari_cart`) as lines of `{productId, name, nameEnglish, price, imageUrl, quantity}`, in both the website (`CartContext`) and the mobile app (`mobile/src/lib/cart.tsx`). A line is keyed by `productId`, and setting a quantity to 0 removes it. Change both together.",
           "more": []
         }
       ],
@@ -1971,6 +2004,19 @@
           "more": [
             "Why: the UI and the stored preference disagreed until the next reload."
           ]
+        },
+        {
+          "id": "D-DSN-014",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "`npm run palettes` also generates `mobile/src/theme/palettes.gen.ts` for the React Native app: every palette's light and dark values plus the neutral and status colours parsed from `tokens.css`. `check-colors.mjs --mobile` applies R-DSN-001 to `mobile/src`. R-DSN-002 still holds: palettes change only in `palettes.mjs`. See D-APP-007.",
+          "more": [
+            "Why: one colour source for the website and the app, so they never drift."
+          ]
         }
       ],
       "questions": [
@@ -2918,6 +2964,367 @@
             "effort": "M"
           },
           "text": "Have `vault.mjs stale` comment on PRs that change code under a node's `code` globs without touching that node file.",
+          "more": []
+        }
+      ]
+    },
+    {
+      "file": "vault/nodes/mobile-app.md",
+      "id": "mobile-app",
+      "title": "Mobile app (Android & iOS, Expo)",
+      "prefix": "APP",
+      "kind": "feature",
+      "status": "partial",
+      "scope": "local",
+      "reviewed": "2026-10-21",
+      "code": [
+        "mobile/**",
+        "client/scripts/palettes.mjs",
+        "client/scripts/check-colors.mjs"
+      ],
+      "relations": [
+        {
+          "type": "depends-on",
+          "to": "auth",
+          "note": "native Google sign-in sends its ID token to the same POST /api/auth/google"
+        },
+        {
+          "type": "depends-on",
+          "to": "storefront",
+          "note": "shows the same menu, categories and dishes from the public catalog API"
+        },
+        {
+          "type": "uses",
+          "to": "cart",
+          "note": "keeps a device cart with the same line shape and storage key as the website"
+        },
+        {
+          "type": "depends-on",
+          "to": "design-system",
+          "note": "colours are generated from the same palette data and tokens.css"
+        },
+        {
+          "type": "depends-on",
+          "to": "i18n",
+          "note": "every string is t('বাংলা', 'English'), Bangla by default"
+        },
+        {
+          "type": "uses",
+          "to": "notifications",
+          "note": "phase 2 delivers the same notification events as native push"
+        },
+        {
+          "type": "uses",
+          "to": "web-push",
+          "note": "phase 2 adds native push (FCM/APNs) next to web push, reusing its per-device subscription model"
+        },
+        {
+          "type": "depends-on",
+          "to": "platform",
+          "note": "same REST API; money and business rules stay on the server"
+        }
+      ],
+      "summary": "Native Android and iOS apps for customers, built with React Native and Expo\nin `mobile/` (Expo Router, file-based screens in `mobile/src/app`). The first\nversion covers the customer core: menu by category, dish details, a device\ncart, native Google sign-in, and language, theme and palette settings. Checkout\nlinks to the website for now. Admin and kitchen keep using the website. Builds\nrun on Expo's EAS Build in the cloud, so no Mac or Android SDK is needed.",
+      "rules": [
+        {
+          "id": "R-APP-001",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "The app uses the same REST API as the website and never computes a price the server trusts. Totals in the app are previews (R-PLT-004).",
+          "more": []
+        },
+        {
+          "id": "R-APP-002",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "No colour is hard-coded in `mobile/src`. Colours come only from `mobile/src/theme/palettes.gen.ts`, which `cd client && npm run palettes` generates from `palettes.mjs` and `tokens.css`. Never edit it by hand. `cd mobile && npm run check:design` must pass.",
+          "more": []
+        },
+        {
+          "id": "R-APP-003",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "Every user-visible string in the app is bilingual, `t('বাংলা', 'English')`, with Bangla as the default.",
+          "more": []
+        },
+        {
+          "id": "R-APP-004",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "Sign-in in the app is Google only and uses the native Google SDK, posting its ID token to `POST /api/auth/google`. Never a Google flow inside a WebView, and never another login method (R-AUTH-001).",
+          "more": []
+        },
+        {
+          "id": "R-APP-005",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "Without `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` the app hides sign-in, and browsing and the cart keep working (R-PLT-009).",
+          "more": []
+        },
+        {
+          "id": "R-APP-006",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "`mobile/ios` and `mobile/android` are generated by Expo prebuild and are never committed or edited by hand. Native settings live in `mobile/app.config.ts` and config plugins.",
+          "more": []
+        },
+        {
+          "id": "R-APP-007",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "The sign-in JWT is stored in the OS keychain/keystore (`expo-secure-store`), never in AsyncStorage.",
+          "more": []
+        },
+        {
+          "id": "R-APP-008",
+          "meta": {
+            "tokens": [
+              "should"
+            ]
+          },
+          "text": "Add native packages with `npx expo install` so versions match the Expo SDK, and keep `npx expo-doctor` clean.",
+          "more": []
+        },
+        {
+          "id": "R-APP-009",
+          "meta": {
+            "tokens": [
+              "must"
+            ]
+          },
+          "text": "Staff (ADMIN/KITCHEN) who sign in to the app are told to use the website for their work. The app has no admin or kitchen screens (R-ACL-003 still decides access on the server).",
+          "more": []
+        }
+      ],
+      "decisions": [
+        {
+          "id": "D-APP-001",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Build the apps with React Native + Expo, not Capacitor or a PWA.",
+          "more": [
+            "Why: the owner's choice. The agent recommended Capacitor (one codebase reusing the web UI); the owner preferred truly native screens and accepted rebuilding them."
+          ]
+        },
+        {
+          "id": "D-APP-002",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Sign in with the native Google sign-in SDK (`@react-native-google-signin/google-signin`). The ID token goes to the existing `POST /api/auth/google`, and the server also accepts the iOS client id as an audience (`GOOGLE_EXTRA_CLIENT_IDS`, see R-AUTH-008).",
+          "more": [
+            "Why: Google blocks its sign-in inside embedded WebViews; a native SDK keeps sign-in Google only with no new endpoint."
+          ]
+        },
+        {
+          "id": "D-APP-003",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Phone push in the app (FCM for Android, APNs for iOS) is phase 2. The first version has no push.",
+          "more": [
+            "Why: it needs a Firebase project and a new server sender; the owner chose to ship the app first."
+          ]
+        },
+        {
+          "id": "D-APP-004",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "The first version covers the customer core: Expo scaffold, Google sign-in, glass theme and Bangla/English, menu by category, dish details and the cart. Checkout, my orders, `/track` deep links and the wallet follow in later PRs. Admin and kitchen stay on the website.",
+          "more": [
+            "Why: the owner picked the smallest useful first release."
+          ]
+        },
+        {
+          "id": "D-APP-005",
+          "meta": {
+            "tokens": [
+              "confirmed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Build with Expo EAS Build in the cloud (`mobile/eas.json`: development, preview APK, production). The owner has a Google Play Console account; there is no Apple Developer account or Mac yet.",
+          "more": [
+            "Why: no Mac and no Android SDK on the owner's machine; EAS builds both platforms remotely."
+          ]
+        },
+        {
+          "id": "D-APP-006",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "App id `com.chayabari.app` on both stores, display name `ছায়া বাড়ি`, deep-link scheme `chayabari`. The app id cannot change after the first store upload.",
+          "more": []
+        },
+        {
+          "id": "D-APP-007",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "`palettes.mjs` also writes `mobile/src/theme/palettes.gen.ts` (every palette's light/dark tokens plus the neutral and status colours parsed from `tokens.css`), and `check-colors.mjs --mobile` guards `mobile/src`. One palette source for web and app.",
+          "more": []
+        },
+        {
+          "id": "D-APP-008",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Random palette mode is the app default too (R-DSN-016) and keeps the website's 30 s to 5 min hold, but the app only swaps when it starts or returns to the foreground, never while a screen is in view.",
+          "more": []
+        },
+        {
+          "id": "D-APP-009",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Until in-app checkout ships, the cart screen shows the subtotal preview and a button that opens the website to order. The app cart is not carried over to the website.",
+          "more": []
+        },
+        {
+          "id": "D-APP-010",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "The app uses the phone's system fonts for now. The website's fonts are woff2 subsets that React Native cannot load; bundling TTFs of Hind Siliguri and Anek Bangla is a follow-up (I-APP-003).",
+          "more": []
+        },
+        {
+          "id": "D-APP-011",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "Native icons come from `expo-symbols` (SF Symbols on iOS, Material Symbols on Android) rather than an icon font package.",
+          "more": []
+        }
+      ],
+      "questions": [
+        {
+          "id": "Q-APP-001",
+          "meta": {
+            "tokens": [
+              "open"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "What are the live website and API addresses for production builds? They set `EXPO_PUBLIC_API_URL` / `EXPO_PUBLIC_WEB_URL`, and https App Links / Universal Links for `/track/<token>` need the domain plus the Play signing SHA-256 (and later the Apple Team ID) in `/.well-known` files.",
+          "more": [
+            "Options: (a) set them as EAS environment variables once known (recommended) · (b) hard-code them in `app.config.ts`"
+          ]
+        },
+        {
+          "id": "Q-APP-002",
+          "meta": {
+            "tokens": [
+              "open"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "When will the Apple Developer account ($99/yr) be created? iOS builds, TestFlight and the iOS OAuth client wait on it.",
+          "more": [
+            "Options: (a) after the Android app is live on Play (recommended) · (b) now, to launch both together"
+          ]
+        }
+      ],
+      "ideas": [
+        {
+          "id": "I-APP-001",
+          "meta": {
+            "tokens": [
+              "new"
+            ],
+            "impact": "high",
+            "effort": "M"
+          },
+          "text": "In-app checkout, my orders and order tracking, with the confirmation email's `/track/<token>` link opening the app when it is installed.",
+          "more": []
+        },
+        {
+          "id": "I-APP-002",
+          "meta": {
+            "tokens": [
+              "new"
+            ],
+            "impact": "high",
+            "effort": "M"
+          },
+          "text": "Native push for order steps via Expo push / FCM, reusing the notification events and message keys, so customers hear \"on the way\" without the site open.",
+          "more": []
+        },
+        {
+          "id": "I-APP-003",
+          "meta": {
+            "tokens": [
+              "new"
+            ],
+            "impact": "med",
+            "effort": "S"
+          },
+          "text": "Bundle Hind Siliguri and Anek Bangla as TTFs with `expo-font` so Bangla in the app matches the website exactly.",
+          "more": []
+        },
+        {
+          "id": "I-APP-004",
+          "meta": {
+            "tokens": [
+              "new"
+            ],
+            "impact": "med",
+            "effort": "S"
+          },
+          "text": "Long-press the app icon for \"Order again\" and \"Track my order\" shortcuts.",
           "more": []
         }
       ]
@@ -3916,6 +4323,19 @@
           "text": "Store rate limits in the database (the `RateLimit` table) and fail open.",
           "more": [
             "Why: an in-memory limiter is useless on serverless, and blocking real users is worse than letting a few extra requests through."
+          ]
+        },
+        {
+          "id": "D-PLT-003",
+          "meta": {
+            "tokens": [
+              "proposed"
+            ],
+            "date": "2026-10-21"
+          },
+          "text": "The native apps live in `mobile/` as a separate Expo package with its own `package.json`. R-PLT-006 (no heavy dependencies) governs `client/`; the app's React Native and Expo packages stay inside `mobile/`. See mobile-app.",
+          "more": [
+            "Why: keeps the website's bundle and dependency list unchanged while the app grows."
           ]
         }
       ],
@@ -5547,6 +5967,54 @@
       "type": "constrains",
       "to": "platform",
       "note": "every change to the project goes through the vault protocol"
+    },
+    {
+      "from": "mobile-app",
+      "type": "depends-on",
+      "to": "auth",
+      "note": "native Google sign-in sends its ID token to the same POST /api/auth/google"
+    },
+    {
+      "from": "mobile-app",
+      "type": "depends-on",
+      "to": "storefront",
+      "note": "shows the same menu, categories and dishes from the public catalog API"
+    },
+    {
+      "from": "mobile-app",
+      "type": "uses",
+      "to": "cart",
+      "note": "keeps a device cart with the same line shape and storage key as the website"
+    },
+    {
+      "from": "mobile-app",
+      "type": "depends-on",
+      "to": "design-system",
+      "note": "colours are generated from the same palette data and tokens.css"
+    },
+    {
+      "from": "mobile-app",
+      "type": "depends-on",
+      "to": "i18n",
+      "note": "every string is t('বাংলা', 'English'), Bangla by default"
+    },
+    {
+      "from": "mobile-app",
+      "type": "uses",
+      "to": "notifications",
+      "note": "phase 2 delivers the same notification events as native push"
+    },
+    {
+      "from": "mobile-app",
+      "type": "uses",
+      "to": "web-push",
+      "note": "phase 2 adds native push (FCM/APNs) next to web push, reusing its per-device subscription model"
+    },
+    {
+      "from": "mobile-app",
+      "type": "depends-on",
+      "to": "platform",
+      "note": "same REST API; money and business rules stay on the server"
     },
     {
       "from": "notifications",

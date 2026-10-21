@@ -83,6 +83,8 @@ specification. This node holds its rules and the decisions behind them.
   Why: the owner wants the palette rotation to be noticeable within a single visit.
 - **D-DSN-012** [confirmed 2026-10-21] Added the 400ms View Transition guard (R-DSN-015) after a test showed that a throttled page could save a palette choice without ever applying it.
   Why: the UI and the stored preference disagreed until the next reload.
+- **D-DSN-014** [proposed 2026-10-21] `npm run palettes` also generates `mobile/src/theme/palettes.gen.ts` for the React Native app: every palette's light and dark values plus the neutral and status colours parsed from `tokens.css`. `check-colors.mjs --mobile` applies R-DSN-001 to `mobile/src`. R-DSN-002 still holds: palettes change only in `palettes.mjs`. See D-APP-007.
+  Why: one colour source for the website and the app, so they never drift.
 
 ## Open questions
 - **Q-DSN-001** [answered 2026-10-21 → D-DSN-003] Should the default palette be Ember & Gold (the brand, currently implemented) or Sapphire Lagoon (the brief's default)? See D-DSN-003.
